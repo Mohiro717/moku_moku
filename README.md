@@ -1,14 +1,41 @@
-# Run and deploy your AI Studio app
+# Moku Moku House
 
-This contains everything you need to run your app locally.
+クリエイターが静かに、もくもくと創作する場所
 
-## Run Locally
+## 概要
 
-**Prerequisites:**  Node.js
+Moku Moku Houseは、デザイナー、イラストレーター、プログラマー、ライターなど、あらゆる分野のクリエイターが集まって、静かにもくもくと創作活動を行う、居心地の良いコミュニティスペースです。
 
+## 特徴
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+- 🎨 **クリエイター向けコミュニティ**: 様々な分野のクリエイターが集まる場所
+- 🤫 **静かな環境**: 集中して創作活動ができる落ち着いた雰囲気
+- 😊 **もこぴ**: マスコットキャラクターが創作活動を見守ります
+- 📱 **レスポンシブデザイン**: モバイル・タブレット・デスクトップに対応
+
+## 技術スタック
+
+- **フレームワーク**: React with TypeScript
+- **スタイリング**: Tailwind CSS
+- **ビルドツール**: Vite
+- **デプロイ**: ESM imports (ビルド不要)
+
+## 開発
+
+```bash
+# 依存関係のインストール
+npm install
+
+# 開発サーバーの起動
+npm run dev
+
+# ビルド
+npm run build
+
+# プレビュー
+npm run preview
+```
+
+## ライセンス
+
+© 2024 Moku Moku House. All rights reserved.

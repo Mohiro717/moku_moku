@@ -1,164 +1,201 @@
-import React, { useState, useEffect, useRef } from 'react';
-import Header from './components/Header';
-import AnimatedSection from './components/AnimatedSection';
-import ProjectCard from './components/ProjectCard';
+import React, { useEffect, useState } from 'react';
+import { Header } from './components/Header';
+import { AnimatedSection } from './components/AnimatedSection';
+import { Blob } from './components/Blob';
+import { ProjectCard } from './components/ProjectCard';
 import { ChevronDownIcon } from './components/icons/ChevronDownIcon';
 import { GameControllerIcon } from './components/icons/GameControllerIcon';
-import Blob from './components/Blob';
-import { worksData, projectBorderColors, navLinks } from './constants';
+import { SITE_CONFIG, PROJECTS } from './constants';
 
-const App: React.FC = () => {
-  const [activeSection, setActiveSection] = useState<string>('');
-  const sectionRefs = useRef<(HTMLElement | null)[]>([]);
+export const App: React.FC = () => {
+  const [activeSection, setActiveSection] = useState('home');
+  const [mokopiHovered, setMokopiHovered] = useState(false);
 
   useEffect(() => {
-    const observerOptions = {
-      root: null,
-      rootMargin: '0px',
-      threshold: 0.4,
-    };
+    const handleScroll = () => {
+      const sections = ['home', 'about', 'mokopi', 'works', 'game'];
+      const scrollPosition = window.scrollY + 100;
 
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          setActiveSection(entry.target.id);
+      for (const sectionId of sections) {
+        const element = document.getElementById(sectionId);
+        if (element) {
+          const { offsetTop, offsetHeight } = element;
+          if (scrollPosition >= offsetTop && scrollPosition < offsetTop + offsetHeight) {
+            setActiveSection(sectionId);
+            break;
+          }
         }
-      });
-    }, observerOptions);
-
-    const currentRefs = sectionRefs.current;
-    currentRefs.forEach(ref => {
-      if (ref) observer.observe(ref);
-    });
-
-    return () => {
-      currentRefs.forEach(ref => {
-        if (ref) observer.unobserve(ref);
-      });
+      }
     };
+
+    window.addEventListener('scroll', handleScroll);
+    handleScroll();
+
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const addToRefs = (el: HTMLElement | null, index: number) => {
-    if (el && !sectionRefs.current.includes(el)) {
-        sectionRefs.current[index] = el;
+  const scrollToNext = () => {
+    const aboutSection = document.getElementById('about');
+    if (aboutSection) {
+      aboutSection.scrollIntoView({ behavior: 'smooth' });
     }
   };
 
-
   return (
-    <div className="bg-ivory text-coffee-dark font-sans">
+    <div className="min-h-screen">
       <Header activeSection={activeSection} />
 
-      <main>
-        {/* Hero Section */}
-        <section id="home" className="h-screen w-full relative flex items-center justify-center">
-          <div
-            className="absolute inset-0 bg-cover bg-center"
-            style={{ backgroundImage: "url('https://picsum.photos/seed/latteart/1920/1080')" }}
-          ></div>
-          <div className="absolute inset-0 bg-ivory/50 backdrop-blur-sm"></div>
-          <div className="relative z-10 text-center text-coffee-dark px-4">
-            <h1 className="text-4xl sm:text-6xl md:text-7xl font-serif mb-4 animate-fade-in-down">Welcome to Moku Moku House</h1>
-            <p className="text-base sm:text-lg md:text-xl animate-fade-in-up" style={{ animationDelay: '0.5s' }}>クリエイターが静かに、もくもくと創作する場所</p>
-          </div>
-          <div className="absolute bottom-10 left-1/2 -translate-x-1/2">
-            <ChevronDownIcon className="w-8 h-8 text-coffee-dark animate-bounce" />
-          </div>
-        </section>
+      <section id="home" className="relative h-screen flex items-center justify-center overflow-hidden">
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{
+            backgroundImage: `url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800"><defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="%23f8f4e9"/><stop offset="50%" stop-color="%23e0f7fa"/><stop offset="100%" stop-color="%23d2b48c"/></linearGradient></defs><rect width="1200" height="800" fill="url(%23bg)"/></svg>')`
+          }}
+        />
+        <div className="absolute inset-0 bg-ivory/60 backdrop-blur-sm" />
+        
+        <div className="relative z-10 text-center px-4">
+          <h1 className="font-serif text-5xl md:text-7xl font-bold text-coffee-dark mb-6 opacity-0 animate-fade-in-up">
+            {SITE_CONFIG.title}
+          </h1>
+          <p className="text-xl md:text-2xl text-coffee-dark/80 mb-8 opacity-0 animate-fade-in-up animation-delay-500">
+            {SITE_CONFIG.tagline}
+          </p>
+        </div>
 
-        {/* About Section */}
-        <section ref={el => addToRefs(el, 0)} id="about" className="py-20 md:py-32 bg-pastel-blue overflow-hidden relative">
-          <Blob className="absolute top-0 left-0 w-full h-full opacity-30" />
+        <button
+          onClick={scrollToNext}
+          className="absolute bottom-8 left-1/2 transform -translate-x-1/2 text-coffee-dark/60 hover:text-vivid-pink transition-colors duration-300 animate-bounce"
+        >
+          <ChevronDownIcon className="w-8 h-8" />
+        </button>
+      </section>
+
+      <section id="about" className="relative py-20 bg-pastel-blue overflow-hidden">
+        <Blob />
+        <div className="relative z-10 max-w-4xl mx-auto px-4">
+          <AnimatedSection className="text-center">
+            <h2 className="font-serif text-4xl md:text-5xl font-bold text-coffee-dark mb-8">
+              What is Moku Moku House?
+            </h2>
+            <p className="text-lg md:text-xl text-coffee-dark/80 leading-relaxed max-w-3xl mx-auto">
+              {SITE_CONFIG.description}
+            </p>
+          </AnimatedSection>
+        </div>
+      </section>
+
+      <section id="mokopi" className="py-20 bg-ivory">
+        <div className="max-w-6xl mx-auto px-4">
           <AnimatedSection>
-            <div className="container mx-auto px-6 text-center relative z-10">
-              <div className="flex items-center justify-center mb-8">
-                <div className="flex-grow border-t border-coffee-light"></div>
-                <h2 className="text-3xl md:text-4xl font-serif mx-4 sm:mx-8">What is Moku Moku House?</h2>
-                <div className="flex-grow border-t border-coffee-light"></div>
+            <div className="grid md:grid-cols-2 gap-12 items-center">
+              <div className="text-center md:text-left order-2 md:order-1">
+                <h2 className="font-serif text-4xl md:text-5xl font-bold text-coffee-dark mb-6">
+                  Meet Mokopi
+                </h2>
+                <p className="text-lg text-coffee-dark/80 leading-relaxed mb-6">
+                  もこぴは、Moku Moku Houseのマスコットキャラクター。
+                  いつも静かに創作活動を見守り、クリエイターたちを応援しています。
+                </p>
+                <p className="text-lg text-coffee-dark/80 leading-relaxed">
+                  集中したいときも、息抜きが必要なときも、もこぴがそっと寄り添ってくれます。
+                </p>
               </div>
-              <p className="max-w-3xl mx-auto text-lg leading-relaxed">
-                Moku Moku Houseは、デザイナー、イラストレーター、プログラマー、ライターなど、
-                あらゆる分野のクリエイターが集うオンラインコミュニティです。
-                まるで居心地の良いカフェにいるかのように、リラックスした雰囲気の中で、
-                それぞれが「もくもくと」自分の創作活動に集中できる空間を目指しています。
+
+              <div className="text-center order-1 md:order-2">
+                <div
+                  className={`relative inline-block transition-all duration-500 ${
+                    mokopiHovered ? 'transform rotate-0' : 'transform rotate-3'
+                  }`}
+                  onMouseEnter={() => setMokopiHovered(true)}
+                  onMouseLeave={() => setMokopiHovered(false)}
+                  onClick={() => setMokopiHovered(!mokopiHovered)}
+                >
+                  <div
+                    className={`absolute inset-0 rounded-2xl transition-all duration-500 ${
+                      mokopiHovered 
+                        ? 'bg-gradient-to-br from-vivid-pink/30 to-vivid-green/30 blur-xl scale-110' 
+                        : 'bg-gradient-to-br from-vivid-pink/20 to-vivid-green/20 blur-lg scale-105'
+                    }`}
+                  />
+                  <div className="relative bg-white rounded-2xl p-8 shadow-lg">
+                    <div className="w-48 h-48 mx-auto bg-gradient-to-br from-vivid-pink/10 to-vivid-green/10 rounded-full flex items-center justify-center">
+                      <span className="text-6xl">
+                        {mokopiHovered ? '😉' : '😊'}
+                      </span>
+                    </div>
+                    <p className="mt-4 font-serif text-xl font-bold text-coffee-dark">
+                      Mokopi
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </AnimatedSection>
+        </div>
+      </section>
+
+      <section id="works" className="py-20 bg-pastel-blue transform skew-y-1">
+        <div className="max-w-6xl mx-auto px-4 transform -skew-y-1">
+          <AnimatedSection className="text-center mb-16">
+            <h2 className="font-serif text-4xl md:text-5xl font-bold text-coffee-dark">
+              Creator's Works
+            </h2>
+          </AnimatedSection>
+
+          <AnimatedSection>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {PROJECTS.map((project) => (
+                <ProjectCard key={project.id} project={project} />
+              ))}
+            </div>
+          </AnimatedSection>
+        </div>
+      </section>
+
+      <section id="game" className="py-20 bg-ivory">
+        <div className="max-w-4xl mx-auto px-4">
+          <AnimatedSection className="text-center">
+            <div className="border-2 border-dashed border-coffee-light rounded-2xl p-12">
+              <GameControllerIcon className="w-16 h-16 mx-auto text-coffee-light mb-6" />
+              <h2 className="font-serif text-3xl md:text-4xl font-bold text-coffee-dark mb-4">
+                A New Game is Coming Soon!
+              </h2>
+              <p className="text-lg text-coffee-dark/70">
+                クリエイターのための新しいゲーム体験を準備中です。お楽しみに！
               </p>
             </div>
           </AnimatedSection>
-        </section>
+        </div>
+      </section>
 
-        {/* Mokopi Section */}
-        <section ref={el => addToRefs(el, 1)} id="mokopi" className="py-20 md:py-32 bg-ivory">
-          <AnimatedSection>
-            <div className="container mx-auto px-6 flex flex-col md:flex-row items-center justify-center gap-x-12 gap-y-12">
-              <div className="group relative w-72 h-80 cursor-pointer">
-                <div className="absolute -inset-0.5 bg-gradient-to-r from-vivid-pink to-vivid-green rounded-lg blur opacity-50 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
-                <div className="relative p-2 bg-white rounded-lg shadow-lg transform -rotate-3 group-hover:rotate-0 transition-transform duration-300 ease-in-out">
-                    <img
-                        src="https://picsum.photos/seed/mokopi-normal/400/400"
-                        alt="Mokopi normal face"
-                        className="w-full h-full object-cover rounded-md group-hover:hidden"
-                    />
-                    <img
-                        src="https://picsum.photos/seed/mokopi-wink/400/400"
-                        alt="Mokopi winking face"
-                        className="w-full h-full object-cover rounded-md hidden group-hover:block"
-                    />
-                  <div className="absolute bottom-4 left-4 font-serif text-coffee-dark text-xl">Mokopi</div>
-                </div>
-              </div>
-              <div className="md:w-1/2 text-center md:text-left">
-                <h2 className="text-3xl md:text-4xl font-serif mb-4">Our Mascot, Mokopi</h2>
-                <p className="text-lg leading-relaxed">
-                  コミュニティマスコットの「もこぴ」です。もこもこの羊で、みんなの創作活動を温かく見守ってくれます。ホバーするとウィンクしてくれる、ちょっとお茶目な一面も。
-                </p>
-              </div>
-            </div>
-          </AnimatedSection>
-        </section>
-
-        {/* Works Section */}
-        <section ref={el => addToRefs(el, 2)} id="works" className="py-20 md:py-32 bg-pastel-blue overflow-hidden transform -skew-y-2">
-           <div className="transform skew-y-2">
-              <AnimatedSection>
-                <div className="container mx-auto px-6">
-                  <h2 className="text-3xl md:text-4xl font-serif text-center mb-12">Creator's Works</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {worksData.map((work, index) => (
-                      <ProjectCard
-                        key={work.id}
-                        work={work}
-                        borderColor={projectBorderColors[index % projectBorderColors.length]}
-                      />
-                    ))}
-                  </div>
-                </div>
-              </AnimatedSection>
-           </div>
-        </section>
-
-        {/* Game Section */}
-        <section ref={el => addToRefs(el, 3)} id="game" className="py-20 md:py-32 bg-ivory">
-          <AnimatedSection>
-            <div className="container mx-auto px-6">
-              <div className="max-w-2xl mx-auto p-8 md:p-12 border-2 border-dashed border-coffee-light rounded-lg flex flex-col items-center justify-center text-center">
-                <GameControllerIcon className="w-16 h-16 text-coffee-light mb-6" />
-                <h2 className="text-3xl md:text-4xl font-serif mb-4">A New Game is Coming Soon!</h2>
-                <p className="text-lg">新しいミニゲームを準備中です！お楽しみに！</p>
-              </div>
-            </div>
-          </AnimatedSection>
-        </section>
-      </main>
-
-      {/* Footer */}
-      <footer className="bg-coffee-mid text-ivory py-8 text-center">
-        <div className="container mx-auto px-6">
-          <p className="font-serif text-lg">Moku Moku House</p>
-          <p className="text-sm mt-2">&copy; {new Date().getFullYear()} Moku Moku House. All rights reserved.</p>
+      <footer className="bg-coffee-mid text-ivory py-8">
+        <div className="max-w-6xl mx-auto px-4 text-center">
+          <h3 className="font-serif text-xl font-bold mb-2">{SITE_CONFIG.title}</h3>
+          <p className="text-ivory/80">© 2024 Moku Moku House. All rights reserved.</p>
         </div>
       </footer>
+
+      <style jsx>{`
+        @keyframes fade-in-up {
+          from {
+            opacity: 0;
+            transform: translateY(30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        .animate-fade-in-up {
+          animation: fade-in-up 1s ease-out forwards;
+        }
+
+        .animation-delay-500 {
+          animation-delay: 0.5s;
+        }
+      `}</style>
     </div>
   );
 };
-
-export default App;

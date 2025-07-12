@@ -1,24 +1,35 @@
-
 import React from 'react';
-import { Work } from '../types';
+import type { ProjectCardProps } from '../types';
 
-interface ProjectCardProps {
-  work: Work;
-  borderColor: string;
-}
+export const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => {
+  const getAccentColorClass = (color: string) => {
+    switch (color) {
+      case 'vivid-pink':
+        return 'border-t-vivid-pink';
+      case 'vivid-green':
+        return 'border-t-vivid-green';
+      case 'coffee-light':
+        return 'border-t-coffee-light';
+      default:
+        return 'border-t-vivid-pink';
+    }
+  };
 
-const ProjectCard: React.FC<ProjectCardProps> = ({ work, borderColor }) => {
   return (
-    <div className="bg-white rounded-lg shadow-lg overflow-hidden group transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl">
-      <div className={`w-full h-3 ${borderColor.replace('border-', 'bg-')}`}></div>
-      <img src={work.imageUrl} alt={work.title} className="w-full h-48 object-cover" />
+    <div className={`bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg hover:transform hover:-translate-y-2 border-t-4 ${getAccentColorClass(project.accentColor)}`}>
       <div className="p-6">
-        <h3 className="text-xl font-serif font-bold text-coffee-dark mb-2">{work.title}</h3>
-        <p className="text-sm font-bold text-coffee-light mb-3">{work.author}</p>
-        <p className="text-coffee-mid leading-relaxed">{work.description}</p>
+        <div className="mb-2">
+          <span className="inline-block px-3 py-1 text-xs font-semibold text-coffee-dark bg-coffee-light/20 rounded-full">
+            {project.category}
+          </span>
+        </div>
+        <h3 className="text-xl font-bold text-coffee-dark mb-3 font-serif">
+          {project.title}
+        </h3>
+        <p className="text-coffee-dark/70 leading-relaxed">
+          {project.description}
+        </p>
       </div>
     </div>
   );
 };
-
-export default ProjectCard;

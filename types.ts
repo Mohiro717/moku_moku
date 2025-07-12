@@ -1,13 +1,25 @@
-
-export interface Work {
-  id: number;
-  title: string;
-  author: string;
-  description: string;
-  imageUrl: string;
+export interface NavigationItem {
+  id: string;
+  label: string;
 }
 
-export interface NavLink {
-    id: string;
-    label: string;
+export interface Project {
+  id: number;
+  title: string;
+  description: string;
+  category: string;
+  accentColor: string;
+}
+
+export interface AnimatedSectionProps {
+  children: React.ReactNode;
+  className?: string;
+}
+
+export interface HeaderProps {
+  activeSection: string;
+}
+
+export interface ProjectCardProps {
+  project: Project;
 }

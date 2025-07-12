@@ -1,56 +1,46 @@
-
 <!DOCTYPE html>
-<html lang="en" class="scroll-smooth">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Moku Moku House</title>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moku Moku House - クリエイターが静かに、もくもくと創作する場所</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
     <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            colors: {
-              'ivory': '#f8f4e9',
-              'coffee-light': '#d2b48c',
-              'coffee-mid': '#5a3a22',
-              'coffee-dark': '#3b2f2f',
-              'pastel-blue': '#e0f7fa',
-              'pastel-green': '#d4e2d4',
-              'vivid-pink': '#ff5d8f',
-              'vivid-green': '#00c9a7',
-            },
-            fontFamily: {
-              serif: ['Playfair Display', 'serif'],
-              sans: ['Noto Sans JP', 'sans-serif'],
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'ivory': '#f8f4e9',
+                        'coffee-dark': '#3b2f2f',
+                        'coffee-mid': '#5a3a22',
+                        'coffee-light': '#d2b48c',
+                        'pastel-blue': '#e0f7fa',
+                        'vivid-pink': '#ff5d8f',
+                        'vivid-green': '#00c9a7'
+                    },
+                    fontFamily: {
+                        'serif': ['Playfair Display', 'serif'],
+                        'sans': ['Noto Sans JP', 'sans-serif']
+                    }
+                }
             }
-          }
         }
-      }
     </script>
-    <style>
-      body {
-        background-color: #f8f4e9; /* ivory */
-        color: #3b2f2f; /* coffee-dark */
-        font-family: 'Noto Sans JP', sans-serif;
-      }
-    </style>
-  <script type="importmap">
-{
-  "imports": {
-    "react": "https://esm.sh/react@^19.1.0",
-    "react-dom/": "https://esm.sh/react-dom@^19.1.0/",
-    "react/": "https://esm.sh/react@^19.1.0/"
-  }
-}
-</script>
-<link rel="stylesheet" href="/index.css">
+    <script type="importmap">
+    {
+        "imports": {
+            "react": "https://esm.sh/react@18",
+            "react-dom": "https://esm.sh/react-dom@18",
+            "react-dom/client": "https://esm.sh/react-dom@18/client"
+        }
+    }
+    </script>
 </head>
-  <body>
+<body class="bg-ivory text-coffee-dark font-sans">
     <div id="root"></div>
-  <script type="module" src="/index.tsx"></script>
+    <script type="module" src="./index.tsx"></script>
 </body>
 </html>

@@ -1,61 +1,46 @@
+export const COLORS = {
+  ivory: '#f8f4e9',
+  coffeeDark: '#3b2f2f',
+  coffeeMid: '#5a3a22',
+  coffeeLight: '#d2b48c',
+  pastelBlue: '#e0f7fa',
+  vividPink: '#ff5d8f',
+  vividGreen: '#00c9a7'
+} as const;
 
-import { NavLink, Work } from './types';
-
-export const navLinks: NavLink[] = [
+export const NAVIGATION_ITEMS = [
   { id: 'about', label: 'About' },
   { id: 'mokopi', label: 'Mokopi' },
   { id: 'works', label: 'Works' },
-  { id: 'game', label: 'Game' },
-];
+  { id: 'game', label: 'Game' }
+] as const;
 
-export const worksData: Work[] = [
+export const SITE_CONFIG = {
+  title: 'Moku Moku House',
+  tagline: 'クリエイターが静かに、もくもくと創作する場所',
+  description: 'デザイナー、イラストレーター、プログラマー、ライターなど、あらゆる分野のクリエイターが集まって、静かにもくもくと創作活動を行う、居心地の良いコミュニティスペースです。'
+} as const;
+
+export const PROJECTS = [
   {
     id: 1,
-    title: 'Forest Spirit Illustration',
-    author: 'Eri',
-    description: 'A mystical creature in a magical forest, painted with vibrant watercolors.',
-    imageUrl: 'https://picsum.photos/seed/work1/600/400',
+    title: 'Creative Design Portfolio',
+    description: 'モダンなUIデザインとブランディング',
+    category: 'Design',
+    accentColor: 'vivid-pink'
   },
   {
     id: 2,
-    title: 'Minimalist Portfolio Site',
-    author: 'Kenji',
-    description: 'A clean and fast portfolio website built with React and Tailwind CSS.',
-    imageUrl: 'https://picsum.photos/seed/work2/600/400',
+    title: 'Interactive Web Experience',
+    description: 'React & TypeScriptによるウェブアプリケーション',
+    category: 'Development',
+    accentColor: 'vivid-green'
   },
   {
     id: 3,
-    title: 'Hand-drawn Logo Set',
-    author: 'Yuna',
-    description: 'A collection of logos for local cafes, featuring organic shapes and a friendly feel.',
-    imageUrl: 'https://picsum.photos/seed/work3/600/400',
-  },
-  {
-    id: 4,
-    title: 'City at Night',
-    author: 'Takuya',
-    description: 'A dramatic photograph capturing the neon lights and motion of Tokyo at night.',
-    imageUrl: 'https://picsum.photos/seed/work4/600/400',
-  },
-  {
-    id: 5,
-    title: 'Short Story "The Last Leaf"',
-    author: 'Airi',
-    description: 'A touching story about hope and perseverance in the face of adversity.',
-    imageUrl: 'https://picsum.photos/seed/work5/600/400',
-  },
-  {
-    id: 6,
-    title: 'iOS Weather App UI',
-    author: 'Sota',
-    description: 'A concept design for a weather application with delightful animations and a clean interface.',
-    imageUrl: 'https://picsum.photos/seed/work6/600/400',
-  },
-];
-
-export const projectBorderColors: string[] = [
-  'border-vivid-pink',
-  'border-vivid-green',
-  'border-pastel-blue',
-  'border-coffee-light',
-];
+    title: 'Illustration Series',
+    description: 'キャラクターデザインとイラストレーション',
+    category: 'Art',
+    accentColor: 'coffee-light'
+  }
+] as const;
