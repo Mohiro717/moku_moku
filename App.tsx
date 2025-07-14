@@ -46,10 +46,6 @@ export const App: React.FC = () => {
     setMokopiInteracted(!mokopiInteracted);
   };
 
-  const getLatteArtBackground = () => {
-    return `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800"><defs><radialGradient id="latte" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="%23f8f4e9"/><stop offset="30%" stop-color="%23e0f7fa"/><stop offset="70%" stop-color="%23d2b48c"/><stop offset="100%" stop-color="%23d2b48c"/></radialGradient><filter id="blur"><feGaussianBlur stdDeviation="8"/></filter></defs><rect width="1200" height="800" fill="url(%23latte)"/><circle cx="600" cy="400" r="100" fill="%235a3a22" opacity="0.1" filter="url(%23blur)"/><path d="M500,350 Q550,300 600,350 Q650,300 700,350 Q650,400 600,350 Q550,400 500,350" fill="%235a3a22" opacity="0.15"/></svg>`;
-  };
-
   return (
     <div className="min-h-screen">
       <Header activeSection={activeSection} />
@@ -60,12 +56,7 @@ export const App: React.FC = () => {
         className="relative h-screen flex items-center justify-center overflow-hidden"
       >
         {/* Background */}
-        <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{
-            backgroundImage: `url('${getLatteArtBackground()}')`
-          }}
-        />
+        <div className="absolute inset-0 bg-gradient-to-br from-ivory via-pastel-blue/20 to-coffee-light/30" />
         <div className="absolute inset-0 bg-ivory/40 backdrop-blur-sm" />
         
         {/* Content */}
