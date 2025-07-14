@@ -56,20 +56,29 @@ export const App: React.FC = () => {
         className="relative h-screen flex items-center justify-center overflow-hidden"
       >
         {/* Background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-ivory via-pastel-blue/20 to-coffee-light/30" />
-        <div className="absolute inset-0 bg-ivory/40 backdrop-blur-sm" />
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{
+            backgroundImage: 'url(/moku_moku/images/latte-art.jpg)'
+          }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-br from-ivory/70 via-pastel-blue/50 to-coffee-light/60" />
+        <div className="absolute inset-0 bg-ivory/30 backdrop-blur-[1px]" />
         
         {/* Content */}
         <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
-          <h1 className="font-serif text-5xl md:text-7xl font-bold text-coffee-dark mb-6 opacity-0 animate-fade-in-up">
-            {SITE_CONFIG.heroTitle}
-          </h1>
-          <p 
-            className="text-xl md:text-2xl text-coffee-mid mb-8 opacity-0 animate-fade-in-up leading-relaxed"
-            style={{ animationDelay: '0.5s' }}
-          >
-            {SITE_CONFIG.heroSubtitle}
-          </p>
+          {/* Text background for better readability */}
+          <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-8 lg:p-12 shadow-xl">
+            <h1 className="font-serif text-5xl md:text-7xl font-bold text-coffee-dark mb-6 opacity-0 animate-fade-in-up">
+              {SITE_CONFIG.heroTitle}
+            </h1>
+            <p 
+              className="text-xl md:text-2xl text-coffee-mid mb-8 opacity-0 animate-fade-in-up leading-relaxed"
+              style={{ animationDelay: '0.5s' }}
+            >
+              {SITE_CONFIG.heroSubtitle}
+            </p>
+          </div>
         </div>
 
         {/* Scroll indicator */}
