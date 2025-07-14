@@ -67,18 +67,15 @@ export const App: React.FC = () => {
         
         {/* Content */}
         <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
-          {/* Text background for better readability */}
-          <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-8 lg:p-12 shadow-xl">
-            <h1 className="font-serif text-5xl md:text-7xl font-bold text-coffee-dark mb-6 opacity-0 animate-fade-in-up">
-              {SITE_CONFIG.heroTitle}
-            </h1>
-            <p 
-              className="text-xl md:text-2xl text-coffee-mid mb-8 opacity-0 animate-fade-in-up leading-relaxed"
-              style={{ animationDelay: '0.5s' }}
-            >
-              {SITE_CONFIG.heroSubtitle}
-            </p>
-          </div>
+          <h1 className="font-serif text-5xl md:text-7xl font-bold text-coffee-dark mb-6 opacity-0 animate-fade-in-up drop-shadow-2xl">
+            {SITE_CONFIG.heroTitle}
+          </h1>
+          <p 
+            className="text-xl md:text-2xl text-coffee-mid mb-8 opacity-0 animate-fade-in-up leading-relaxed drop-shadow-lg"
+            style={{ animationDelay: '0.5s' }}
+          >
+            {SITE_CONFIG.heroSubtitle}
+          </p>
         </div>
 
         {/* Scroll indicator */}
