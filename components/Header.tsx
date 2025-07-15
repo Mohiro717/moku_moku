@@ -2,9 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { MenuIcon } from './icons/MenuIcon';
 import { XIcon } from './icons/XIcon';
 import { NAVIGATION_ITEMS, SITE_CONFIG } from '../constants';
-import type { HeaderProps } from '../types';
-
-export const Header: React.FC<HeaderProps> = ({ activeSection }) => {
+export const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
@@ -43,7 +41,7 @@ export const Header: React.FC<HeaderProps> = ({ activeSection }) => {
       <header 
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
           isScrolled 
-            ? 'bg-ivory/90 backdrop-blur-md shadow-lg' 
+            ? 'bg-ivory/60 backdrop-blur-md shadow-lg' 
             : 'bg-transparent'
         }`}
       >
@@ -63,14 +61,9 @@ export const Header: React.FC<HeaderProps> = ({ activeSection }) => {
                 <button
                   key={item.id}
                   onClick={() => scrollToSection(item.id)}
-                  className={`relative font-medium transition-all duration-300 hover:text-vivid-pink ${
-                    activeSection === item.id ? 'text-vivid-pink' : 'text-coffee-dark'
-                  }`}
+                  className="font-medium transition-all duration-300 hover:text-vivid-pink text-coffee-dark"
                 >
                   {item.label}
-                  {activeSection === item.id && (
-                    <div className="absolute -bottom-1 left-0 w-full h-0.5 bg-vivid-pink transform origin-left transition-all duration-300" />
-                  )}
                 </button>
               ))}
             </nav>
@@ -104,9 +97,7 @@ export const Header: React.FC<HeaderProps> = ({ activeSection }) => {
                   <button
                     key={item.id}
                     onClick={() => scrollToSection(item.id)}
-                    className={`block w-full text-left font-medium text-xl transition-colors duration-300 hover:text-vivid-pink ${
-                      activeSection === item.id ? 'text-vivid-pink' : 'text-coffee-dark'
-                    }`}
+                    className="block w-full text-left font-medium text-xl transition-colors duration-300 hover:text-vivid-pink text-coffee-dark"
                   >
                     {item.label}
                   </button>

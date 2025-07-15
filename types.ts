@@ -19,11 +19,16 @@ export interface AnimatedSectionProps {
   id?: string;
 }
 
-export interface HeaderProps {
-  activeSection: string;
-}
-
 export interface ProjectCardProps {
   work: Work;
   index: number;
+}
+
+export interface HeroSectionProps {
+  onScrollToNext: () => void;
+}
+
+export interface LoadingScreenProps {
+  isLoading: boolean;
+  onComplete?: () => void;
 }

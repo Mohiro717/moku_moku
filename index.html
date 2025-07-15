@@ -9,7 +9,7 @@
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -27,12 +27,13 @@
                         'vivid-green': '#00c9a7'
                     },
                     fontFamily: {
-                        'serif': ['Playfair Display', 'serif'],
+                        'serif': ['Mochiy Pop One', 'sans-serif'],
                         'sans': ['Noto Sans JP', 'sans-serif']
                     },
                     animation: {
                         'fade-in-up': 'fadeInUp 1s ease-out forwards',
-                        'bounce-slow': 'bounce 2s infinite'
+                        'bounce-slow': 'bounce 2s infinite',
+                        'loading-progress': 'loadingProgress 2s ease-in-out infinite'
                     },
                     keyframes: {
                         fadeInUp: {
@@ -44,6 +45,11 @@
                                 opacity: '1',
                                 transform: 'translateY(0)'
                             }
+                        },
+                        loadingProgress: {
+                            '0%': { width: '0%' },
+                            '50%': { width: '70%' },
+                            '100%': { width: '100%' }
                         }
                     }
                 }

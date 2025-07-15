@@ -10,7 +10,7 @@ export const COLORS = {
 
 export const NAVIGATION_ITEMS = [
   { id: 'about', label: 'About' },
-  { id: 'mokopi', label: 'Mokopi' },
+  { id: 'mokopi', label: 'Mocopi' },
   { id: 'works', label: 'Works' },
   { id: 'game', label: 'Game' }
 ] as const;
@@ -28,7 +28,7 @@ export const SITE_CONFIG = {
 
 一人で作業しながらも、同じ志を持つクリエイター仲間の存在を感じられる、
 そんな温かくて居心地の良い空間を提供しています。`,
-  mokopiTitle: 'Meet Mokopi',
+  mokopiTitle: 'Meet Mocopi',
   mokopiDescription: `こんにちは！私はもこぴです 🐑
 
 Moku Moku Houseのマスコットとして、
