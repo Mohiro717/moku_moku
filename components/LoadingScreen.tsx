@@ -1,6 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import type { LoadingScreenProps } from '../types';
 
+const LOADING_TEXT = 'Now loading...';
+const ANIMATION_DELAY_STEP = 0.1; // seconds
+
+const AnimatedText: React.FC<{ text: string; baseDelay?: number }> = ({ 
+  text, 
+  baseDelay = 0 
+}) => {
+  return (
+    <>
+      {text.split('').map((char, index) => (
+        <span
+          key={index}
+          className="inline-block animate-poyopoyo"
+          style={{ 
+            animationDelay: `${baseDelay + index * ANIMATION_DELAY_STEP}s` 
+          }}
+        >
+          {char === ' ' ? '\u00A0' : char}
+        </span>
+      ))}
+    </>
+  );
+};
+
 export const LoadingScreen: React.FC<LoadingScreenProps> = ({ isLoading, onComplete }) => {
   const [progress, setProgress] = useState(0);
 
@@ -88,8 +112,8 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ isLoading, onCompl
         <h2 className="font-serif text-2xl font-bold text-coffee-dark mb-4">
           Moku Moku House
         </h2>
-        <p className="text-coffee-mid mb-6">
-          もくもくハウスを準備中...
+        <p className="text-coffee-mid mb-6 relative overflow-hidden">
+          <AnimatedText text={LOADING_TEXT} />
         </p>
 
         {/* Loading dots */}

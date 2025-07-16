@@ -22,12 +22,12 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onScrollToNext }) => {
       {/* Content */}
       <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
         <div className="flex justify-center">
-          <h1 className="font-serif text-4xl md:text-6xl lg:text-7xl font-bold text-coffee-dark mb-6 opacity-0 animate-fade-in-up drop-shadow-2xl whitespace-nowrap">
+          <h1 className="font-serif text-2xl sm:text-4xl md:text-6xl lg:text-7xl font-bold text-coffee-dark mb-6 opacity-0 animate-fade-in-up drop-shadow-2xl text-center leading-tight px-2 md:whitespace-nowrap">
             {SITE_CONFIG.heroTitle}
           </h1>
         </div>
         <p 
-          className="text-xl md:text-2xl text-coffee-mid mb-8 opacity-0 animate-fade-in-up leading-relaxed drop-shadow-lg"
+          className="text-lg sm:text-xl md:text-2xl text-coffee-mid mb-8 opacity-0 animate-fade-in-up leading-relaxed drop-shadow-lg px-2"
           style={{ animationDelay: '0.5s' }}
         >
           {SITE_CONFIG.heroSubtitle}

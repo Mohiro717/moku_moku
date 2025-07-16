@@ -33,7 +33,8 @@
                     animation: {
                         'fade-in-up': 'fadeInUp 1s ease-out forwards',
                         'bounce-slow': 'bounce 2s infinite',
-                        'loading-progress': 'loadingProgress 2s ease-in-out infinite'
+                        'loading-progress': 'loadingProgress 2s ease-in-out infinite',
+                        'poyopoyo': 'poyopoyo 1.5s ease-in-out infinite'
                     },
                     keyframes: {
                         fadeInUp: {
@@ -50,6 +51,20 @@
                             '0%': { width: '0%' },
                             '50%': { width: '70%' },
                             '100%': { width: '100%' }
+                        },
+                        poyopoyo: {
+                            '0%, 100%': { 
+                                transform: 'scale(1) translateY(0)' 
+                            },
+                            '25%': { 
+                                transform: 'scale(1.2) translateY(-8px)' 
+                            },
+                            '50%': { 
+                                transform: 'scale(0.9) translateY(4px)' 
+                            },
+                            '75%': { 
+                                transform: 'scale(1.1) translateY(-2px)' 
+                            }
                         }
                     }
                 }
