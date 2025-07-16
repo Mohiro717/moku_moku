@@ -28,7 +28,7 @@ export const GameSection: React.FC = () => {
               </div>
 
               {/* Popup Modal */}
-              <div className="absolute inset-0 flex items-center justify-center z-10">
+              <div className="absolute inset-0 flex items-center justify-center z-10 pt-16 md:pt-0">
                 <div className="bg-white rounded-3xl shadow-2xl border-4 border-coffee-light p-8 max-w-md mx-4 transform animate-fade-in-up">
                   {/* Close decoration */}
                   <div className="flex justify-center mb-6">
@@ -75,8 +75,11 @@ export const GameSection: React.FC = () => {
                         🎮 ゲームを始める
                       </button>
                       
-                      <p className="text-xs text-coffee-dark/60">
+                      <p className="text-xs text-coffee-dark/60 hidden md:block">
                         キーボードの矢印キーで操作
+                      </p>
+                      <p className="text-xs text-coffee-dark/60 md:hidden">
+                        タップ・スライドで操作
                       </p>
                     </div>
                   </div>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { GameGrid } from './GameGrid';
 import { GameControls } from './GameControls';
+import { TouchControls } from './TouchControls';
 import { usePuyoGame } from '../../hooks/usePuyoGame';
 
 export const PuyoPuyoGame: React.FC = () => {
@@ -9,7 +10,10 @@ export const PuyoPuyoGame: React.FC = () => {
     startGame,
     pauseGame,
     restartGame,
-    getPairPositions
+    getPairPositions,
+    movePair,
+    rotatePair,
+    hardDropPair
   } = usePuyoGame();
 
   return (
@@ -38,18 +42,25 @@ export const PuyoPuyoGame: React.FC = () => {
 
         {/* Game Grid - Center/Right on desktop */}
         <div className="lg:col-span-3 order-1 lg:order-2 flex justify-center">
-          <GameGrid
-            grid={gameState.grid}
-            currentPair={gameState.currentPair}
-            getPairPositions={getPairPositions}
-            isGameOver={gameState.isGameOver}
-          />
+          <TouchControls
+            onMove={movePair}
+            onRotate={rotatePair}
+            onHardDrop={hardDropPair}
+            isActive={gameState.isPlaying && !gameState.isPaused && !gameState.isGameOver}
+          >
+            <GameGrid
+              grid={gameState.grid}
+              currentPair={gameState.currentPair}
+              getPairPositions={getPairPositions}
+              isGameOver={gameState.isGameOver}
+            />
+          </TouchControls>
         </div>
       </div>
 
       {/* Game focus reminder */}
       <div className="mt-6 text-center text-xs text-coffee-dark/60">
-        <p>ゲーム開始後、キーボードの矢印キーで操作できます</p>
+        <p className="hidden md:block">ゲーム開始後、キーボードの矢印キーで操作できます</p>
         <p className="mt-1">
           {gameState.isPlaying && !gameState.isPaused 
             ? "ゲーム中です！集中してプレイしましょう 🎮" 

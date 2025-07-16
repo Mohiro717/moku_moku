@@ -75,6 +75,27 @@ export const usePuyoGame = () => {
     });
   }, []);
 
+  // Hard drop - instantly drop pair to bottom
+  const hardDropPair = useCallback(() => {
+    setGameState(prev => {
+      if (!prev.currentPair || prev.isGameOver || prev.isPaused || prev.isChaining) {
+        return prev;
+      }
+
+      let newPair = { ...prev.currentPair };
+      
+      // Keep moving down until we can't place the pair
+      while (canPlacePair({ ...newPair, y: newPair.y + 1 }, prev.grid)) {
+        newPair.y++;
+      }
+
+      return { ...prev, currentPair: newPair };
+    });
+    
+    // Lock the pair immediately after hard drop
+    setTimeout(() => lockPair(), 50);
+  }, []);
+
   // Pair locking
   const lockPair = useCallback(() => {
     setGameState(prev => {
@@ -274,6 +295,7 @@ export const usePuyoGame = () => {
     restartGame,
     movePair,
     rotatePair,
+    hardDropPair,
     getPairPositions,
     config: GAME_CONFIG
   };
