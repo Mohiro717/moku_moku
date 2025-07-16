@@ -29,18 +29,16 @@ export const SITE_CONFIG = {
 一人で作業しながらも、同じ志を持つクリエイター仲間の存在を感じられる、
 そんな温かくて居心地の良い空間を提供しています。`,
   mokopiTitle: 'Meet Mocopi',
-  mokopiDescription: `こんにちは！私はもこぴです 🐑
+  mokopiDescription: `もこもこしてて電波ピピッ🐏☁⚡の「もこぴ」だよ♪
 
-Moku Moku Houseのマスコットとして、
-みなさんの創作活動をそっと見守っています。
 
-集中したいときは静かに、
-息抜きが必要なときは一緒にほっこりしましょう。
+みなさんの創作活動を、ゆる～く見守っていま～す。
+集中したいときは、しーっ…て静かに。
+ひとやすみしたくなったら、一緒にまったりしましょうねぇ♪
 
-クリエイターのみなさんが心地よく過ごせるよう、
-いつでもお手伝いしますよ！`,
+みなさんが、にこにこで過ごせるように、いつでも応援してるよ～`,
   worksTitle: "Creator's Works",
-  gameTitle: "A New Game is Coming Soon!",
+  gameTitle: "Game",
   gameDescription: "新しいミニゲームを準備中です！お楽しみに！"
 } as const;
 
