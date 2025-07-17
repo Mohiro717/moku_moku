@@ -57,7 +57,7 @@ export const isValidPosition = (pos: Position, grid: PuyoCell[][]): boolean => {
          !grid[pos.y][pos.x].color;
 };
 
-export const canPlacePair = (pair: PuyoPair, grid: PuyoCell[][]): boolean => {
+export const canPlacePair = (grid: PuyoCell[][], pair: PuyoPair): boolean => {
   const positions = getPairPositions(pair);
   return isValidPosition(positions.main, grid) && isValidPosition(positions.sub, grid);
 };

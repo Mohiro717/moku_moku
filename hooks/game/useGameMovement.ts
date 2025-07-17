@@ -1,16 +1,16 @@
 import { useCallback } from 'react';
-import type { GameState, PuyoPair } from '../../types/game';
+import type { GameState } from '../../types/game';
 import { 
   GAME_CONFIG, 
-  isValidPosition, 
   canPlacePair, 
-  getPairPositions 
+  lockPairToGrid 
 } from '../../utils/puyoGameLogic';
 import { attemptRotationWithKick } from '../../utils/puyoKickSystem';
 
-export const usePairMovement = (
+export const useGameMovement = (
   gameState: GameState,
-  updateGameState: (updater: (prev: GameState) => GameState) => void
+  updateGameState: (updater: (prev: GameState) => GameState) => void,
+  setGameOver: () => void
 ) => {
   const movePair = useCallback((direction: 'left' | 'right' | 'down') => {
     updateGameState(prev => {
@@ -28,19 +28,15 @@ export const usePairMovement = (
           newPair.x = Math.min(GAME_CONFIG.gridWidth - 1, newPair.x + 1);
           break;
         case 'down':
-          newPair.y = Math.min(GAME_CONFIG.gridHeight - 1, newPair.y + 1);
+          newPair.y = newPair.y + 1;
           break;
       }
 
-      // Check if new position is valid
-      if (!canPlacePair(prev.grid, newPair)) {
-        return prev;
+      if (canPlacePair(prev.grid, newPair)) {
+        return { ...prev, currentPair: newPair };
       }
-
-      return {
-        ...prev,
-        currentPair: newPair
-      };
+      
+      return prev;
     });
   }, [updateGameState]);
 
@@ -50,17 +46,12 @@ export const usePairMovement = (
         return prev;
       }
 
-      // Attempt rotation with kick system
       const kickResult = attemptRotationWithKick(prev.currentPair, prev.grid, clockwise);
       
       if (kickResult.success && kickResult.kickedPair) {
-        return {
-          ...prev,
-          currentPair: kickResult.kickedPair
-        };
+        return { ...prev, currentPair: kickResult.kickedPair };
       }
 
-      // If kick system fails, no rotation occurs
       return prev;
     });
   }, [updateGameState]);
@@ -72,31 +63,42 @@ export const usePairMovement = (
       }
 
       let newPair = { ...prev.currentPair };
-      let dropDistance = 0;
-
-      // Find the lowest valid position
-      while (newPair.y < GAME_CONFIG.gridHeight - 1) {
-        const testPair = { ...newPair, y: newPair.y + 1 };
-        if (!canPlacePair(prev.grid, testPair)) {
-          break;
-        }
-        newPair = testPair;
-        dropDistance++;
+      
+      while (canPlacePair(prev.grid, { ...newPair, y: newPair.y + 1 })) {
+        newPair.y++;
       }
 
-      const points = dropDistance * 2;
-
-      return {
-        ...prev,
-        currentPair: newPair,
-        score: prev.score + points
-      };
+      return { ...prev, currentPair: newPair };
     });
   }, [updateGameState]);
 
-  const getPairPositions = useCallback((pair: PuyoPair) => {
-    return getPairPositions(pair);
-  }, []);
+  const handleAutoFall = useCallback(() => {
+    updateGameState(prev => {
+      if (!prev.currentPair || prev.isGameOver || prev.isPaused || prev.isChaining) {
+        return prev;
+      }
+
+      const newPair = { ...prev.currentPair, y: prev.currentPair.y + 1 };
+      
+      if (canPlacePair(prev.grid, newPair)) {
+        return { ...prev, currentPair: newPair };
+      } else {
+        // Lock the pair
+        const lockResult = lockPairToGrid(prev.currentPair, prev.grid);
+        
+        if (lockResult.isGameOver) {
+          setGameOver();
+          return prev;
+        }
+        
+        return {
+          ...prev,
+          grid: lockResult.newGrid,
+          currentPair: null
+        };
+      }
+    });
+  }, [updateGameState, setGameOver]);
 
   const rotateClockwise = useCallback(() => rotatePair(true), [rotatePair]);
   const rotateCounterClockwise = useCallback(() => rotatePair(false), [rotatePair]);
@@ -107,6 +109,6 @@ export const usePairMovement = (
     rotateClockwise,
     rotateCounterClockwise,
     hardDropPair,
-    getPairPositions
+    handleAutoFall
   };
 };

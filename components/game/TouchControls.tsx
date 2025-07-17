@@ -2,7 +2,8 @@ import React, { useRef, useState, useCallback } from 'react';
 
 interface TouchControlsProps {
   onMove: (direction: 'left' | 'right' | 'down') => void;
-  onRotate: () => void;
+  onRotateClockwise: () => void;
+  onRotateCounterClockwise: () => void;
   onHardDrop: () => void;
   isActive: boolean;
   children: React.ReactNode;
@@ -16,7 +17,8 @@ interface TouchData {
 
 export const TouchControls: React.FC<TouchControlsProps> = ({
   onMove,
-  onRotate,
+  onRotateClockwise,
+  onRotateCounterClockwise,
   onHardDrop,
   isActive,
   children
@@ -87,8 +89,8 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
     
     // Check for different gesture types
     if (distance < 10 && duration < 200) {
-      // Tap gesture - rotate (stricter detection)
-      onRotate();
+      // Tap gesture - rotate clockwise (stricter detection)
+      onRotateClockwise();
       setTouchFeedback('↻');
     } else if (deltaY > 50 && duration < 200) {
       // Quick downward flick - hard drop
@@ -103,7 +105,7 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
     setTimeout(() => setTouchFeedback(null), 300);
     
     e.preventDefault();
-  }, [isActive, onRotate, onHardDrop]);
+  }, [isActive, onRotateClockwise, onHardDrop]);
 
   return (
     <div className="relative">

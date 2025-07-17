@@ -12,6 +12,7 @@ import {
   lockPairToGrid,
   calculateChainScore
 } from '../utils/puyoGameLogic';
+import { attemptRotationWithKick } from '../utils/puyoKickSystem';
 
 const createInitialGameState = (): GameState => ({
   grid: createEmptyGrid(),
@@ -52,26 +53,30 @@ export const usePuyoGame = () => {
           break;
       }
 
-      return canPlacePair(newPair, prev.grid) 
+      return canPlacePair(prev.grid, newPair) 
         ? { ...prev, currentPair: newPair }
         : prev;
     });
   }, []);
 
-  const rotatePair = useCallback(() => {
+  const rotatePair = useCallback((clockwise: boolean = true) => {
     setGameState(prev => {
       if (!prev.currentPair || prev.isGameOver || prev.isPaused || prev.isChaining) {
         return prev;
       }
 
-      const newPair = { 
-        ...prev.currentPair, 
-        rotation: (prev.currentPair.rotation + 1) % 4 
-      };
+      // Use kick system for rotation
+      const kickResult = attemptRotationWithKick(prev.currentPair, prev.grid, clockwise);
+      
+      if (kickResult.success && kickResult.kickedPair) {
+        return {
+          ...prev,
+          currentPair: kickResult.kickedPair
+        };
+      }
 
-      return canPlacePair(newPair, prev.grid)
-        ? { ...prev, currentPair: newPair }
-        : prev;
+      // If kick system fails, no rotation occurs
+      return prev;
     });
   }, []);
 
@@ -85,7 +90,7 @@ export const usePuyoGame = () => {
       let newPair = { ...prev.currentPair };
       
       // Keep moving down until we can't place the pair
-      while (canPlacePair({ ...newPair, y: newPair.y + 1 }, prev.grid)) {
+      while (canPlacePair(prev.grid, { ...newPair, y: newPair.y + 1 })) {
         newPair.y++;
       }
 
@@ -153,66 +158,74 @@ export const usePuyoGame = () => {
     setGameState(prev => ({ ...prev, isChaining: false }));
   }, [gameState.grid, gameState.score]);
 
-  // Game loop logic
-  const handlePairFall = useCallback(() => {
-    if (!gameState.currentPair) return;
+  // Simple auto-fall mechanism
+  const handleAutoFall = useCallback(() => {
+    setGameState(prev => {
+      if (!prev.currentPair || prev.isGameOver || prev.isPaused || prev.isChaining) {
+        return prev;
+      }
 
-    const newPair = { ...gameState.currentPair, y: gameState.currentPair.y + 1 };
-    
-    if (canPlacePair(newPair, gameState.grid)) {
-      movePair('down');
-    } else {
-      // Check if either puyo can fall individually
-      const positions = getPairPositions(gameState.currentPair);
-      const mainCanFall = isValidPosition(
-        { x: positions.main.x, y: positions.main.y + 1 }, 
-        gameState.grid
-      );
-      const subCanFall = isValidPosition(
-        { x: positions.sub.x, y: positions.sub.y + 1 }, 
-        gameState.grid
-      );
+      const newPair = { ...prev.currentPair, y: prev.currentPair.y + 1 };
       
-      // Always lock when pair can't fall as a unit
-      lockPair();
-    }
-  }, [gameState.currentPair, gameState.grid, movePair, lockPair]);
+      if (canPlacePair(prev.grid, newPair)) {
+        return { 
+          ...prev, 
+          currentPair: newPair
+        };
+      } else {
+        // Can't fall further, lock the pair
+        const lockResult = lockPairToGrid(prev.currentPair, prev.grid);
+        
+        return {
+          ...prev,
+          grid: lockResult.newGrid,
+          currentPair: null,
+          isGameOver: lockResult.isGameOver,
+          isPlaying: !lockResult.isGameOver
+        };
+      }
+    });
+  }, []);
 
-  const spawnNewPair = useCallback(() => {
-    const newPair = createRandomPair();
-    
-    if (canPlacePair(newPair, gameState.grid)) {
-      setGameState(prev => ({ ...prev, currentPair: newPair }));
-    } else {
-      // Can't spawn new pair due to collision, game over
-      setGameState(prev => ({ 
-        ...prev, 
-        isGameOver: true, 
-        isPlaying: false 
-      }));
-    }
-  }, [gameState.grid]);
-
-  // Main game loop
-  const gameLoop = useCallback((currentTime: number) => {
-    if (!gameState.isPlaying || gameState.isPaused || gameState.isGameOver) {
+  // Auto-fall timer
+  useEffect(() => {
+    if (!gameState.isPlaying || gameState.isPaused || gameState.isGameOver || !gameState.currentPair) {
       return;
     }
 
-    const deltaTime = currentTime - lastUpdateTime.current;
-    
-    if (deltaTime >= GAME_CONFIG.fallSpeed) {
-      if (gameState.currentPair) {
-        handlePairFall();
-      } else if (!gameState.isChaining) {
-        spawnNewPair();
-      }
-      
-      lastUpdateTime.current = currentTime;
-    }
+    const fallTimer = setInterval(() => {
+      handleAutoFall();
+    }, GAME_CONFIG.fallSpeed);
 
-    gameLoopRef.current = requestAnimationFrame(gameLoop);
-  }, [gameState, handlePairFall, spawnNewPair]);
+    return () => clearInterval(fallTimer);
+  }, [gameState.isPlaying, gameState.isPaused, gameState.isGameOver, gameState.currentPair, handleAutoFall]);
+
+  // Spawn new pair when needed
+  useEffect(() => {
+    if (!gameState.currentPair && !gameState.isChaining && gameState.isPlaying && !gameState.isGameOver) {
+      const timer = setTimeout(() => {
+        setGameState(prev => {
+          const newPair = prev.nextPair || createRandomPair();
+          
+          if (canPlacePair(prev.grid, newPair)) {
+            return { 
+              ...prev, 
+              currentPair: newPair,
+              nextPair: createRandomPair()
+            };
+          } else {
+            return { 
+              ...prev, 
+              isGameOver: true, 
+              isPlaying: false 
+            };
+          }
+        });
+      }, 200);
+
+      return () => clearTimeout(timer);
+    }
+  }, [gameState.currentPair, gameState.isChaining, gameState.isPlaying, gameState.isGameOver]);
 
   // Keyboard controls
   useEffect(() => {
@@ -228,9 +241,15 @@ export const usePuyoGame = () => {
           event.preventDefault();
           movePair('right');
           break;
-        case 'ArrowUp':
+        case 'z':
+        case 'Z':
           event.preventDefault();
-          rotatePair();
+          rotatePair(false);
+          break;
+        case 'x':
+        case 'X':
+          event.preventDefault();
+          rotatePair(true);
           break;
         case 'ArrowDown':
           event.preventDefault();
@@ -243,23 +262,7 @@ export const usePuyoGame = () => {
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [gameState.isPlaying, gameState.isPaused, gameState.isGameOver, movePair, rotatePair]);
 
-  // Game loop management
-  useEffect(() => {
-    if (gameState.isPlaying && !gameState.isPaused) {
-      lastUpdateTime.current = performance.now();
-      gameLoopRef.current = requestAnimationFrame(gameLoop);
-    } else {
-      if (gameLoopRef.current) {
-        cancelAnimationFrame(gameLoopRef.current);
-      }
-    }
-
-    return () => {
-      if (gameLoopRef.current) {
-        cancelAnimationFrame(gameLoopRef.current);
-      }
-    };
-  }, [gameState.isPlaying, gameState.isPaused, gameLoop]);
+  // Remove the old game loop management since we're using timers now
 
   // Chain processing trigger
   useEffect(() => {
@@ -276,7 +279,8 @@ export const usePuyoGame = () => {
       isPlaying: true,
       isPaused: false,
       isGameOver: false,
-      currentPair: createRandomPair()
+      currentPair: createRandomPair(),
+      nextPair: createRandomPair()
     }));
   }, []);
 
@@ -288,6 +292,9 @@ export const usePuyoGame = () => {
     setGameState(createInitialGameState());
   }, []);
 
+  const rotateClockwise = useCallback(() => rotatePair(true), [rotatePair]);
+  const rotateCounterClockwise = useCallback(() => rotatePair(false), [rotatePair]);
+
   return {
     gameState,
     startGame,
@@ -295,6 +302,8 @@ export const usePuyoGame = () => {
     restartGame,
     movePair,
     rotatePair,
+    rotateClockwise,
+    rotateCounterClockwise,
     hardDropPair,
     getPairPositions,
     config: GAME_CONFIG

@@ -18,11 +18,6 @@ export const GameStatusIndicator: React.FC<GameStatusIndicatorProps> = memo(({ g
           ⏸️ PAUSED
         </div>
       )}
-      {gameState.isGameOver && (
-        <div className="text-sm text-coffee-dark font-medium">
-          💀 GAME OVER
-        </div>
-      )}
       {gameState.isPlaying && !gameState.isPaused && !gameState.isChaining && (
         <div className="text-sm text-vivid-green font-medium">
           ▶️ PLAYING

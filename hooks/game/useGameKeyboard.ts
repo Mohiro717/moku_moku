@@ -1,7 +1,7 @@
 import { useEffect, useCallback } from 'react';
 import type { GameState } from '../../types/game';
 
-export const useGameInput = (
+export const useGameKeyboard = (
   gameState: GameState,
   movePair: (direction: 'left' | 'right' | 'down') => void,
   rotateClockwise: () => void,
@@ -44,14 +44,10 @@ export const useGameInput = (
         pauseGame();
         break;
     }
-  }, [gameState.isPlaying, gameState.isGameOver, movePair, rotatePair, hardDropPair, pauseGame]);
+  }, [gameState.isPlaying, gameState.isGameOver, movePair, rotateClockwise, rotateCounterClockwise, hardDropPair, pauseGame]);
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);
-
-  return {
-    handleKeyDown
-  };
 };

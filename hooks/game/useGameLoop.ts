@@ -79,20 +79,20 @@ export const useGameLoop = (
         
         if (!canPlacePair(prev.grid, newPair)) {
           // Can't move down, lock the pair
-          const newGrid = lockPairToGrid(prev.grid, prev.currentPair);
+          const lockResult = lockPairToGrid(prev.currentPair, prev.grid);
           
           // Check for game over
-          if (prev.currentPair.y <= 1) {
+          if (lockResult.isGameOver) {
             setGameOver();
             return prev;
           }
           
           // Process chains
-          processChainReaction(newGrid);
+          processChainReaction(lockResult.newGrid);
           
           return {
             ...prev,
-            grid: newGrid,
+            grid: lockResult.newGrid,
             currentPair: null
           };
         }

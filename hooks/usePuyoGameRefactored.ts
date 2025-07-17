@@ -20,6 +20,8 @@ export const usePuyoGameRefactored = () => {
   const {
     movePair,
     rotatePair,
+    rotateClockwise,
+    rotateCounterClockwise,
     hardDropPair,
     getPairPositions
   } = usePairMovement(gameState, updateGameState);
@@ -37,7 +39,8 @@ export const usePuyoGameRefactored = () => {
   useGameInput(
     gameState,
     movePair,
-    rotatePair,
+    rotateClockwise,
+    rotateCounterClockwise,
     hardDropPair,
     pauseGame
   );
@@ -49,6 +52,8 @@ export const usePuyoGameRefactored = () => {
     resetGame,
     movePair,
     rotatePair,
+    rotateClockwise,
+    rotateCounterClockwise,
     hardDropPair,
     getPairPositions
   };
