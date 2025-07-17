@@ -22,10 +22,10 @@ export const useGameMovement = (
       
       switch (direction) {
         case 'left':
-          newPair.x = Math.max(0, newPair.x - 1);
+          newPair.x = newPair.x - 1;
           break;
         case 'right':
-          newPair.x = Math.min(GAME_CONFIG.gridWidth - 1, newPair.x + 1);
+          newPair.x = newPair.x + 1;
           break;
         case 'down':
           newPair.y = newPair.y + 1;
@@ -64,13 +64,32 @@ export const useGameMovement = (
 
       let newPair = { ...prev.currentPair };
       
+      // Drop until we can't drop anymore
       while (canPlacePair(prev.grid, { ...newPair, y: newPair.y + 1 })) {
         newPair.y++;
       }
 
-      return { ...prev, currentPair: newPair };
+      // Immediately lock the pair after hard drop
+      const lockResult = lockPairToGrid(newPair, prev.grid);
+      
+      if (lockResult.isGameOver) {
+        setGameOver();
+        return {
+          ...prev,
+          grid: lockResult.newGrid,
+          currentPair: null,
+          isGameOver: true,
+          isPlaying: false
+        };
+      }
+      
+      return {
+        ...prev,
+        grid: lockResult.newGrid,
+        currentPair: null
+      };
     });
-  }, [updateGameState]);
+  }, [updateGameState, setGameOver]);
 
   const handleAutoFall = useCallback(() => {
     updateGameState(prev => {
@@ -88,7 +107,13 @@ export const useGameMovement = (
         
         if (lockResult.isGameOver) {
           setGameOver();
-          return prev;
+          return {
+            ...prev,
+            grid: lockResult.newGrid,
+            currentPair: null,
+            isGameOver: true,
+            isPlaying: false
+          };
         }
         
         return {

@@ -63,12 +63,12 @@ export const canPlacePair = (grid: PuyoCell[][], pair: PuyoPair): boolean => {
 };
 
 export const findLowestPosition = (grid: PuyoCell[][], col: number, startRow: number): number => {
-  for (let row = GAME_CONFIG.gridHeight - 1; row >= startRow; row--) {
+  for (let row = GAME_CONFIG.gridHeight - 1; row >= 0; row--) {
     if (!grid[row][col].color) {
       return row;
     }
   }
-  return startRow; // Can't fall any lower
+  return 0; // Top row if column is full
 };
 
 export const findConnectedPuyos = (
@@ -169,27 +169,31 @@ export const lockPairToGrid = (
 
   // For same column pairs, need to handle them carefully
   if (positions.main.x === positions.sub.x) {
-    // Same column - place them in order (bottom first, then top)
+    // Same column - place them in proper order with gravity
     const lowerY = Math.max(positions.main.y, positions.sub.y);
     const higherY = Math.min(positions.main.y, positions.sub.y);
     
-    // Find positions for both puyos in the same column
-    const lowerFinalY = findLowestPosition(newGrid, positions.main.x, lowerY);
+    // First, place the lower puyo (which will fall to the bottom)
+    const lowerFinalY = findLowestPosition(newGrid, positions.main.x, 0);
+    const lowerColor = lowerY === positions.main.y ? pair.main : pair.sub;
     newGrid[lowerFinalY][positions.main.x] = {
-      color: lowerY === positions.main.y ? pair.main : pair.sub,
+      color: lowerColor,
       id: Math.random().toString(36)
     };
     
-    // For the higher puyo, find position above the just-placed puyo
-    const higherFinalY = findLowestPosition(newGrid, positions.main.x, higherY);
-    newGrid[higherFinalY][positions.main.x] = {
-      color: higherY === positions.main.y ? pair.main : pair.sub,
-      id: Math.random().toString(36)
-    };
+    // Then place the higher puyo (which will fall to rest on top of the lower one)
+    const higherFinalY = Math.max(0, lowerFinalY - 1);
+    const higherColor = higherY === positions.main.y ? pair.main : pair.sub;
+    if (higherFinalY >= 0) {
+      newGrid[higherFinalY][positions.main.x] = {
+        color: higherColor,
+        id: Math.random().toString(36)
+      };
+    }
   } else {
     // Different columns - apply gravity independently
-    const mainFinalY = findLowestPosition(newGrid, positions.main.x, positions.main.y);
-    const subFinalY = findLowestPosition(newGrid, positions.sub.x, positions.sub.y);
+    const mainFinalY = findLowestPosition(newGrid, positions.main.x, 0);
+    const subFinalY = findLowestPosition(newGrid, positions.sub.x, 0);
 
     newGrid[mainFinalY][positions.main.x] = {
       color: pair.main,

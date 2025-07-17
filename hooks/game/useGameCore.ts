@@ -27,14 +27,27 @@ export const useGameCore = () => {
   }, []);
 
   const startGame = useCallback(() => {
-    setGameState(prev => ({
-      ...prev,
-      isPlaying: true,
-      isPaused: false,
-      isGameOver: false,
-      currentPair: createRandomPair(),
-      nextPair: createRandomPair()
-    }));
+    setGameState(prev => {
+      // If game is over, reset everything
+      if (prev.isGameOver) {
+        return {
+          ...createInitialGameState(),
+          isPlaying: true,
+          currentPair: createRandomPair(),
+          nextPair: createRandomPair()
+        };
+      }
+      
+      // Otherwise just start the game
+      return {
+        ...prev,
+        isPlaying: true,
+        isPaused: false,
+        isGameOver: false,
+        currentPair: createRandomPair(),
+        nextPair: createRandomPair()
+      };
+    });
   }, []);
 
   const pauseGame = useCallback(() => {
@@ -63,11 +76,26 @@ export const useGameCore = () => {
   }, []);
 
   const spawnNewPair = useCallback(() => {
-    setGameState(prev => ({
-      ...prev,
-      currentPair: prev.nextPair,
-      nextPair: createRandomPair()
-    }));
+    setGameState(prev => {
+      const newPair = prev.nextPair || createRandomPair();
+      
+      // Check if the new pair can be placed
+      if (newPair && prev.grid[newPair.y] && prev.grid[newPair.y][newPair.x] && prev.grid[newPair.y][newPair.x].color) {
+        // Game over - can't place new pair
+        return {
+          ...prev,
+          isGameOver: true,
+          isPlaying: false,
+          currentPair: null
+        };
+      }
+      
+      return {
+        ...prev,
+        currentPair: newPair,
+        nextPair: createRandomPair()
+      };
+    });
   }, []);
 
   return {

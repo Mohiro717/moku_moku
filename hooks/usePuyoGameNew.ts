@@ -49,7 +49,7 @@ export const usePuyoGameNew = () => {
     gameState,
     startGame,
     pauseGame,
-    resetGame,
+    restartGame: resetGame,
     movePair,
     rotatePair,
     rotateClockwise,

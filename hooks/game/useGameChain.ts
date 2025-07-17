@@ -14,37 +14,40 @@ export const useGameChain = (
 ) => {
   const processChainReaction = useCallback(async () => {
     setChaining(true);
-    let currentGrid = gameState.grid;
-    let totalChains = 0;
-    let totalScore = gameState.score;
+    
+    updateGameState(prev => {
+      let currentGrid = prev.grid;
+      let totalChains = 0;
+      let totalScore = prev.score;
 
-    while (true) {
-      const { newGrid, chainOccurred, deletedCount } = processChains(currentGrid);
-      
-      if (!chainOccurred) break;
+      // Process all chains synchronously
+      while (true) {
+        const { newGrid, chainOccurred, deletedCount } = processChains(currentGrid);
+        
+        if (!chainOccurred) break;
 
-      totalChains++;
-      const chainScore = calculateChainScore(deletedCount, totalChains);
-      totalScore += chainScore;
-      
-      // Apply gravity after clearing
-      currentGrid = applyGravity(newGrid);
-      
-      // Update game state with animation
-      updateGameState(prev => ({
+        totalChains++;
+        const chainScore = calculateChainScore(deletedCount, totalChains);
+        totalScore += chainScore;
+        
+        // Apply gravity after clearing
+        currentGrid = applyGravity(newGrid);
+      }
+
+      return {
         ...prev,
         grid: currentGrid,
         chainCount: totalChains,
         score: totalScore
-      }));
-      
-      // Wait for animation
-      await new Promise(resolve => setTimeout(resolve, 600));
-    }
-
+      };
+    });
+    
+    // Wait for animation
+    await new Promise(resolve => setTimeout(resolve, 600));
+    
     setChaining(false);
     spawnNewPair();
-  }, [gameState.grid, gameState.score, updateGameState, setChaining, spawnNewPair]);
+  }, [updateGameState, setChaining, spawnNewPair]);
 
   return {
     processChainReaction

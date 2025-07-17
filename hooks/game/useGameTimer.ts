@@ -9,7 +9,7 @@ export const useGameTimer = (
 ) => {
   // Auto-fall timer
   useEffect(() => {
-    if (!gameState.isPlaying || gameState.isPaused || gameState.isGameOver || !gameState.currentPair) {
+    if (!gameState.isPlaying || gameState.isPaused || gameState.isGameOver || !gameState.currentPair || gameState.isChaining) {
       return;
     }
 
@@ -18,7 +18,7 @@ export const useGameTimer = (
     }, GAME_CONFIG.fallSpeed);
 
     return () => clearInterval(fallTimer);
-  }, [gameState.isPlaying, gameState.isPaused, gameState.isGameOver, gameState.currentPair, handleAutoFall]);
+  }, [gameState.isPlaying, gameState.isPaused, gameState.isGameOver, gameState.currentPair, gameState.isChaining, handleAutoFall]);
 
   // Chain processing trigger
   useEffect(() => {
