@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import type { PuyoColor } from '../../types/game';
 
 interface PuyoProps {
@@ -24,7 +24,7 @@ const PUYO_EYES = {
   null: ''
 };
 
-export const Puyo: React.FC<PuyoProps> = ({ 
+export const Puyo: React.FC<PuyoProps> = memo(({ 
   color, 
   isConnected = false, 
   willDelete = false,
@@ -56,4 +56,4 @@ export const Puyo: React.FC<PuyoProps> = ({
       </span>
     </div>
   );
-};
+});

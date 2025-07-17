@@ -2,6 +2,8 @@ import React from 'react';
 import { GameGrid } from './GameGrid';
 import { GameControls } from './GameControls';
 import { TouchControls } from './TouchControls';
+import { ErrorBoundary } from '../ErrorBoundary';
+import { GameErrorFallback } from './GameErrorFallback';
 import { usePuyoGame } from '../../hooks/usePuyoGame';
 
 export const PuyoPuyoGame: React.FC = () => {
@@ -17,7 +19,8 @@ export const PuyoPuyoGame: React.FC = () => {
   } = usePuyoGame();
 
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-ivory rounded-3xl shadow-lg">
+    <ErrorBoundary fallback={GameErrorFallback}>
+      <div className="max-w-4xl mx-auto p-6 bg-ivory rounded-3xl shadow-lg">
       {/* Game Title */}
       <div className="text-center mb-6">
         <h3 className="text-2xl font-bold text-coffee-dark mb-2">
@@ -68,6 +71,7 @@ export const PuyoPuyoGame: React.FC = () => {
           }
         </p>
       </div>
-    </div>
+      </div>
+    </ErrorBoundary>
   );
 };

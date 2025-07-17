@@ -3,6 +3,7 @@ import { AnimatedSection } from './AnimatedSection';
 import { SectionTitle } from './SectionTitle';
 import { GameControllerIcon } from './icons/GameControllerIcon';
 import { PuyoPuyoGame } from './game/PuyoPuyoGame';
+import { Button } from './ui/Button';
 import { SITE_CONFIG } from '../constants';
 
 export const GameSection: React.FC = () => {
@@ -54,33 +55,18 @@ export const GameSection: React.FC = () => {
                     <p className="text-coffee-mid mb-2 leading-relaxed">
                       息抜きしませんか？
                     </p>
-                    <p className="text-coffee-mid mb-8 leading-relaxed">
-                      同じ色のぷよを4個以上つなげて消去しよう！
-                    </p>
 
                     {/* Action buttons */}
                     <div className="space-y-3">
-                      <button
+                      <Button
                         onClick={() => setShowGame(true)}
-                        className="
-                          w-full px-8 py-4 
-                          bg-gradient-to-r from-vivid-pink to-vivid-green 
-                          text-white font-bold rounded-full
-                          transition-all duration-300
-                          hover:scale-105 hover:shadow-lg
-                          active:scale-95
-                          text-lg
-                        "
+                        variant="primary"
+                        size="lg"
+                        className="w-full"
                       >
                         🎮 ゲームを始める
-                      </button>
+                      </Button>
                       
-                      <p className="text-xs text-coffee-dark/60 hidden md:block">
-                        キーボードの矢印キーで操作
-                      </p>
-                      <p className="text-xs text-coffee-dark/60 md:hidden">
-                        タップ・スライドで操作
-                      </p>
                     </div>
                   </div>
                 </div>
@@ -89,19 +75,14 @@ export const GameSection: React.FC = () => {
           ) : (
             <div className="transition-all duration-500 animate-fade-in-up">
               <PuyoPuyoGame />
-              <button
+              <Button
                 onClick={() => setShowGame(false)}
-                className="
-                  mt-6 px-6 py-2 
-                  bg-coffee-mid text-white 
-                  rounded-full font-medium
-                  transition-all duration-200
-                  hover:bg-coffee-dark hover:scale-105
-                  text-sm
-                "
+                variant="secondary"
+                size="sm"
+                className="mt-6"
               >
                 ← ゲームを閉じる
-              </button>
+              </Button>
             </div>
           )}
         </AnimatedSection>

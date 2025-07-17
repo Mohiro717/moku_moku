@@ -43,23 +43,3 @@ export interface Position {
   y: number;
 }
 
-export interface ChainResult {
-  deletedCount: number;
-  chainLength: number;
-  score: number;
-}
-
-export type GameAction = 
-  | { type: 'MOVE_LEFT' }
-  | { type: 'MOVE_RIGHT' }
-  | { type: 'ROTATE' }
-  | { type: 'SOFT_DROP' }
-  | { type: 'HARD_DROP' }
-  | { type: 'TICK' } // 自動落下
-  | { type: 'LOCK_PAIR' } // ペア着地
-  | { type: 'CLEAR_CHAINS' }
-  | { type: 'UPDATE_SCORE'; payload: number }
-  | { type: 'GAME_OVER' }
-  | { type: 'RESTART' }
-  | { type: 'PAUSE' }
-  | { type: 'RESUME' };

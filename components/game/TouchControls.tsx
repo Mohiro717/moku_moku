@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useCallback } from 'react';
 
 interface TouchControlsProps {
   onMove: (direction: 'left' | 'right' | 'down') => void;
@@ -24,7 +24,7 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
   const touchData = useRef<TouchData | null>(null);
   const [touchFeedback, setTouchFeedback] = useState<string | null>(null);
 
-  const handleTouchStart = (e: React.TouchEvent) => {
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
     if (!isActive) return;
     
     const touch = e.touches[0];
@@ -35,9 +35,9 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
     };
     
     e.preventDefault();
-  };
+  }, [isActive]);
 
-  const handleTouchMove = (e: React.TouchEvent) => {
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
     if (!isActive || !touchData.current) return;
     
     const touch = e.touches[0];
@@ -74,9 +74,9 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
     }
     
     e.preventDefault();
-  };
+  }, [isActive, onMove]);
 
-  const handleTouchEnd = (e: React.TouchEvent) => {
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
     if (!isActive || !touchData.current) return;
     
     const touch = e.changedTouches[0];
@@ -86,8 +86,8 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
     const duration = Date.now() - touchData.current.startTime;
     
     // Check for different gesture types
-    if (distance < 20 && duration < 300) {
-      // Tap gesture - rotate
+    if (distance < 10 && duration < 200) {
+      // Tap gesture - rotate (stricter detection)
       onRotate();
       setTouchFeedback('↻');
     } else if (deltaY > 50 && duration < 200) {
@@ -103,7 +103,7 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
     setTimeout(() => setTouchFeedback(null), 300);
     
     e.preventDefault();
-  };
+  }, [isActive, onRotate, onHardDrop]);
 
   return (
     <div className="relative">
@@ -121,25 +121,7 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
       {/* Game content */}
       {children}
       
-      {/* Touch feedback */}
-      {touchFeedback && (
-        <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none">
-          <div className="bg-white/90 rounded-full p-4 shadow-lg animate-ping">
-            <span className="text-2xl font-bold text-coffee-dark">
-              {touchFeedback}
-            </span>
-          </div>
-        </div>
-      )}
       
-      {/* Mobile instructions overlay */}
-      {isActive && (
-        <div className="absolute bottom-2 left-2 right-2 z-20 pointer-events-none md:hidden">
-          <div className="bg-black/70 text-white text-xs rounded-lg p-2 text-center">
-            <p>📱 タップ: 回転 | スライド: 移動・落下 | フリック↓: 瞬間落下</p>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

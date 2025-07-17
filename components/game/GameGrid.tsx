@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Puyo } from './Puyo';
 import type { PuyoCell, PuyoPair, Position } from '../../types/game';
 
@@ -15,27 +15,33 @@ export const GameGrid: React.FC<GameGridProps> = ({
   getPairPositions,
   isGameOver 
 }) => {
-  // Get positions of current falling pair
-  const fallingPositions = currentPair ? getPairPositions(currentPair) : null;
+  // Memoize falling positions calculation
+  const fallingPositions = useMemo(() => {
+    return currentPair ? getPairPositions(currentPair) : null;
+  }, [currentPair, getPairPositions]);
 
-  // Create display grid that includes falling pair
-  const displayGrid = grid.map((row, rowIndex) =>
-    row.map((cell, colIndex) => {
-      // Check if this position has a falling puyo
-      if (fallingPositions) {
-        if (fallingPositions.main.x === colIndex && fallingPositions.main.y === rowIndex) {
-          return { ...cell, color: currentPair!.main, isFalling: true };
+  // Memoize display grid creation
+  const displayGrid = useMemo(() => {
+    return grid.map((row, rowIndex) =>
+      row.map((cell, colIndex) => {
+        // Check if this position has a falling puyo
+        if (fallingPositions) {
+          if (fallingPositions.main.x === colIndex && fallingPositions.main.y === rowIndex) {
+            return { ...cell, color: currentPair!.main, isFalling: true };
+          }
+          if (fallingPositions.sub.x === colIndex && fallingPositions.sub.y === rowIndex) {
+            return { ...cell, color: currentPair!.sub, isFalling: true };
+          }
         }
-        if (fallingPositions.sub.x === colIndex && fallingPositions.sub.y === rowIndex) {
-          return { ...cell, color: currentPair!.sub, isFalling: true };
-        }
-      }
-      return { ...cell, isFalling: false };
-    })
-  );
+        return { ...cell, isFalling: false };
+      })
+    );
+  }, [grid, fallingPositions, currentPair]);
 
-  // Only show visible rows (skip top spawn area)
-  const visibleGrid = displayGrid.slice(1);
+  // Memoize visible grid
+  const visibleGrid = useMemo(() => {
+    return displayGrid.slice(1);
+  }, [displayGrid]);
 
   return (
     <div className="relative bg-ivory border-4 border-coffee-dark rounded-2xl p-4 shadow-lg">
@@ -76,12 +82,6 @@ export const GameGrid: React.FC<GameGridProps> = ({
         ))}
       </div>
 
-      {/* Controls instruction */}
-      <div className="absolute -bottom-8 left-0 right-0 text-center">
-        <p className="text-xs text-coffee-dark/60">
-          ← → 移動 | ↑ 回転 | ↓ 高速落下
-        </p>
-      </div>
 
       {/* Game Over overlay */}
       {isGameOver && (
