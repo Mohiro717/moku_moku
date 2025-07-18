@@ -6,8 +6,8 @@ import { SITE_CONFIG, SAMPLE_WORKS } from '../constants';
 
 export const WorksSection: React.FC = () => {
   return (
-    <section className="py-20 lg:py-32 bg-pastel-blue transform skew-y-2">
-      <div className="max-w-7xl mx-auto px-4 transform -skew-y-2">
+    <section className="py-20 lg:py-32 bg-pastel-blue transform skew-y-3">
+      <div className="max-w-7xl mx-auto px-4 transform -skew-y-3">
         <AnimatedSection id="works" className="text-center mb-16">
           <SectionTitle className="mb-4" lineLength="long">
             {SITE_CONFIG.worksTitle}
