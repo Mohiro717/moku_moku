@@ -5,13 +5,55 @@ import { NAVIGATION_ITEMS, SITE_CONFIG } from '../constants';
 export const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [activeSection, setActiveSection] = useState('home');
+
+  const getCurrentSection = () => {
+    const scrollY = window.scrollY;
+    
+    // If at the very top, return home
+    if (scrollY < 100) return 'home';
+    
+    // Get all section elements
+    const sectionIds = ['about', 'mokopi', 'works', 'game'];
+    
+    // Find the section that is most visible in the viewport
+    let currentSection = 'home';
+    let maxVisibility = 0;
+    
+    for (const sectionId of sectionIds) {
+      const element = document.getElementById(sectionId);
+      if (!element) continue;
+      
+      const rect = element.getBoundingClientRect();
+      const elementTop = rect.top;
+      const elementBottom = rect.bottom;
+      const viewportHeight = window.innerHeight;
+      
+      // Calculate how much of the section is visible
+      const visibleTop = Math.max(0, elementTop);
+      const visibleBottom = Math.min(viewportHeight, elementBottom);
+      const visibleHeight = Math.max(0, visibleBottom - visibleTop);
+      const sectionHeight = rect.height;
+      const visibilityRatio = visibleHeight / sectionHeight;
+      
+      // If this section is more visible than the current one, use it
+      if (visibilityRatio > maxVisibility && visibilityRatio > 0.3) {
+        maxVisibility = visibilityRatio;
+        currentSection = sectionId;
+      }
+    }
+    
+    return currentSection;
+  };
 
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
+      setActiveSection(getCurrentSection());
     };
 
     window.addEventListener('scroll', handleScroll);
+    handleScroll(); // Set initial state
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
@@ -50,7 +92,7 @@ export const Header: React.FC = () => {
             {/* Logo */}
             <button
               onClick={() => scrollToSection('home')}
-              className="font-serif text-2xl font-bold text-coffee-dark hover:text-vivid-pink transition-colors duration-300"
+              className="font-serif text-xl sm:text-2xl font-bold text-coffee-dark hover:text-vivid-pink transition-colors duration-300"
             >
               {SITE_CONFIG.title}
             </button>
@@ -61,9 +103,16 @@ export const Header: React.FC = () => {
                 <button
                   key={item.id}
                   onClick={() => scrollToSection(item.id)}
-                  className="font-medium transition-all duration-300 hover:text-vivid-pink text-coffee-dark"
+                  className={`font-medium transition-all duration-300 relative ${
+                    activeSection === item.id 
+                      ? 'text-vivid-pink' 
+                      : 'text-coffee-dark hover:text-vivid-pink'
+                  }`}
                 >
                   {item.label}
+                  {activeSection === item.id && (
+                    <div className="absolute -bottom-1 left-0 right-0 h-0.5 bg-vivid-pink rounded-full animate-pulse"></div>
+                  )}
                 </button>
               ))}
             </nav>
@@ -97,9 +146,16 @@ export const Header: React.FC = () => {
                   <button
                     key={item.id}
                     onClick={() => scrollToSection(item.id)}
-                    className="block w-full text-left font-medium text-xl transition-colors duration-300 hover:text-vivid-pink text-coffee-dark"
+                    className={`block w-full text-left font-medium text-xl transition-colors duration-300 relative ${
+                      activeSection === item.id 
+                        ? 'text-vivid-pink' 
+                        : 'text-coffee-dark hover:text-vivid-pink'
+                    }`}
                   >
                     {item.label}
+                    {activeSection === item.id && (
+                      <div className="absolute -bottom-1 left-0 w-8 h-0.5 bg-vivid-pink rounded-full animate-pulse"></div>
+                    )}
                   </button>
                 ))}
               </nav>

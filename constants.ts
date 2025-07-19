@@ -1,3 +1,6 @@
+import type { Work } from './types';
+
+// Theme Colors
 export const COLORS = {
   ivory: '#f8f4e9',
   coffeeDark: '#3b2f2f',
@@ -8,6 +11,7 @@ export const COLORS = {
   vividGreen: '#00c9a7'
 } as const;
 
+// Navigation Configuration
 export const NAVIGATION_ITEMS = [
   { id: 'about', label: 'About' },
   { id: 'mokopi', label: 'Mocopi' },
@@ -15,26 +19,40 @@ export const NAVIGATION_ITEMS = [
   { id: 'game', label: 'Game' }
 ] as const;
 
+// Site Content Configuration
 export const SITE_CONFIG = {
   title: 'Moku Moku House',
   heroTitle: 'Welcome to Moku Moku House',
   heroSubtitle: 'クリエイターが静かに、もくもくと創作する場所',
   aboutTitle: 'What is Moku Moku House?',
-  aboutDescription: `Moku Moku Houseは、デザイナー、イラストレーター、プログラマー、ライターなど、
-あらゆる分野のクリエイターが集まる特別な場所です。
+  aboutDescription: `Moku Moku Houseは、 あらゆる分野のクリエイターが集まる特別な場所です。
 
-静かなカフェのような心地よい空間で、それぞれが「もくもく」と集中して
-創作活動に取り組むことができるコミュニティです。
+静かなカフェのような心地よい空間で、それぞれが「もくもく」と集中して 創作活動に取り組むことができるコミュニティです。
 
-一人で作業しながらも、同じ志を持つクリエイター仲間の存在を感じられる、
-そんな温かくて居心地の良い空間を提供しています。`,
+一人で作業しながらも、様々な志を持つクリエイター仲間の存在を感じられる、 お互いに刺激し合える、そんな温かくて居心地の良い空間を提供しています。`,
+
+
+
+
+
+
   mokopiTitle: 'Meet Mocopi',
+
+
+  
   mokopiDescription: `もこもこしてて電波ピピッ🐏☁⚡の「もこぴ」だよ♪
 
 
+
+
 みなさんの創作活動を、ゆる～く見守っていま～す。
+
 集中したいときは、しーっ…て静かに。
+
 ひとやすみしたくなったら、一緒にまったりしましょうねぇ♪
+
+
+
 
 みなさんが、にこにこで過ごせるように、いつでも応援してるよ～`,
   worksTitle: "Creator's Works",
@@ -42,7 +60,8 @@ export const SITE_CONFIG = {
   gameDescription: "新しいミニゲームを準備中です！お楽しみに！"
 } as const;
 
-export const SAMPLE_WORKS = [
+// Sample Works Data
+export const SAMPLE_WORKS: readonly Work[] = [
   {
     id: 1,
     title: 'Peaceful Workspace Design',

@@ -6,7 +6,7 @@ import { SITE_CONFIG } from '../constants';
 
 export const AboutSection: React.FC = () => {
   return (
-    <section className="relative py-20 lg:py-32 bg-pastel-blue overflow-hidden">
+    <section className="relative pt-20 pb-32 lg:pt-32 lg:pb-48 bg-pastel-blue overflow-hidden">
       <div className="absolute inset-0 z-0">
         <Blob />
       </div>
