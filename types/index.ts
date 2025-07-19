@@ -10,6 +10,16 @@ export interface Work {
   color: string;
 }
 
+export interface FortniteCreator {
+  id: number;
+  name: string;
+  fortniteUrl: string;
+  category: string;
+  description: string;
+  avatar?: string;
+  color: string;
+}
+
 export interface NavigationItem {
   id: string;
   label: string;

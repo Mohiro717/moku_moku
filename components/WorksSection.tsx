@@ -1,8 +1,8 @@
 import React from 'react';
 import { AnimatedSection } from './AnimatedSection';
-import { ProjectCard } from './ProjectCard';
+import { FortniteCreatorCard } from './FortniteCreatorCard';
 import { SectionTitle } from './SectionTitle';
-import { SITE_CONFIG, SAMPLE_WORKS } from '../constants';
+import { SITE_CONFIG, FORTNITE_CREATORS } from '../constants';
 
 export const WorksSection: React.FC = () => {
   return (
@@ -24,15 +24,20 @@ export const WorksSection: React.FC = () => {
           <SectionTitle className="mb-4" lineLength="long">
             {SITE_CONFIG.worksTitle}
           </SectionTitle>
-          <p className="text-lg text-coffee-dark/70 max-w-2xl mx-auto">
-            Moku Moku Houseのクリエイターたちによる素晴らしい作品をご紹介します
-          </p>
+          <div className="text-lg text-coffee-dark/70 max-w-3xl mx-auto">
+            <p className="mb-2">
+              Moku Moku Houseで活動するFortniteクリエイターたちをご紹介します。
+            </p>
+            <p>
+              それぞれが独自の世界観とアイデアで、素晴らしいクリエイティブマップを制作しています。
+            </p>
+          </div>
         </AnimatedSection>
 
         <AnimatedSection>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {SAMPLE_WORKS.map((work, index) => (
-              <ProjectCard key={work.id} work={work} index={index} />
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6 lg:gap-8">
+            {FORTNITE_CREATORS.map((creator, index) => (
+              <FortniteCreatorCard key={creator.id} creator={creator} index={index} />
             ))}
           </div>
         </AnimatedSection>

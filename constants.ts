@@ -1,4 +1,4 @@
-import type { Work } from './types';
+import type { Work, FortniteCreator } from './types';
 
 // Theme Colors
 export const COLORS = {
@@ -55,65 +55,174 @@ export const SITE_CONFIG = {
 
 
 みなさんが、にこにこで過ごせるように、いつでも応援してるよ～`,
-  worksTitle: "Creator's Works",
+  worksTitle: "Fortnite Creators",
   gameTitle: "Game",
   gameDescription: "新しいミニゲームを準備中です！お楽しみに！"
 } as const;
 
-// Sample Works Data
-export const SAMPLE_WORKS: readonly Work[] = [
+// Fortnite Creators Data
+export const FORTNITE_CREATORS: readonly FortniteCreator[] = [
   {
     id: 1,
-    title: 'Peaceful Workspace Design',
-    author: 'Yuki Tanaka',
-    category: 'UI/UX Design',
-    description: 'クリエイターのための静かで集中できるワークスペースのデザイン提案',
-    image: '/api/placeholder/300/200',
+    name: '柏木まさみ',
+    fortniteUrl: 'https://www.fortnite.com/@masami_k?lang=ja',
+    category: 'Creative Builder',
+    description: 'Fortniteクリエイティブで素晴らしいマップを制作するクリエイター',
     color: 'vivid-pink'
   },
   {
     id: 2,
-    title: 'Mokumoku Study App',
-    author: 'Hiroshi Sato',
-    category: 'App Development',
-    description: '集中して学習できるポモドーロタイマー付きアプリケーション',
-    image: '/api/placeholder/300/200',
+    name: 'だいすけ',
+    fortniteUrl: 'https://www.fortnite.com/@daisukevlad?lang=ja',
+    category: 'Map Creator',
+    description: '独創的なアイデアでプレイヤーを楽しませるマップクリエイター',
     color: 'vivid-green'
   },
   {
     id: 3,
-    title: 'Coffee & Code Illustrations',
-    author: 'Emi Watanabe',
-    category: 'Illustration',
-    description: 'カフェで働くプログラマーをテーマにした温かみのあるイラストシリーズ',
-    image: '/api/placeholder/300/200',
+    name: 'T.GRAPH',
+    fortniteUrl: 'https://www.fortnite.com/@t.graph?lang=ja',
+    category: 'Visual Designer',
+    description: 'ビジュアル重視の美しいクリエイティブマップを手がける',
     color: 'coffee-light'
   },
   {
     id: 4,
-    title: 'Focus Music Collection',
-    author: 'Kenji Nakamura',
-    category: 'Music',
-    description: '集中力を高める環境音楽とアンビエントサウンドのコレクション',
-    image: '/api/placeholder/300/200',
+    name: 'タカオ',
+    fortniteUrl: 'https://www.fortnite.com/@takao417?lang=ja',
+    category: 'Game Designer',
+    description: '面白いゲームシステムを考案するゲームデザイナー',
     color: 'vivid-pink'
   },
   {
     id: 5,
-    title: 'Creative Writing Workshop',
-    author: 'Ayaka Yoshida',
-    category: 'Writing',
-    description: 'クリエイターのためのストーリーテリングとライティング技法',
-    image: '/api/placeholder/300/200',
+    name: 'Mohiro',
+    fortniteUrl: 'https://www.fortnite.com/@mohiro?lang=ja',
+    category: 'Creative Developer',
+    description: 'プログラミング的思考でクリエイティブマップを開発',
     color: 'vivid-green'
   },
   {
     id: 6,
-    title: 'Minimalist Productivity Tools',
-    author: 'Takeshi Yamamoto',
-    category: 'Product Design',
-    description: 'シンプルで美しい生産性向上ツールのデザインコンセプト',
-    image: '/api/placeholder/300/200',
+    name: 'YusukeN',
+    fortniteUrl: 'https://www.fortnite.com/@yusuken?lang=ja',
+    category: 'Adventure Creator',
+    description: 'アドベンチャー要素満載のマップ制作が得意',
     color: 'coffee-light'
+  },
+  {
+    id: 7,
+    name: 'ねずみまる',
+    fortniteUrl: 'https://www.fortnite.com/@nezumimaru?lang=ja',
+    category: 'Puzzle Master',
+    description: '頭を使うパズル系マップのスペシャリスト',
+    color: 'vivid-pink'
+  },
+  {
+    id: 8,
+    name: 'やまぽん',
+    fortniteUrl: 'https://www.fortnite.com/@yama_pon',
+    category: 'Action Creator',
+    description: 'アクション満載のスリリングなマップを制作',
+    color: 'vivid-green'
+  },
+  {
+    id: 9,
+    name: 'はこぶ',
+    fortniteUrl: 'https://www.fortnite.com/@hakobu?lang=ja',
+    category: 'Story Teller',
+    description: 'ストーリー性豊かなマップで感動を提供',
+    color: 'coffee-light'
+  },
+  {
+    id: 10,
+    name: 'moly',
+    fortniteUrl: 'https://www.fortnite.com/@bgl/6332-5843-8603',
+    category: 'Experimental',
+    description: '実験的で革新的なマップコンセプトを追求',
+    color: 'vivid-pink'
+  },
+  {
+    id: 11,
+    name: 'piyo',
+    fortniteUrl: 'https://www.fortnite.com/@piyo1453?lang=ja',
+    category: 'Fun Creator',
+    description: '楽しさを最優先にしたエンターテイメントマップ',
+    color: 'vivid-green'
+  },
+  {
+    id: 12,
+    name: 'カバ姫',
+    fortniteUrl: 'https://www.fortnite.com/@yokkun?lang=ja',
+    category: 'Artistic Builder',
+    description: 'アーティスティックで美しいマップ空間をデザイン',
+    color: 'coffee-light'
+  },
+  {
+    id: 13,
+    name: 'ゆーにん/Younin',
+    fortniteUrl: 'https://www.fortnite.com/@bgl/2155-3261-9371?lang=ja',
+    category: 'Technical Creator',
+    description: '技術的に高度なシステムを駆使したマップ制作',
+    color: 'vivid-pink'
+  },
+  {
+    id: 14,
+    name: 'TaE',
+    fortniteUrl: 'https://www.fortnite.com/@taeeee.u_u?lang=ja',
+    category: 'Creative Artist',
+    description: 'クリエイティブな発想で独特な世界観を表現',
+    color: 'vivid-green'
+  },
+  {
+    id: 15,
+    name: 'Kudo',
+    fortniteUrl: 'https://www.fortnite.com/@kudogames?lang=ja',
+    category: 'Game Creator',
+    description: 'ゲーム性重視の完成度の高いマップを開発',
+    color: 'coffee-light'
+  },
+  {
+    id: 16,
+    name: 'カニいちろう',
+    fortniteUrl: 'https://www.fortnite.com/@koichiro?lang=ja',
+    category: 'Comedy Creator',
+    description: 'ユーモアあふれる楽しいマップでプレイヤーを笑顔に',
+    color: 'vivid-pink'
+  },
+  {
+    id: 17,
+    name: 'mikkeみっけ',
+    fortniteUrl: 'https://www.fortnite.com/@bgl-mikke?lang=ja',
+    category: 'Discovery Creator',
+    description: '探索要素豊富なマップで新しい発見を提供',
+    color: 'vivid-green'
+  },
+  {
+    id: 18,
+    name: 'メタメタのぶくん',
+    fortniteUrl: 'https://www.fortnite.com/@nobukun?lang=ja',
+    category: 'Meta Creator',
+    description: 'メタ的な要素を取り入れた斬新なマップコンセプト',
+    color: 'coffee-light'
+  },
+  {
+    id: 19,
+    name: 'A-HEM(えっへん)',
+    fortniteUrl: 'https://www.fortnite.com/@a-hem?lang=ja',
+    category: 'Entertainment',
+    description: 'エンターテイメント性抜群の盛り上がるマップ',
+    color: 'vivid-pink'
+  },
+  {
+    id: 20,
+    name: 'エドワイズ',
+    fortniteUrl: 'https://www.fortnite.com/@edwise',
+    category: 'Educational',
+    description: '学びながら楽しめる教育的要素を含むマップ制作',
+    color: 'vivid-green'
   }
 ] as const;
+
+// Backward compatibility - keeping old export for gradual migration
+export const SAMPLE_WORKS: readonly Work[] = [] as const;
