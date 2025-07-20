@@ -154,7 +154,7 @@ export const usePuyoGame = () => {
         chainAnimationStep: 'highlighting',
         currentChainStep: displayChainStep
       }));
-      await new Promise(resolve => setTimeout(resolve, 600));
+      await new Promise(resolve => setTimeout(resolve, 300));
       
       // Step 2: Mark for deletion with animation
       const deletingGrid = markPuyosForDeletion(highlightedGrid);
@@ -163,7 +163,7 @@ export const usePuyoGame = () => {
         grid: deletingGrid,
         chainAnimationStep: 'deleting'
       }));
-      await new Promise(resolve => setTimeout(resolve, 400));
+      await new Promise(resolve => setTimeout(resolve, 200));
       
       // Step 3: Remove deleted puyos
       const cleanedGrid = removeDeletedPuyos(deletingGrid);
@@ -172,7 +172,7 @@ export const usePuyoGame = () => {
         grid: cleanedGrid,
         chainAnimationStep: 'falling'
       }));
-      await new Promise(resolve => setTimeout(resolve, 200));
+      await new Promise(resolve => setTimeout(resolve, 100));
       
       // Step 4: Apply gravity with falling animation
       currentGrid = applyGravity(cleanedGrid);
@@ -190,7 +190,7 @@ export const usePuyoGame = () => {
         chainAnimationStep: 'complete'
       }));
       
-      await new Promise(resolve => setTimeout(resolve, 400));
+      await new Promise(resolve => setTimeout(resolve, 200));
     }
 
     setGameState(prev => ({ 
@@ -264,7 +264,7 @@ export const usePuyoGame = () => {
             };
           }
         });
-      }, 200);
+      }, 50);
 
       return () => clearTimeout(timer);
     }
@@ -310,7 +310,7 @@ export const usePuyoGame = () => {
   // Chain processing trigger
   useEffect(() => {
     if (!gameState.currentPair && !gameState.isChaining && gameState.isPlaying) {
-      const timer = setTimeout(processChainReaction, 200);
+      const timer = setTimeout(processChainReaction, 100);
       return () => clearTimeout(timer);
     }
   }, [gameState.currentPair, gameState.isChaining, gameState.isPlaying, processChainReaction]);

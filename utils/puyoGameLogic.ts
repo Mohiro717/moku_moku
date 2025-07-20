@@ -5,7 +5,7 @@ export const GAME_CONFIG: GameConfig = {
   gridHeight: 13, // 12 + 1 for spawn area
   colors: ['red', 'blue', 'green', 'yellow'],
   minChainLength: 4,
-  fallSpeed: 1000, // 1 second
+  fallSpeed: 800, // 0.8 second
   fastFallSpeed: 50, // fast drop
   gameOverLine: 1 // row 1 (top visible row)
 };
