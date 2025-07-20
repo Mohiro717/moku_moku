@@ -45,9 +45,9 @@ export const Puyo: React.FC<PuyoProps> = memo(({
   `;
 
   const animationClasses = `
-    ${isConnected ? 'ring-4 ring-yellow-300 shadow-lg scale-110 animate-pulse' : ''}
-    ${isDeleting ? 'animate-ping scale-125 opacity-75' : ''}
-    ${isFalling ? 'animate-bounce' : ''}
+    ${isConnected ? 'ring-4 ring-yellow-300 shadow-lg scale-110 animate-pulse z-10' : ''}
+    ${isDeleting ? 'animate-ping scale-125 opacity-50 bg-white' : ''}
+    ${isFalling ? 'animate-bounce scale-105' : ''}
   `;
 
   return (

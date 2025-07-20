@@ -44,7 +44,7 @@ export const useGameInput = (
         pauseGame();
         break;
     }
-  }, [gameState.isPlaying, gameState.isGameOver, movePair, rotatePair, hardDropPair, pauseGame]);
+  }, [gameState.isPlaying, gameState.isGameOver, movePair, rotateClockwise, rotateCounterClockwise, hardDropPair, pauseGame]);
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);

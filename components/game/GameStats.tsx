@@ -20,13 +20,13 @@ export const GameStats: React.FC<GameStatsProps> = memo(({
     
     switch (chainAnimationStep) {
       case 'highlighting':
-        return currentChainStep > 0 ? '連鎖発見!' : 'ぷよ発見!';
+        return currentChainStep > 0 ? `${currentChainStep}連鎖発見!` : 'ぷよ発見!';
       case 'deleting':
         return 'ぷよ消去中...';
       case 'falling':
         return '落下中...';
       case 'complete':
-        return currentChainStep > 0 ? `${currentChainStep}連鎖!` : 'ぷよ消去完了!';
+        return currentChainStep > 0 ? `${currentChainStep}連鎖完了!` : 'ぷよ消去完了!';
       default:
         return '';
     }

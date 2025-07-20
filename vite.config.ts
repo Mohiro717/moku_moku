@@ -6,7 +6,12 @@ export default defineConfig({
   base: '/moku_moku/',
   server: {
     port: 3000,
-    open: true
+    open: true,
+    headers: {
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    }
   },
   build: {
     outDir: 'dist',
@@ -20,5 +25,6 @@ export default defineConfig({
   esbuild: {
     jsxFactory: 'React.createElement',
     jsxFragment: 'React.Fragment'
-  }
+  },
+  assetsInclude: ['**/*.webmanifest']
 });

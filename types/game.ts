@@ -28,7 +28,7 @@ export interface GameState {
   isPlaying: boolean;
   isChaining: boolean;
   lastFallTime: number;
-  chainAnimationStep: 'idle' | 'highlighting' | 'deleting' | 'falling' | 'complete';
+  chainAnimationStep: ChainAnimationStep;
   currentChainStep: number;
 }
 
@@ -45,5 +45,27 @@ export interface GameConfig {
 export interface Position {
   x: number;
   y: number;
+}
+
+export interface ChainResult {
+  newGrid: PuyoCell[][];
+  chainOccurred: boolean;
+  deletedCount: number;
+}
+
+export interface ChainProcessingState {
+  currentGrid: PuyoCell[][];
+  deletionRounds: number;
+  totalScore: number;
+  actualChains: number;
+}
+
+export type ChainAnimationStep = 'idle' | 'highlighting' | 'deleting' | 'falling' | 'complete';
+
+export interface GameTimings {
+  highlight: number;
+  deletion: number;
+  falling: number;
+  complete: number;
 }
 

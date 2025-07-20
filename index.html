@@ -33,12 +33,49 @@
     <link rel="canonical" href="https://your-domain.com/moku_moku/">
     
     <!-- Favicons -->
-    <link rel="icon" href="/favicon.ico" type="image/x-icon">
-    <link rel="icon" href="/moku_moku/images/16x16px.png" sizes="16x16" type="image/png">
-    <link rel="icon" href="/moku_moku/images/32x32px.png" sizes="32x32" type="image/png">
-    <link rel="icon" href="/moku_moku/images/192x192px.png" sizes="192x192" type="image/png">
-    <link rel="apple-touch-icon" href="/moku_moku/images/180x180px.png">
-    <link rel="manifest" href="/moku_moku/site.webmanifest">
+    <link rel="icon" href="./favicon.ico" type="image/x-icon">
+    <link rel="icon" href="./images/16x16px.png" sizes="16x16" type="image/png">
+    <link rel="icon" href="./images/192x192px.png" sizes="192x192" type="image/png">
+    <link rel="apple-touch-icon" href="./images/180x180px.png">
+    
+    <!-- PWA Manifest (Data URI to avoid file system issues) -->
+    <script>
+        // Manifest configuration object
+        const manifestData = {
+            name: "Moku Moku House",
+            short_name: "MokuMoku",
+            description: "クリエイターが静かに、もくもくと創作する場所",
+            start_url: window.location.origin + "/moku_moku/",
+            display: "standalone",
+            theme_color: "#f8f4e9",
+            background_color: "#f8f4e9",
+            icons: [
+                {
+                    src: new URL("./images/16x16px.png", window.location.href).href,
+                    sizes: "16x16",
+                    type: "image/png"
+                },
+                {
+                    src: new URL("./images/180x180px.png", window.location.href).href, 
+                    sizes: "180x180",
+                    type: "image/png"
+                },
+                {
+                    src: new URL("./images/192x192px.png", window.location.href).href,
+                    sizes: "192x192", 
+                    type: "image/png"
+                }
+            ]
+        };
+        
+        // Create and inject manifest link
+        const manifestBlob = new Blob([JSON.stringify(manifestData)], {type: 'application/json'});
+        const manifestURL = URL.createObjectURL(manifestBlob);
+        const manifestLink = document.createElement('link');
+        manifestLink.rel = 'manifest';
+        manifestLink.href = manifestURL;
+        document.head.appendChild(manifestLink);
+    </script>
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
