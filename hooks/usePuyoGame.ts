@@ -8,6 +8,9 @@ import {
   isValidPosition,
   canPlacePair,
   processChains,
+  findChainsToHighlight,
+  markPuyosForDeletion,
+  removeDeletedPuyos,
   applyGravity,
   lockPairToGrid,
   calculateChainScore
@@ -24,7 +27,9 @@ const createInitialGameState = (): GameState => ({
   isPaused: false,
   isPlaying: false,
   isChaining: false,
-  lastFallTime: 0
+  lastFallTime: 0,
+  chainAnimationStep: 'idle',
+  currentChainStep: 0
 });
 
 export const usePuyoGame = () => {
@@ -119,44 +124,82 @@ export const usePuyoGame = () => {
     });
   }, []);
 
-  // Chain processing
+  // Animated chain processing with step-by-step visualization
   const processChainReaction = useCallback(async () => {
-    setGameState(prev => ({ ...prev, isChaining: true }));
+    setGameState(prev => ({ 
+      ...prev, 
+      isChaining: true,
+      chainAnimationStep: 'highlighting',
+      currentChainStep: 0
+    }));
 
     let currentGrid = gameState.grid;
-    let totalChainCount = 0;
+    let deletionCount = 0; // Count how many deletion rounds occur
     let totalScore = gameState.score;
 
     while (true) {
-      const { newGrid, chainOccurred, deletedCount } = processChains(currentGrid);
+      // Step 1: Find and highlight chains
+      const { newGrid: highlightedGrid, chainOccurred, deletedCount } = findChainsToHighlight(currentGrid);
       
       if (!chainOccurred) break;
 
-      totalChainCount++;
+      deletionCount++;
+      const isActualChain = deletionCount > 1; // Only count as chain from 2nd deletion onwards
+      const displayChainStep = isActualChain ? deletionCount - 1 : 0;
       
-      // Show connected puyos animation
-      setGameState(prev => ({ ...prev, grid: newGrid }));
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Show highlighted puyos (connected state)
+      setGameState(prev => ({ 
+        ...prev, 
+        grid: highlightedGrid,
+        chainAnimationStep: 'highlighting',
+        currentChainStep: displayChainStep
+      }));
+      await new Promise(resolve => setTimeout(resolve, 600));
       
-      // Apply gravity
-      currentGrid = applyGravity(newGrid);
+      // Step 2: Mark for deletion with animation
+      const deletingGrid = markPuyosForDeletion(highlightedGrid);
+      setGameState(prev => ({ 
+        ...prev, 
+        grid: deletingGrid,
+        chainAnimationStep: 'deleting'
+      }));
+      await new Promise(resolve => setTimeout(resolve, 400));
       
-      // Calculate score
-      totalScore += calculateChainScore(deletedCount, totalChainCount);
+      // Step 3: Remove deleted puyos
+      const cleanedGrid = removeDeletedPuyos(deletingGrid);
+      setGameState(prev => ({ 
+        ...prev, 
+        grid: cleanedGrid,
+        chainAnimationStep: 'falling'
+      }));
+      await new Promise(resolve => setTimeout(resolve, 200));
       
-      // Update state
+      // Step 4: Apply gravity with falling animation
+      currentGrid = applyGravity(cleanedGrid);
+      
+      // Calculate score (use actual deletion count for scoring)
+      totalScore += calculateChainScore(deletedCount, deletionCount);
+      
+      // Update state with final positions
+      const finalChainCount = Math.max(displayChainStep, gameState.chainCount);
       setGameState(prev => ({ 
         ...prev, 
         grid: currentGrid, 
         score: totalScore,
-        chainCount: totalChainCount 
+        chainCount: finalChainCount,
+        chainAnimationStep: 'complete'
       }));
       
-      await new Promise(resolve => setTimeout(resolve, 300));
+      await new Promise(resolve => setTimeout(resolve, 400));
     }
 
-    setGameState(prev => ({ ...prev, isChaining: false }));
-  }, [gameState.grid, gameState.score]);
+    setGameState(prev => ({ 
+      ...prev, 
+      isChaining: false,
+      chainAnimationStep: 'idle',
+      currentChainStep: 0
+    }));
+  }, [gameState.grid, gameState.score, gameState.chainCount]);
 
   // Simple auto-fall mechanism
   const handleAutoFall = useCallback(() => {
@@ -280,7 +323,9 @@ export const usePuyoGame = () => {
       isPaused: false,
       isGameOver: false,
       currentPair: createRandomPair(),
-      nextPair: createRandomPair()
+      nextPair: createRandomPair(),
+      chainAnimationStep: 'idle',
+      currentChainStep: 0
     }));
   }, []);
 

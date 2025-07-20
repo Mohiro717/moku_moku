@@ -5,6 +5,8 @@ export interface PuyoCell {
   id: string;
   isConnected?: boolean;
   willDelete?: boolean;
+  isDeleting?: boolean;
+  isFalling?: boolean;
 }
 
 export interface PuyoPair {
@@ -26,6 +28,8 @@ export interface GameState {
   isPlaying: boolean;
   isChaining: boolean;
   lastFallTime: number;
+  chainAnimationStep: 'idle' | 'highlighting' | 'deleting' | 'falling' | 'complete';
+  currentChainStep: number;
 }
 
 export interface GameConfig {

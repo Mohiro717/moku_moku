@@ -32,3 +32,12 @@ export interface LoadingScreenProps {
   isLoading: boolean;
   onComplete?: () => void;
 }
+
+export interface FortniteCreator {
+  id: number;
+  name: string;
+  fortniteUrl: string;
+  category: string;
+  description: string;
+  color: string;
+}

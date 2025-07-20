@@ -5,7 +5,8 @@ interface PuyoProps {
   color: PuyoColor;
   isConnected?: boolean;
   willDelete?: boolean;
-  isAnimating?: boolean;
+  isDeleting?: boolean;
+  isFalling?: boolean;
 }
 
 const PUYO_COLORS = {
@@ -27,8 +28,8 @@ const PUYO_EYES = {
 export const Puyo: React.FC<PuyoProps> = memo(({ 
   color, 
   isConnected = false, 
-  willDelete = false,
-  isAnimating = false
+  isDeleting = false,
+  isFalling = false
 }) => {
   if (!color) {
     return <div className="w-8 h-8 sm:w-10 sm:h-10" />;
@@ -44,9 +45,9 @@ export const Puyo: React.FC<PuyoProps> = memo(({
   `;
 
   const animationClasses = `
-    ${isConnected ? 'ring-2 ring-white shadow-lg scale-110' : ''}
-    ${willDelete ? 'animate-pulse scale-125' : ''}
-    ${isAnimating ? 'animate-bounce' : ''}
+    ${isConnected ? 'ring-4 ring-yellow-300 shadow-lg scale-110 animate-pulse' : ''}
+    ${isDeleting ? 'animate-ping scale-125 opacity-75' : ''}
+    ${isFalling ? 'animate-bounce' : ''}
   `;
 
   return (

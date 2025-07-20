@@ -26,7 +26,13 @@ export const GameControls: React.FC<GameControlsProps> = ({
 
       {/* Game Status */}
       <div className="text-center space-y-2">
-        <GameStats score={gameState.score} chainCount={gameState.chainCount} />
+        <GameStats 
+          score={gameState.score} 
+          chainCount={gameState.chainCount}
+          isChaining={gameState.isChaining}
+          chainAnimationStep={gameState.chainAnimationStep}
+          currentChainStep={gameState.currentChainStep}
+        />
       </div>
 
       {/* Control Buttons */}

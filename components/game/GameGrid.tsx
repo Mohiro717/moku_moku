@@ -65,7 +65,8 @@ export const GameGrid: React.FC<GameGridProps> = ({
                 color={cell.color}
                 isConnected={cell.isConnected}
                 willDelete={cell.willDelete}
-                isAnimating={(cell as any).isFalling}
+                isDeleting={cell.isDeleting}
+                isFalling={cell.isFalling || (cell as any).isFalling}
               />
             </div>
           ))

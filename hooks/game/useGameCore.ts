@@ -12,7 +12,9 @@ const createInitialGameState = (): GameState => ({
   isPaused: false,
   isPlaying: false,
   isChaining: false,
-  lastFallTime: 0
+  lastFallTime: 0,
+  chainAnimationStep: 'idle',
+  currentChainStep: 0
 });
 
 export const useGameCore = () => {

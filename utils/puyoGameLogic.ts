@@ -97,12 +97,19 @@ export const findConnectedPuyos = (
   return connected;
 };
 
-export const processChains = (grid: PuyoCell[][]): { 
+// Find chains for highlighting (step 1)
+export const findChainsToHighlight = (grid: PuyoCell[][]): { 
   newGrid: PuyoCell[][]; 
   chainOccurred: boolean; 
   deletedCount: number 
 } => {
-  const newGrid = grid.map(row => row.map(cell => ({ ...cell, willDelete: false, isConnected: false })));
+  const newGrid = grid.map(row => row.map(cell => ({ 
+    ...cell, 
+    willDelete: false, 
+    isConnected: false,
+    isDeleting: false,
+    isFalling: false
+  })));
   const visited = new Set<string>();
   let totalDeleted = 0;
   let chainOccurred = false;
@@ -117,9 +124,8 @@ export const processChains = (grid: PuyoCell[][]): {
           chainOccurred = true;
           totalDeleted += connected.length;
           
-          // Mark connected puyos for deletion
+          // Mark connected puyos for highlighting
           connected.forEach(pos => {
-            newGrid[pos.y][pos.x].willDelete = true;
             newGrid[pos.y][pos.x].isConnected = true;
             visited.add(`${pos.y}-${pos.x}`);
           });
@@ -129,6 +135,33 @@ export const processChains = (grid: PuyoCell[][]): {
   }
 
   return { newGrid, chainOccurred, deletedCount: totalDeleted };
+};
+
+// Mark highlighted puyos for deletion (step 2)
+export const markPuyosForDeletion = (grid: PuyoCell[][]): PuyoCell[][] => {
+  return grid.map(row => row.map(cell => ({
+    ...cell,
+    isDeleting: cell.isConnected,
+    willDelete: cell.isConnected
+  })));
+};
+
+// Remove deleted puyos (step 3)
+export const removeDeletedPuyos = (grid: PuyoCell[][]): PuyoCell[][] => {
+  return grid.map(row => row.map(cell => 
+    cell.willDelete 
+      ? { color: null, id: Math.random().toString(36) }
+      : { ...cell, isConnected: false, isDeleting: false }
+  ));
+};
+
+// Legacy function for backward compatibility
+export const processChains = (grid: PuyoCell[][]): { 
+  newGrid: PuyoCell[][]; 
+  chainOccurred: boolean; 
+  deletedCount: number 
+} => {
+  return findChainsToHighlight(grid);
 };
 
 export const applyGravity = (grid: PuyoCell[][]): PuyoCell[][] => {

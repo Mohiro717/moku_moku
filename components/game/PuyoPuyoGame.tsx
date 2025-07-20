@@ -4,7 +4,7 @@ import { GameControls } from './GameControls';
 import { TouchControls } from './TouchControls';
 import { ErrorBoundary } from '../ErrorBoundary';
 import { GameErrorFallback } from './GameErrorFallback';
-import { usePuyoGameNew } from '../../hooks/usePuyoGameNew';
+import { usePuyoGame } from '../../hooks/usePuyoGame';
 
 export const PuyoPuyoGame: React.FC = () => {
   const {
@@ -18,7 +18,7 @@ export const PuyoPuyoGame: React.FC = () => {
     rotateClockwise,
     rotateCounterClockwise,
     hardDropPair
-  } = usePuyoGameNew();
+  } = usePuyoGame();
 
   return (
     <ErrorBoundary fallback={GameErrorFallback}>
