@@ -1,0 +1,31 @@
+{
+    "name": "Moku Moku House",
+    "short_name": "MokuMoku",
+    "description": "クリエイターが静かに、もくもくと創作する場所",
+    "icons": [
+        {
+            "src": "/moku_moku/images/16x16px.jpg",
+            "sizes": "16x16",
+            "type": "image/jpeg"
+        },
+        {
+            "src": "/moku_moku/images/32x32px.jpg",
+            "sizes": "32x32",
+            "type": "image/jpeg"
+        },
+        {
+            "src": "/moku_moku/images/180x180px.jpg",
+            "sizes": "180x180",
+            "type": "image/jpeg"
+        },
+        {
+            "src": "/moku_moku/images/192x192px.jpg",
+            "sizes": "192x192",
+            "type": "image/jpeg"
+        }
+    ],
+    "theme_color": "#f8f4e9",
+    "background_color": "#f8f4e9",
+    "display": "standalone",
+    "start_url": "/moku_moku/"
+}
