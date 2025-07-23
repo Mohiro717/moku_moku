@@ -1,4 +1,5 @@
-import type { PuyoCell, PuyoColor, PuyoPair, Position, GameConfig } from '../types/game';
+import type { PuyoCell, PuyoColor, ColoredPuyoColor, PuyoPair, Position, GameConfig } from '../types/game';
+import { removeAdjacentOjama } from './ojamaSystem';
 
 export const GAME_CONFIG: GameConfig = {
   gridWidth: 6,
@@ -19,7 +20,7 @@ export const createEmptyGrid = (): PuyoCell[][] => {
   );
 };
 
-export const getRandomColor = (): PuyoColor => {
+export const getRandomColor = (): ColoredPuyoColor => {
   const colors = GAME_CONFIG.colors;
   return colors[Math.floor(Math.random() * colors.length)];
 };
@@ -78,7 +79,8 @@ export const findConnectedPuyos = (
   color: PuyoColor, 
   visited: Set<string>
 ): Position[] => {
-  if (!color || visited.has(`${startRow}-${startCol}`) || 
+  // おじゃまぷよは連鎖しない
+  if (!color || color === 'ojama' || visited.has(`${startRow}-${startCol}`) || 
       startRow < 0 || startRow >= GAME_CONFIG.gridHeight || 
       startCol < 0 || startCol >= GAME_CONFIG.gridWidth || 
       grid[startRow][startCol].color !== color) {
@@ -113,16 +115,30 @@ export const findChainsToHighlight = (grid: PuyoCell[][]): {
   const visited = new Set<string>();
   let totalDeleted = 0;
   let chainOccurred = false;
+  let chainsFound = 0;
+
+  // まず全体をスキャンしてお邪魔ぷよの数をカウント
+  let ojamaCount = 0;
+  for (let row = 0; row < GAME_CONFIG.gridHeight; row++) {
+    for (let col = 0; col < GAME_CONFIG.gridWidth; col++) {
+      if (newGrid[row][col].color === 'ojama') {
+        ojamaCount++;
+      }
+    }
+  }
 
   for (let row = 0; row < GAME_CONFIG.gridHeight; row++) {
     for (let col = 0; col < GAME_CONFIG.gridWidth; col++) {
       const cell = newGrid[row][col];
-      if (cell.color && !visited.has(`${row}-${col}`)) {
+      // おじゃまぷよは連鎖対象外（厳格にチェック）
+      if (cell.color && cell.color !== 'ojama' && cell.color !== null && !visited.has(`${row}-${col}`)) {
         const connected = findConnectedPuyos(newGrid, row, col, cell.color, new Set());
         
         if (connected.length >= GAME_CONFIG.minChainLength) {
           chainOccurred = true;
           totalDeleted += connected.length;
+          chainsFound++;
+          
           
           // Mark connected puyos for highlighting
           connected.forEach(pos => {
@@ -134,6 +150,13 @@ export const findChainsToHighlight = (grid: PuyoCell[][]): {
     }
   }
 
+  
+  // 異常検知: 削除数が全セル数を超える場合
+  if (totalDeleted > GAME_CONFIG.gridWidth * GAME_CONFIG.gridHeight) {
+    console.error(`[CHAIN DETECTION] ERROR: Total deleted (${totalDeleted}) exceeds grid size! Resetting.`);
+    return { newGrid: grid, chainOccurred: false, deletedCount: 0 };
+  }
+  
   return { newGrid, chainOccurred, deletedCount: totalDeleted };
 };
 
@@ -146,40 +169,135 @@ export const markPuyosForDeletion = (grid: PuyoCell[][]): PuyoCell[][] => {
   })));
 };
 
-// Remove deleted puyos (step 3)
+// Remove deleted puyos and adjacent ojama puyos (step 3)
 export const removeDeletedPuyos = (grid: PuyoCell[][]): PuyoCell[][] => {
-  return grid.map(row => row.map(cell => 
-    cell.willDelete 
-      ? { color: null, id: Math.random().toString(36) }
-      : { ...cell, isConnected: false, isDeleting: false }
-  ));
+  // 消去されるぷよの位置を収集（色つきぷよのみ、おじゃまぷよは除外）
+  const deletedPositions: Array<{ x: number; y: number }> = [];
+  
+  for (let row = 0; row < GAME_CONFIG.gridHeight; row++) {
+    for (let col = 0; col < GAME_CONFIG.gridWidth; col++) {
+      const cell = grid[row][col];
+      // willDeleteフラグが立っていて、色つきぷよの場合のみ（おじゃまぷよは除外）
+      if (cell.willDelete && cell.color && cell.color !== 'ojama') {
+        deletedPositions.push({ x: col, y: row });
+      }
+    }
+  }
+  
+  
+  // 削除対象のおじゃまぷよもカウント
+  let ojamaToDelete = 0;
+  for (let row = 0; row < GAME_CONFIG.gridHeight; row++) {
+    for (let col = 0; col < GAME_CONFIG.gridWidth; col++) {
+      const cell = grid[row][col];
+      if (cell.willDelete && cell.color === 'ojama') {
+        ojamaToDelete++;
+      }
+    }
+  }
+  
+  if (ojamaToDelete > 0) {
+  }
+  
+  // 基本的な消去処理（色つきぷよとおじゃまぷよ両方）
+  let newGrid = grid.map(row => row.map(cell => {
+    if (cell.willDelete && cell.color) {
+      // 色つきぷよとおじゃまぷよを削除
+      return { color: null, id: Math.random().toString(36) };
+    } else {
+      // その他のセルはフラグをリセット
+      return { 
+        ...cell, 
+        isConnected: false, 
+        isDeleting: false,
+        willDelete: false
+      };
+    }
+  }));
+  
+  // おじゃまぷよの隣接消去処理
+  if (deletedPositions.length > 0) {
+    
+    // 削除前のおじゃまぷよ数をカウント
+    let ojamaCountBefore = 0;
+    for (let row = 0; row < GAME_CONFIG.gridHeight; row++) {
+      for (let col = 0; col < GAME_CONFIG.gridWidth; col++) {
+        if (newGrid[row][col].color === 'ojama') {
+          ojamaCountBefore++;
+        }
+      }
+    }
+    
+    // おじゃまぷよにアニメーションフラグを設定（実際の削除はしない）
+    const { newGrid: gridWithOjamaFlags, removedOjamaCount } = removeAdjacentOjama(newGrid, deletedPositions);
+    newGrid = gridWithOjamaFlags;
+    
+    if (removedOjamaCount > 0) {
+    } else {
+    }
+  } else {
+  }
+  
+  return newGrid;
 };
 
-// Legacy function for backward compatibility
+// Complete chain processing with ojama removal (replaces legacy processChains)
 export const processChains = (grid: PuyoCell[][]): { 
   newGrid: PuyoCell[][]; 
   chainOccurred: boolean; 
   deletedCount: number 
 } => {
-  return findChainsToHighlight(grid);
+  
+  // 入力検証
+  if (!grid || grid.length === 0) {
+    console.error(`[CHAIN PROCESS] Invalid grid provided`);
+    return { newGrid: createEmptyGrid(), chainOccurred: false, deletedCount: 0 };
+  }
+  
+  // Step 1: Find chains to highlight
+  const { newGrid: highlightGrid, chainOccurred, deletedCount } = findChainsToHighlight(grid);
+  
+  if (!chainOccurred) {
+    return { newGrid: grid, chainOccurred: false, deletedCount: 0 };
+  }
+  
+  // 異常な削除数チェック
+  if (deletedCount <= 0 || deletedCount > 50) {
+    console.warn(`[CHAIN PROCESS] Abnormal deleted count: ${deletedCount} - aborting chain processing`);
+    return { newGrid: grid, chainOccurred: false, deletedCount: 0 };
+  }
+  
+  
+  // Step 2: Mark puyos for deletion
+  const markedGrid = markPuyosForDeletion(highlightGrid);
+  
+  // Step 3: Remove deleted puyos and adjacent ojama puyos
+  const finalGrid = removeDeletedPuyos(markedGrid);
+  
+  return { newGrid: finalGrid, chainOccurred, deletedCount };
 };
 
 export const applyGravity = (grid: PuyoCell[][]): PuyoCell[][] => {
   const newGrid = createEmptyGrid();
+  
 
   for (let col = 0; col < GAME_CONFIG.gridWidth; col++) {
     const columnCells: PuyoCell[] = [];
     
-    // Collect non-deleted cells from bottom to top
+    // Collect all existing cells (including ojama) from bottom to top
     for (let row = GAME_CONFIG.gridHeight - 1; row >= 0; row--) {
       const cell = grid[row][col];
-      if (cell.color && !cell.willDelete) {
+      // 色がありwillDeleteフラグが立っていないセル（お邪魔ぷよも含む）
+      if (cell.color && !cell.willDelete && !cell.isDeleting) {
         columnCells.push({
-          ...cell,
+          color: cell.color,
+          id: Math.random().toString(36),
           willDelete: false,
           isConnected: false,
-          id: Math.random().toString(36)
+          isDeleting: false,
+          isFalling: false
         });
+      } else if (cell.color) {
       }
     }
 
@@ -188,8 +306,11 @@ export const applyGravity = (grid: PuyoCell[][]): PuyoCell[][] => {
       const targetRow = GAME_CONFIG.gridHeight - 1 - i;
       newGrid[targetRow][col] = columnCells[i];
     }
+    
+    if (columnCells.length > 0) {
+    }
   }
-
+  
   return newGrid;
 };
 
@@ -245,6 +366,19 @@ export const lockPairToGrid = (
 };
 
 export const calculateChainScore = (deletedCount: number, chainCount: number): number => {
-  const chainMultiplier = Math.pow(2, chainCount - 1);
-  return deletedCount * 10 * chainMultiplier;
+  // 異常値制限
+  const limitedDeletedCount = Math.min(Math.max(deletedCount, 0), 50); // 0-50個に制限
+  const limitedChainCount = Math.min(Math.max(chainCount, 1), 10); // 1-10連鎖に制限
+  
+  // 倍率も制限（最大1024倍まで）
+  const chainMultiplier = Math.min(Math.pow(2, limitedChainCount - 1), 1024);
+  const score = limitedDeletedCount * 10 * chainMultiplier;
+  
+  // 最終スコアも制限（最大10万点まで）
+  const limitedScore = Math.min(score, 100000);
+  
+  if (score !== limitedScore || deletedCount !== limitedDeletedCount || chainCount !== limitedChainCount) {
+  }
+  
+  return limitedScore;
 };

@@ -1,4 +1,5 @@
-export type PuyoColor = 'red' | 'blue' | 'green' | 'yellow' | null;
+export type ColoredPuyoColor = 'red' | 'blue' | 'green' | 'yellow';
+export type PuyoColor = ColoredPuyoColor | 'ojama' | null;
 
 export interface PuyoCell {
   color: PuyoColor;
@@ -10,8 +11,8 @@ export interface PuyoCell {
 }
 
 export interface PuyoPair {
-  main: PuyoColor; // 下側のぷよ
-  sub: PuyoColor;  // 上側のぷよ
+  main: ColoredPuyoColor; // 下側のぷよ（お邪魔ぷよは生成時に出現しない）
+  sub: ColoredPuyoColor;  // 上側のぷよ（お邪魔ぷよは生成時に出現しない）
   x: number;       // 横位置（列）
   y: number;       // 縦位置（行、下側ぷよの位置）
   rotation: number; // 0:上下, 1:右左, 2:下上, 3:左右
@@ -35,7 +36,7 @@ export interface GameState {
 export interface GameConfig {
   gridWidth: number;
   gridHeight: number;
-  colors: PuyoColor[];
+  colors: ColoredPuyoColor[]; // お邪魔ぷよは含まない（生成時のみ）
   minChainLength: number;
   fallSpeed: number; // milliseconds
   fastFallSpeed: number;
@@ -67,5 +68,23 @@ export interface GameTimings {
   deletion: number;
   falling: number;
   complete: number;
+  puyoFallInterval: number;
+}
+
+export type GameDifficulty = 'easy' | 'normal' | 'hard';
+
+export type GamePlayer = 'player' | 'cpu';
+
+export interface VsGameState {
+  player: GameState;
+  cpu: GameState;
+  gameMode: 'single' | 'vs-cpu';
+  difficulty: GameDifficulty;
+  isPlaying: boolean;
+  isPaused: boolean;
+  isGameOver: boolean;
+  winner: GamePlayer | null;
+  pendingOjamaPlayer: number;
+  pendingOjamaCpu: number;
 }
 

@@ -14,6 +14,7 @@ const PUYO_COLORS = {
   blue: 'bg-blue-400 border-blue-500',
   green: 'bg-green-400 border-green-500',
   yellow: 'bg-yellow-400 border-yellow-500',
+  ojama: 'bg-gray-500 border-gray-600',
   null: 'bg-transparent border-transparent'
 };
 
@@ -22,6 +23,7 @@ const PUYO_EYES = {
   blue: '😌',
   green: '😄',
   yellow: '😆',
+  ojama: '😈',
   null: ''
 };
 

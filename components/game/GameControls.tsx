@@ -3,7 +3,7 @@ import { Button } from '../ui/Button';
 import { NextPiecePreview } from './NextPiecePreview';
 import { GameStats } from './GameStats';
 import { GameStatusIndicator } from './GameStatusIndicator';
-import { GameInstructions } from './GameInstructions';
+import { GameInstructionsCommon } from './GameInstructionsCommon';
 import type { GameState } from '../../types/game';
 
 interface GameControlsProps {
@@ -38,37 +38,31 @@ export const GameControls: React.FC<GameControlsProps> = ({
       {/* Control Buttons */}
       <div className="flex flex-col space-y-2">
         {!gameState.isPlaying ? (
-          <Button
+          <button
             onClick={onStart}
-            variant="primary"
-            size="lg"
+            className="w-full py-3 px-4 bg-gradient-to-r from-vivid-pink to-vivid-green text-white rounded-xl font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 hover:from-vivid-pink/90 hover:to-vivid-green/90"
           >
             {gameState.isGameOver ? 'New Game' : 'Start Game'}
-          </Button>
+          </button>
         ) : (
-          <Button
+          <button
             onClick={onPause}
-            variant="primary"
-            size="lg"
+            className="w-full py-3 px-4 bg-gradient-to-r from-vivid-pink to-vivid-green text-white rounded-xl font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 hover:from-vivid-pink/90 hover:to-vivid-green/90"
           >
             {gameState.isPaused ? 'Resume' : 'Pause'}
-          </Button>
+          </button>
         )}
         
-        <Button
+        <button
           onClick={onRestart}
-          variant="secondary"
-          size="sm"
+          className="w-full py-2 px-4 bg-gradient-to-r from-coffee-light to-coffee-mid text-white rounded-xl font-medium shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200 hover:from-coffee-light/90 hover:to-coffee-mid/90"
         >
           Restart
-        </Button>
+        </button>
       </div>
 
       {/* Game Instructions */}
-      <GameInstructions />
-
-      {/* Game Status Indicators */}
-      <GameStatusIndicator gameState={gameState} />
+      <GameInstructionsCommon />
     </div>
   );
 };

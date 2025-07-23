@@ -112,7 +112,7 @@ const SingleBlob: React.FC<SingleBlobProps> = ({ config, morphPaths }) => {
       viewBox="0 0 200 200"
       xmlns="http://www.w3.org/2000/svg"
     >
-      <path fill={config.color}>
+      <path fill={config.color} d={morphPaths[0]}>
         <animate
           attributeName="d"
           values={morphValues}

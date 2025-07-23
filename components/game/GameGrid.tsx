@@ -7,13 +7,15 @@ interface GameGridProps {
   currentPair: PuyoPair | null;
   getPairPositions: (pair: PuyoPair) => { main: Position; sub: Position };
   isGameOver: boolean;
+  isPaused?: boolean;
 }
 
 export const GameGrid: React.FC<GameGridProps> = ({ 
   grid, 
   currentPair,
   getPairPositions,
-  isGameOver 
+  isGameOver,
+  isPaused = false
 }) => {
   // Memoize falling positions calculation
   const fallingPositions = useMemo(() => {
@@ -47,7 +49,7 @@ export const GameGrid: React.FC<GameGridProps> = ({
     <div className="relative bg-ivory border-4 border-coffee-dark rounded-2xl p-4 shadow-lg">
       {/* Grid container */}
       <div 
-        className="grid gap-1" 
+        className={`grid gap-1 transition-all duration-300 ${isPaused ? 'opacity-30' : ''}`}
         style={{ gridTemplateColumns: `repeat(${grid[0]?.length || 6}, 1fr)` }}
       >
         {visibleGrid.map((row, rowIndex) =>
@@ -83,6 +85,15 @@ export const GameGrid: React.FC<GameGridProps> = ({
         ))}
       </div>
 
+
+      {/* Pause overlay */}
+      {isPaused && (
+        <div className="absolute inset-0 bg-coffee-dark/70 rounded-2xl flex items-center justify-center">
+          <div className="text-center text-white">
+            <h3 className="text-4xl font-bold tracking-wider animate-pulse">PAUSE</h3>
+          </div>
+        </div>
+      )}
 
       {/* Game Over overlay */}
       {isGameOver && (

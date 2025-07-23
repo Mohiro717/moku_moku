@@ -34,15 +34,25 @@ const createInitialGameState = (): GameState => ({
   currentChainStep: 0
 });
 
-export const usePuyoGame = () => {
+// キーボード入力なしのぷよぷよゲーム（CPU用）
+export const usePuyoGameWithoutInput = () => {
   const [gameState, setGameState] = useState<GameState>(createInitialGameState);
   const gameLoopRef = useRef<number>();
   const lastUpdateTime = useRef<number>(0);
+  const pairStuckTime = useRef<number>(0);
+  const lastPairPosition = useRef<{x: number, y: number} | null>(null);
+
 
   // Pair movement handlers
   const movePair = useCallback((direction: 'left' | 'right' | 'down') => {
     setGameState(prev => {
       if (!prev.currentPair || prev.isGameOver || prev.isPaused || prev.isChaining) {
+        console.log('CPU movePair blocked:', { 
+          hasPair: !!prev.currentPair, 
+          isGameOver: prev.isGameOver, 
+          isPaused: prev.isPaused, 
+          isChaining: prev.isChaining 
+        });
         return prev;
       }
 
@@ -50,25 +60,34 @@ export const usePuyoGame = () => {
       
       switch (direction) {
         case 'left':
-          newPair.x = Math.max(0, newPair.x - 1);
+          newPair.x = prev.currentPair.x - 1;
           break;
         case 'right':
-          newPair.x = Math.min(GAME_CONFIG.gridWidth - 1, newPair.x + 1);
+          newPair.x = prev.currentPair.x + 1;
           break;
         case 'down':
-          newPair.y = newPair.y + 1;
+          newPair.y = prev.currentPair.y + 1;
           break;
       }
 
-      return canPlacePair(prev.grid, newPair) 
-        ? { ...prev, currentPair: newPair }
-        : prev;
+      // Validate the new position
+      if (canPlacePair(prev.grid, newPair)) {
+        return { ...prev, currentPair: newPair };
+      } else {
+        return prev;
+      }
     });
   }, []);
 
   const rotatePair = useCallback((clockwise: boolean = true) => {
     setGameState(prev => {
       if (!prev.currentPair || prev.isGameOver || prev.isPaused || prev.isChaining) {
+        console.log('CPU rotatePair blocked:', { 
+          hasPair: !!prev.currentPair, 
+          isGameOver: prev.isGameOver, 
+          isPaused: prev.isPaused, 
+          isChaining: prev.isChaining 
+        });
         return prev;
       }
 
@@ -83,6 +102,7 @@ export const usePuyoGame = () => {
       }
 
       // If kick system fails, no rotation occurs
+      console.log(`CPU rotation ${clockwise ? 'clockwise' : 'counter-clockwise'} failed`);
       return prev;
     });
   }, []);
@@ -91,6 +111,12 @@ export const usePuyoGame = () => {
   const hardDropPair = useCallback(() => {
     setGameState(prev => {
       if (!prev.currentPair || prev.isGameOver || prev.isPaused || prev.isChaining) {
+        console.log('CPU Hard drop blocked:', {
+          hasPair: !!prev.currentPair,
+          isGameOver: prev.isGameOver,
+          isPaused: prev.isPaused,
+          isChaining: prev.isChaining
+        });
         return prev;
       }
 
@@ -199,7 +225,6 @@ export const usePuyoGame = () => {
     await new Promise<void>(resolve => setTimeout(resolve, GAME_TIMINGS.falling));
   }, []);
 
-
   const updateFinalState = useCallback(async (
     grid: PuyoCell[][], 
     score: number, 
@@ -227,18 +252,22 @@ export const usePuyoGame = () => {
     let currentGrid = [...gameState.grid.map(row => [...row])];
     let deletionRounds = 0;
     let totalScore = gameState.score;
+
     const MAX_CHAIN_ROUNDS = 20; // 無限ループ防止
     let consecutiveNoChains = 0; // 連続で連鎖が発生しない回数
 
+    console.log(`[PUYO CHAIN WITHOUT INPUT] Starting chain reaction processing...`);
 
     while (deletionRounds < MAX_CHAIN_ROUNDS) {
       const { newGrid, chainOccurred, deletedCount } = processChains(currentGrid);
       
       if (!chainOccurred || deletedCount === 0) {
         consecutiveNoChains++;
+        console.log(`[PUYO CHAIN WITHOUT INPUT] No chains detected (consecutive: ${consecutiveNoChains})`);
         
         // 連続で2回連鎖が発生しなければ終了
         if (consecutiveNoChains >= 2) {
+          console.log(`[PUYO CHAIN WITHOUT INPUT] Ending chain reaction after ${deletionRounds} rounds`);
           break;
         }
         
@@ -252,10 +281,11 @@ export const usePuyoGame = () => {
       deletionRounds++;
       const actualChains = Math.max(0, deletionRounds - 1);
       
+      console.log(`[PUYO CHAIN WITHOUT INPUT] Chain ${deletionRounds}: ${deletedCount} puyos deleted`);
       
       // 異常検知: 同じ削除数が10回以上続いた場合は強制終了
       if (deletionRounds > 10 && deletedCount === 4) {
-        console.error(`[PUYO CHAIN] EMERGENCY STOP: Same chain pattern detected ${deletionRounds} times - forcing end`);
+        console.error(`[PUYO CHAIN WITHOUT INPUT] EMERGENCY STOP: Same chain pattern detected ${deletionRounds} times - forcing end`);
         break;
       }
       
@@ -271,6 +301,7 @@ export const usePuyoGame = () => {
       
       // デバッグ: グリッド状態を確認
       const remainingPuyos = currentGrid.flat().filter(cell => cell.color && cell.color !== null).length;
+      console.log(`[PUYO CHAIN WITHOUT INPUT] After deletion: ${remainingPuyos} puyos remaining`);
       
       await showFallingAnimation(currentGrid);
       
@@ -282,9 +313,10 @@ export const usePuyoGame = () => {
     }
 
     if (deletionRounds >= MAX_CHAIN_ROUNDS) {
-      console.warn(`[PUYO CHAIN] Hit maximum chain limit of ${MAX_CHAIN_ROUNDS}! Stopping to prevent infinite loop.`);
+      console.warn(`[PUYO CHAIN WITHOUT INPUT] Hit maximum chain limit of ${MAX_CHAIN_ROUNDS}! Stopping to prevent infinite loop.`);
     }
 
+    console.log(`[PUYO CHAIN WITHOUT INPUT] Chain reaction complete - total rounds: ${deletionRounds}`);
 
     setGameState(prev => ({ 
       ...prev, 
@@ -330,18 +362,60 @@ export const usePuyoGame = () => {
     });
   }, []);
 
-  // Auto-fall timer
+  // Game loop for automatic falling
   useEffect(() => {
-    if (!gameState.isPlaying || gameState.isPaused || gameState.isGameOver || !gameState.currentPair) {
-      return;
+    const gameLoop = (currentTime: number) => {
+      if (gameState.isPlaying && !gameState.isPaused && !gameState.isGameOver) {
+        const deltaTime = currentTime - lastUpdateTime.current;
+        
+        if (deltaTime >= GAME_TIMINGS.puyoFallInterval) {
+          // Auto-fall current pair
+          if (gameState.currentPair && !gameState.isChaining) {
+            // 滞留検出：同じ位置に3秒以上いる場合は強制落下
+            const currentPos = { x: gameState.currentPair.x, y: gameState.currentPair.y };
+            
+            if (lastPairPosition.current && 
+                lastPairPosition.current.x === currentPos.x && 
+                lastPairPosition.current.y === currentPos.y) {
+              pairStuckTime.current += deltaTime;
+              
+              // 3秒以上滞留している場合は強制ハードドロップ
+              if (pairStuckTime.current > 3000) {
+                console.log('[CPU GAME] Pair stuck detected, forcing hard drop');
+                hardDropPair();
+                pairStuckTime.current = 0;
+                lastPairPosition.current = null;
+              } else {
+                handleAutoFall();
+              }
+            } else {
+              // 位置が変わった場合はタイマーリセット
+              pairStuckTime.current = 0;
+              lastPairPosition.current = currentPos;
+              handleAutoFall();
+            }
+          } else {
+            // ペアがない場合はタイマーリセット
+            pairStuckTime.current = 0;
+            lastPairPosition.current = null;
+          }
+          lastUpdateTime.current = currentTime;
+        }
+      }
+      
+      gameLoopRef.current = requestAnimationFrame(gameLoop);
+    };
+
+    if (gameState.isPlaying) {
+      gameLoopRef.current = requestAnimationFrame(gameLoop);
     }
 
-    const fallTimer = setInterval(() => {
-      handleAutoFall();
-    }, GAME_CONFIG.fallSpeed);
-
-    return () => clearInterval(fallTimer);
-  }, [gameState.isPlaying, gameState.isPaused, gameState.isGameOver, gameState.currentPair, handleAutoFall]);
+    return () => {
+      if (gameLoopRef.current) {
+        cancelAnimationFrame(gameLoopRef.current);
+      }
+    };
+  }, [gameState.isPlaying, gameState.isPaused, gameState.isGameOver, gameState.isChaining, gameState.currentPair, handleAutoFall, hardDropPair]);
 
   // Chain processing trigger - should happen BEFORE spawning new pair
   useEffect(() => {
@@ -380,45 +454,7 @@ export const usePuyoGame = () => {
     }
   }, [gameState.currentPair, gameState.isChaining, gameState.isPlaying, gameState.isGameOver, gameState.grid, processChainReaction]);
 
-  // Keyboard controls
-  useEffect(() => {
-    const handleKeyPress = (event: KeyboardEvent) => {
-      if (!gameState.isPlaying || gameState.isPaused || gameState.isGameOver) return;
-
-      switch (event.key) {
-        case 'ArrowLeft':
-          event.preventDefault();
-          movePair('left');
-          break;
-        case 'ArrowRight':
-          event.preventDefault();
-          movePair('right');
-          break;
-        case 'z':
-        case 'Z':
-          event.preventDefault();
-          rotatePair(false);
-          break;
-        case 'x':
-        case 'X':
-          event.preventDefault();
-          rotatePair(true);
-          break;
-        case 'ArrowDown':
-          event.preventDefault();
-          movePair('down');
-          break;
-        case ' ':
-        case 'Space':
-          event.preventDefault();
-          hardDropPair();
-          break;
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyPress);
-    return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [gameState.isPlaying, gameState.isPaused, gameState.isGameOver, movePair, rotatePair]);
+  // *** キーボード操作は削除 ***
 
   // Game control functions
   const startGame = useCallback(() => {
