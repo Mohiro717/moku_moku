@@ -4,13 +4,51 @@ import { ErrorBoundary } from '../ErrorBoundary';
 import { GameErrorFallback } from './GameErrorFallback';
 import { TouchControls } from './TouchControls';
 import { NextPiecePreview } from './NextPiecePreview';
-import { GameInstructionsCommon } from './GameInstructionsCommon';
 import { useVsCpuGame } from '../../hooks/useVsCpuGame';
-import type { GameDifficulty } from '../../types/game';
+import type { GameDifficulty, GameResult } from '../../types/game';
+
+// Constants
+const GAME_STYLES = {
+  container: 'max-w-7xl mx-auto p-6 bg-ivory rounded-3xl shadow-lg',
+  title: 'text-3xl font-bold text-coffee-dark mb-2',
+  fieldContainer: 'bg-white/20 rounded-2xl p-4',
+  fieldTitle: 'text-xl font-bold text-coffee-dark',
+  infoContainer: 'bg-white/30 rounded-xl p-4',
+  infoTitle: 'text-sm font-bold text-coffee-dark',
+  loadingContainer: 'max-w-7xl mx-auto p-6 bg-ivory rounded-3xl shadow-lg',
+  errorContainer: 'max-w-7xl mx-auto p-6 bg-red-100 rounded-3xl shadow-lg'
+} as const;
+
+const DIFFICULTY_STYLES = {
+  easy: 'bg-gradient-to-r from-green-400 to-green-500 text-white',
+  normal: 'bg-gradient-to-r from-yellow-400 to-orange-400 text-white',
+  hard: 'bg-gradient-to-r from-red-400 to-red-500 text-white'
+} as const;
+
+const DIFFICULTY_LABELS = {
+  easy: 'EASY',
+  normal: 'NORMAL', 
+  hard: 'HARD'
+} as const;
 
 interface PuyoVsCpuGameProps {
   initialDifficulty?: GameDifficulty;
 }
+
+// Utility functions
+const getGameResult = (isGameOver: boolean, winner: string | null, player: 'player' | 'cpu'): GameResult => {
+  if (!isGameOver) return null;
+  if (winner === player) return 'win';
+  return 'lose';
+};
+
+const getDifficultyStyle = (difficulty: GameDifficulty): string => {
+  return DIFFICULTY_STYLES[difficulty];
+};
+
+const getDifficultyLabel = (difficulty: GameDifficulty): string => {
+  return DIFFICULTY_LABELS[difficulty];
+};
 
 export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty = 'normal' }) => {
   try {
@@ -102,17 +140,16 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
                     getPairPositions={getPlayerPairPositions}
                     isGameOver={gameState.player.isGameOver}
                     isPaused={gameState.isPaused}
+                    gameResult={getGameResult(gameState.isGameOver, gameState.winner, 'player')}
                   />
                 </TouchControls>
               </div>
 
-              {/* Player Status */}
-              <div className="text-center">
-                {gameState.player.isGameOver && (
-                  <div className="text-sm text-red-600 font-bold mt-1">
-                    GAME OVER
-                  </div>
-                )}
+              {/* Player Score Display */}
+              <div className="text-center mt-2">
+                <div className="text-xl font-bold text-vivid-pink">
+                  {gameState.player.score.toLocaleString()}
+                </div>
               </div>
             </div>
           </div>
@@ -138,49 +175,6 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
                   </div>
                 </div>
                 
-              </div>
-              
-              {/* Score Comparison */}
-              <div className="bg-white/30 rounded-xl p-4">
-                <div className="text-center mb-3">
-                  <div className="text-sm font-bold text-coffee-dark">SCORE</div>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className={`rounded-lg p-3 text-center transition-all duration-300 ${
-                    gameState.player.score > gameState.cpu.score 
-                      ? 'bg-green-100/90 border-2 border-green-300 shadow-lg' 
-                      : 'bg-blue-100/80'
-                  }`}>
-                    <div className={`text-xs font-medium mb-1 ${
-                      gameState.player.score > gameState.cpu.score ? 'text-green-700' : 'text-blue-700'
-                    }`}>YOU</div>
-                    <div className={`text-lg font-bold ${
-                      gameState.player.score > gameState.cpu.score ? 'text-green-800' : 'text-blue-800'
-                    }`}>
-                      {gameState.player.score.toLocaleString()}
-                    </div>
-                    {gameState.player.score > gameState.cpu.score && (
-                      <div className="text-xs text-green-600 font-bold mt-1">リード！</div>
-                    )}
-                  </div>
-                  <div className={`rounded-lg p-3 text-center transition-all duration-300 ${
-                    gameState.cpu.score > gameState.player.score 
-                      ? 'bg-green-100/90 border-2 border-green-300 shadow-lg' 
-                      : 'bg-red-100/80'
-                  }`}>
-                    <div className={`text-xs font-medium mb-1 ${
-                      gameState.cpu.score > gameState.player.score ? 'text-green-700' : 'text-red-700'
-                    }`}>CPU</div>
-                    <div className={`text-lg font-bold ${
-                      gameState.cpu.score > gameState.player.score ? 'text-green-800' : 'text-red-800'
-                    }`}>
-                      {gameState.cpu.score.toLocaleString()}
-                    </div>
-                    {gameState.cpu.score > gameState.player.score && (
-                      <div className="text-xs text-green-600 font-bold mt-1">リード！</div>
-                    )}
-                  </div>
-                </div>
               </div>
               
               {/* Chain Display */}
@@ -238,24 +232,22 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
                   難易度
                 </div>
                 <div className="text-center">
-                  <div className={`inline-block py-2 px-4 rounded-lg text-sm font-medium ${
-                    gameState.difficulty === 'easy' ? 'bg-gradient-to-r from-green-400 to-green-500 text-white' :
-                    gameState.difficulty === 'normal' ? 'bg-gradient-to-r from-yellow-400 to-orange-400 text-white' :
-                    'bg-gradient-to-r from-red-400 to-red-500 text-white'
-                  }`}>
-                    {gameState.difficulty === 'easy' ? 'EASY' :
-                     gameState.difficulty === 'normal' ? 'NORMAL' : 'HARD'}
+                  <div className={`inline-block py-2 px-4 rounded-lg text-sm font-medium ${getDifficultyStyle(gameState.difficulty)}`}>
+                    {getDifficultyLabel(gameState.difficulty)}
                   </div>
                 </div>
               </div>
+
 
               {/* Game Controls */}
               <div className="space-y-2">
                 <button
                   onClick={gameState.isPlaying ? handlePause : handleStart}
                   className="w-full py-3 px-4 bg-gradient-to-r from-vivid-pink to-vivid-green text-white rounded-xl font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 hover:from-vivid-pink/90 hover:to-vivid-green/90"
+                  disabled={gameState.isGameOver}
                 >
-                  {gameState.isPlaying ? (gameState.isPaused ? 'RESUME' : 'PAUSE') : 'START'}
+                  {gameState.isGameOver ? 'GAME ENDED' : 
+                   gameState.isPlaying ? (gameState.isPaused ? 'RESUME' : 'PAUSE') : 'START'}
                 </button>
                 
                 <button
@@ -266,8 +258,6 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
                 </button>
               </div>
 
-              {/* Game Instructions */}
-              <GameInstructionsCommon showOjamaExplanation={true} />
             </div>
           </div>
 
@@ -286,16 +276,15 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
                   getPairPositions={getCpuPairPositions}
                   isGameOver={gameState.cpu.isGameOver}
                   isPaused={gameState.isPaused}
+                  gameResult={getGameResult(gameState.isGameOver, gameState.winner, 'cpu')}
                 />
               </div>
 
-              {/* CPU Status */}
-              <div className="text-center">
-                {gameState.cpu.isGameOver && (
-                  <div className="text-sm text-red-600 font-bold mt-1">
-                    GAME OVER
-                  </div>
-                )}
+              {/* CPU Score Display */}
+              <div className="text-center mt-2">
+                <div className="text-xl font-bold text-red-500">
+                  {gameState.cpu.score.toLocaleString()}
+                </div>
               </div>
             </div>
           </div>
@@ -303,7 +292,6 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
 
         {/* Game Focus Message */}
         <div className="mt-6 text-center text-xs text-coffee-dark/60">
-          <p className="hidden md:block">ゲーム開始後、キーボードの矢印キーで操作できます</p>
           <p className="mt-1">
             {gameState.isPlaying && !gameState.isPaused 
               ? "CPU対戦中です！頑張って勝利を掴もう 🔥" 

@@ -145,7 +145,7 @@ export class CpuOperationManager {
       }
       
       console.log(CPU_MESSAGES.thinking(difficulty));
-      const bestMove = findBestMove(cpuState.grid, cpuState.currentPair, difficulty);
+      const bestMove = findBestMove(cpuState.grid, cpuState.currentPair, difficulty, cpuState.nextPair);
       
       if (bestMove) {
         console.log(CPU_MESSAGES.foundMove(difficulty, bestMove.x, bestMove.rotation));

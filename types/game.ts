@@ -74,17 +74,31 @@ export interface GameTimings {
 export type GameDifficulty = 'easy' | 'normal' | 'hard';
 
 export type GamePlayer = 'player' | 'cpu';
+export type GameResult = 'win' | 'lose' | null;
 
-export interface VsGameState {
+export interface GameControlState {
+  isPlaying: boolean;
+  isPaused: boolean;
+  isGameOver: boolean;
+}
+
+export interface VsGameState extends GameControlState {
   player: GameState;
   cpu: GameState;
   gameMode: 'single' | 'vs-cpu';
   difficulty: GameDifficulty;
-  isPlaying: boolean;
-  isPaused: boolean;
-  isGameOver: boolean;
   winner: GamePlayer | null;
   pendingOjamaPlayer: number;
   pendingOjamaCpu: number;
+}
+
+export interface GameFieldProps {
+  grid: PuyoCell[][];
+  currentPair: PuyoPair | null;
+  nextPair: PuyoPair | null;
+  score: number;
+  chainCount: number;
+  isGameOver: boolean;
+  gameResult?: GameResult;
 }
 

@@ -26,11 +26,8 @@ export const PuyoPuyoGame: React.FC = () => {
         {/* Game Title */}
         <div className="text-center mb-6">
           <h3 className="text-2xl font-bold text-coffee-dark mb-2">
-            Moku Moku Puyo
+            Moku Moku Puyo - シングルプレイ
           </h3>
-          <p className="text-sm text-coffee-mid">
-            2つ1組のぷよを操作して、同色4個以上つなげて消そう！
-          </p>
         </div>
 
         {/* Game Layout */}
@@ -67,7 +64,6 @@ export const PuyoPuyoGame: React.FC = () => {
 
         {/* Game focus reminder */}
         <div className="mt-6 text-center text-xs text-coffee-dark/60">
-          <p className="hidden md:block">ゲーム開始後、キーボードの矢印キーで操作できます</p>
           <p className="mt-1">
             {gameState.isPlaying && !gameState.isPaused 
               ? "ゲーム中です！集中してプレイしましょう 🎮" 

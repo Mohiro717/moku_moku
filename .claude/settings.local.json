@@ -4,7 +4,8 @@
       "Bash(npm run dev:*)",
       "Bash(npx tsc:*)",
       "Bash(git add:*)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(git commit:*)"
     ],
     "deny": []
   }

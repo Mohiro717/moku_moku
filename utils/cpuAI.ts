@@ -1,11 +1,60 @@
-import type { PuyoCell, PuyoPair, Position, GameDifficulty } from '../types/game';
+import type { PuyoCell, PuyoPair, Position, GameDifficulty, ColoredPuyoColor } from '../types/game';
 import { 
   GAME_CONFIG, 
   canPlacePair, 
   getPairPositions, 
   findConnectedPuyos,
-  findLowestPosition 
+  findLowestPosition,
+  simulatePlacePuyo,
+  getAllLegalMoves,
+  processChains,
+  applyGravity,
+  calculateMaxChains
 } from './puyoGameLogic';
+
+// ========================================
+// 定数定義
+// ========================================
+
+const CPU_AI_CONSTANTS = {
+  // 安全性閾値
+  SAFE_HEIGHT_LIMIT: 9,
+  DANGEROUS_HEIGHT_LIMIT: 10,
+  CRITICAL_HEIGHT_LIMIT: 12,
+  MAX_DANGEROUS_COLUMNS: 2,
+  
+  // 緊急度判定
+  EMERGENCY_URGENCY_THRESHOLD: 20,
+  CRITICAL_OJAMA_COUNT: 6,
+  DANGEROUS_OJAMA_COUNT: 10,
+  
+  // スコア倍率
+  CHAIN_SCORE_MULTIPLIER: 1000,
+  OJAMA_REMOVAL_BONUS: 200,
+  EMERGENCY_CHAIN_MULTIPLIER: 10000,
+  POTENTIAL_SCORE_MULTIPLIER: 800,
+  FIELD_VALUE_MULTIPLIER: 2,
+  OJAMA_PENALTY_MULTIPLIER: -8,
+  
+  // パフォーマンス制限
+  EASY_THINK_TIME: 500,
+  NORMAL_THINK_TIME: 800,
+  HARD_THINK_TIME: 0,
+  HARD_MAX_THINK_TIME: 150,
+  
+  // 探索制限
+  NORMAL_NEXT_MOVES_LIMIT: 16,
+  EMERGENCY_NEXT_MOVES_LIMIT: 6,
+  HARD_NORMAL_NEXT_MOVES: 12,
+  
+  // 無限ループ防止
+  MAX_CHAIN_COUNT: 12,
+  MAX_CHAIN_POTENTIAL: 15
+} as const;
+
+// ========================================
+// 型定義
+// ========================================
 
 export interface CpuMove {
   x: number;
@@ -14,56 +63,86 @@ export interface CpuMove {
 }
 
 export interface CpuAiConfig {
-  thinkTime: number; // CPU思考時間（ミリ秒）
-  randomness: number; // ランダム性（0-1）
-  heightPenalty: number; // 高さに対するペナルティ
-  colorMatchBonus: number; // 同色隣接ボーナス
-  chainBonus: number; // 連鎖ボーナス
-  maxChainLength: number; // 最大連鎖長制限
-  flatStackPreference: number; // 平積み優先度（EASY用）
-  chainFormPreference: number; // 連鎖形作成優先度
-  panicThreshold: number; // パニック閾値（おじゃま対応）
-  immediateDropChance: number; // 即落とし確率
+  thinkTime: number;
+  randomness: number;
+  heightPenalty: number;
+  colorMatchBonus: number;
+  chainBonus: number;
+  maxChainLength: number;
+  flatStackPreference: number;
+  chainFormPreference: number;
+  panicThreshold: number;
+  immediateDropChance: number;
 }
+
+interface EmergencySituation {
+  isEmergency: boolean;
+  isCritical: boolean;
+  urgencyLevel: number;
+  recommendedAction: 'immediate_clear' | 'ojama_clear' | 'build_chain' | 'survive';
+  dangerousColumns: number[];
+}
+
+interface MoveSafety {
+  isSafe: boolean;
+  safetyScore: number;
+  resultingHeight: number;
+  wouldCauseGameOver: boolean;
+}
+
+interface ChainPotentialAnalysis {
+  maxChainPotential: number;
+  triggerPositions: Array<{x: number, y: number, chainCount: number}>;
+  fieldValue: number;
+  ojamaImpact: number;
+}
+
+// ========================================
+// AI設定
+// ========================================
 
 const AI_CONFIGS: Record<GameDifficulty, CpuAiConfig> = {
   easy: {
-    thinkTime: 2500,        // 非常に長い思考時間（甘口）
-    randomness: 0.8,        // 高いランダム性で初心者らしく
-    heightPenalty: 10.0,    // 窒息を異常に恐れる
-    colorMatchBonus: 1,     // 同色隣接をあまり考えない
-    chainBonus: 0.5,        // 連鎖をほとんど考えない
-    maxChainLength: 2,      // 最大2連鎖まで
-    flatStackPreference: 8, // 平積み強く優先
-    chainFormPreference: 0, // 連鎖形を作らない
-    panicThreshold: 2,      // 少しのおじゃまでパニック
-    immediateDropChance: 0  // 0%の確率で即落とし（自然落下のみ）
+    thinkTime: CPU_AI_CONSTANTS.EASY_THINK_TIME,
+    randomness: 0.8,
+    heightPenalty: 10.0,
+    colorMatchBonus: 1,
+    chainBonus: 0.5,
+    maxChainLength: 2,
+    flatStackPreference: 8,
+    chainFormPreference: 0,
+    panicThreshold: 2,
+    immediateDropChance: 0
   },
   normal: {
-    thinkTime: 1200,        // 普通の思考時間（中辛）
-    randomness: 0.3,        // 適度なランダム性
-    heightPenalty: 2.0,     // バランスの取れた高さ管理
-    colorMatchBonus: 4,     // 同色配置を意識
-    chainBonus: 6,          // 連鎖を積極的に狙う
-    maxChainLength: 5,      // 最大5連鎖まで
-    flatStackPreference: 2, // 平積みも考慮
-    chainFormPreference: 5, // 基本的な連鎖形を作る
-    panicThreshold: 6,      // 中程度のおじゃままで対応
-    immediateDropChance: 0.5 // 50%の確率で即落とし
+    thinkTime: CPU_AI_CONSTANTS.NORMAL_THINK_TIME,
+    randomness: 0.3,
+    heightPenalty: 2.0,
+    colorMatchBonus: 4,
+    chainBonus: 6,
+    maxChainLength: 4,
+    flatStackPreference: 2,
+    chainFormPreference: 5,
+    panicThreshold: 6,
+    immediateDropChance: 0.5
   },
   hard: {
-    thinkTime: 200,         // 非常に短い思考時間（辛口・激辛）
-    randomness: 0.05,       // ほぼランダム性なし
-    heightPenalty: 1.0,     // 高度な高さ管理
-    colorMatchBonus: 8,     // 完璧な同色配置
-    chainBonus: 15,         // 連鎖を最優先
-    maxChainLength: 12,     // 大連鎖狙い
-    flatStackPreference: 0, // 平積みしない
-    chainFormPreference: 10,// 高度な連鎖形を作る
-    panicThreshold: 15,     // 大量のおじゃまも対応
-    immediateDropChance: 1.0 // 100%の確率で即落とし
+    thinkTime: CPU_AI_CONSTANTS.HARD_THINK_TIME,
+    randomness: 0.05,
+    heightPenalty: 1.0,
+    colorMatchBonus: 8,
+    chainBonus: 15,
+    maxChainLength: 12,
+    flatStackPreference: 0,
+    chainFormPreference: 10,
+    panicThreshold: 15,
+    immediateDropChance: 1.0
   }
 };
+
+// ========================================
+// ユーティリティ関数
+// ========================================
 
 export const getColumnHeight = (grid: PuyoCell[][], col: number): number => {
   for (let row = 0; row < GAME_CONFIG.gridHeight; row++) {
@@ -74,252 +153,795 @@ export const getColumnHeight = (grid: PuyoCell[][], col: number): number => {
   return 0;
 };
 
-export const evaluateColorMatches = (
+const countAdjacentSameColor = (
   grid: PuyoCell[][], 
-  positions: Position[], 
-  colors: string[]
+  x: number, 
+  y: number, 
+  color: ColoredPuyoColor
 ): number => {
-  let score = 0;
   const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
-
-  positions.forEach((pos, index) => {
-    directions.forEach(([dy, dx]) => {
-      const newRow = pos.y + dy;
-      const newCol = pos.x + dx;
-      
-      if (newRow >= 0 && newRow < GAME_CONFIG.gridHeight && 
-          newCol >= 0 && newCol < GAME_CONFIG.gridWidth) {
-        const adjacentColor = grid[newRow][newCol].color;
-        if (adjacentColor === colors[index]) {
-          score += 1;
-        }
+  let count = 0;
+  
+  directions.forEach(([dy, dx]) => {
+    const newRow = y + dy;
+    const newCol = x + dx;
+    
+    if (newRow >= 0 && newRow < GAME_CONFIG.gridHeight && 
+        newCol >= 0 && newCol < GAME_CONFIG.gridWidth) {
+      if (grid[newRow][newCol].color === color) {
+        count++;
       }
-    });
+    }
   });
-
-  return score;
+  
+  return count;
 };
 
-export const simulatePlacement = (
-  grid: PuyoCell[][], 
-  pair: PuyoPair
-): { newGrid: PuyoCell[][]; placedPositions: Position[] } => {
-  const newGrid = grid.map(row => row.map(cell => ({ ...cell })));
-  const positions = getPairPositions(pair);
-  const placedPositions: Position[] = [];
-
-  // シミュレーション用の簡単な落下処理
-  if (positions.main.x === positions.sub.x) {
-    // 同じ列の場合
-    const lowerFinalY = findLowestPosition(newGrid, positions.main.x, 0);
-    const higherFinalY = Math.max(0, lowerFinalY - 1);
-    
-    const lowerPos = positions.main.y > positions.sub.y ? positions.main : positions.sub;
-    const higherPos = positions.main.y > positions.sub.y ? positions.sub : positions.main;
-    
-    newGrid[lowerFinalY][positions.main.x] = {
-      color: lowerPos === positions.main ? pair.main : pair.sub,
-      id: Math.random().toString(36)
-    };
-    newGrid[higherFinalY][positions.main.x] = {
-      color: higherPos === positions.main ? pair.main : pair.sub,
-      id: Math.random().toString(36)
-    };
-    
-    placedPositions.push(
-      { x: positions.main.x, y: lowerFinalY },
-      { x: positions.main.x, y: higherFinalY }
-    );
-  } else {
-    // 異なる列の場合
-    const mainFinalY = findLowestPosition(newGrid, positions.main.x, 0);
-    const subFinalY = findLowestPosition(newGrid, positions.sub.x, 0);
-    
-    newGrid[mainFinalY][positions.main.x] = {
-      color: pair.main,
-      id: Math.random().toString(36)
-    };
-    newGrid[subFinalY][positions.sub.x] = {
-      color: pair.sub,
-      id: Math.random().toString(36)
-    };
-    
-    placedPositions.push(
-      { x: positions.main.x, y: mainFinalY },
-      { x: positions.sub.x, y: subFinalY }
-    );
-  }
-
-  return { newGrid, placedPositions };
-};
-
-export const evaluateMove = (
-  grid: PuyoCell[][], 
-  pair: PuyoPair, 
-  config: CpuAiConfig
+const simulateChainCount = (
+  grid: PuyoCell[][],
+  col: number,
+  rotation: number,
+  mainColor: ColoredPuyoColor,
+  subColor: ColoredPuyoColor
 ): number => {
-  if (!canPlacePair(grid, pair)) {
-    return -1000; // 配置不可能な場合は大幅減点
+  const simulatedGrid = simulatePlacePuyo(grid, col, rotation, mainColor, subColor);
+  if (!simulatedGrid) return 0;
+
+  let currentGrid = applyGravity(simulatedGrid);
+  let chainCount = 0;
+
+  while (true) {
+    const { newGrid, chainOccurred } = processChains(currentGrid);
+    
+    if (!chainOccurred) break;
+    
+    chainCount++;
+    currentGrid = applyGravity(newGrid);
+    
+    if (chainCount > CPU_AI_CONSTANTS.MAX_CHAIN_COUNT) break;
   }
 
-  const { newGrid, placedPositions } = simulatePlacement(grid, pair);
-  let score = 0;
+  return chainCount;
+};
 
-  // 高さペナルティ（難易度別で大きく調整）
-  placedPositions.forEach(pos => {
-    const height = getColumnHeight(newGrid, pos.x);
-    score -= Math.pow(height, config.flatStackPreference > 5 ? 2.5 : 1.5) * config.heightPenalty;
-  });
+// ========================================
+// 安全性評価関数
+// ========================================
 
-  // 平積み優先度（EASY用）
-  if (config.flatStackPreference > 0) {
-    let maxHeight = 0;
-    let minHeight = GAME_CONFIG.gridHeight;
-    for (let col = 0; col < GAME_CONFIG.gridWidth; col++) {
-      const height = getColumnHeight(newGrid, col);
-      maxHeight = Math.max(maxHeight, height);
-      minHeight = Math.min(minHeight, height);
-    }
-    const heightDiff = maxHeight - minHeight;
-    // 平積み優先度が高いほど、高さの差を嫌う
-    score -= heightDiff * config.flatStackPreference * 2;
+export const evaluateMoveSafety = (
+  grid: PuyoCell[][],
+  col: number,
+  rotation: number,
+  mainColor: ColoredPuyoColor,
+  subColor: ColoredPuyoColor
+): MoveSafety => {
+  const simulatedGrid = simulatePlacePuyo(grid, col, rotation, mainColor, subColor);
+  if (!simulatedGrid) {
+    return { 
+      isSafe: false, 
+      safetyScore: -1000, 
+      resultingHeight: 999,
+      wouldCauseGameOver: true
+    };
   }
-
-  // 同色隣接ボーナス
-  const colors = [pair.main, pair.sub];
-  const adjacentScore = evaluateColorMatches(grid, placedPositions, colors);
-  score += adjacentScore * config.colorMatchBonus;
-
-  // 連鎖可能性の評価（難易度別制限付き）
-  let chainPotential = 0;
-  let totalChainLength = 0;
-  placedPositions.forEach(pos => {
-    const color = newGrid[pos.y][pos.x].color;
-    if (color && color !== 'ojama') {
-      const connected = findConnectedPuyos(newGrid, pos.y, pos.x, color, new Set());
-      
-      // 最大連鎖長制限を適用
-      if (totalChainLength < config.maxChainLength) {
-        if (connected.length === 3) {
-          chainPotential += 2; // 連鎖準備ボーナス
-        } else if (connected.length >= 4) {
-          chainPotential += connected.length * 2; // 即連鎖ボーナス
-          totalChainLength++;
-        }
-      } else {
-        // 制限を超える連鎖は減点（EASY用）
-        if (config.maxChainLength <= 2) {
-          chainPotential -= connected.length;
-        }
-      }
-    }
-  });
-  score += chainPotential * config.chainBonus;
-
-  // 連鎖形作成ボーナス（NORMAL/HARD用）
-  if (config.chainFormPreference > 0) {
-    // 階段積みや基本連鎖形の検出（簡易版）
-    let chainFormBonus = 0;
-    for (let col = 0; col < GAME_CONFIG.gridWidth - 1; col++) {
-      const height1 = getColumnHeight(newGrid, col);
-      const height2 = getColumnHeight(newGrid, col + 1);
-      // 階段状の高さ差を評価
-      if (Math.abs(height1 - height2) === 1) {
-        chainFormBonus += config.chainFormPreference;
-      }
-    }
-    score += chainFormBonus;
+  
+  const gravityGrid = applyGravity(simulatedGrid);
+  
+  let maxResultHeight = 0;
+  let dangerousColumns = 0;
+  
+  for (let c = 0; c < GAME_CONFIG.gridWidth; c++) {
+    const height = getColumnHeight(gravityGrid, c);
+    maxResultHeight = Math.max(maxResultHeight, height);
+    if (height >= CPU_AI_CONSTANTS.DANGEROUS_HEIGHT_LIMIT) dangerousColumns++;
   }
+  
+  const wouldCauseGameOver = maxResultHeight >= CPU_AI_CONSTANTS.CRITICAL_HEIGHT_LIMIT || 
+                           gravityGrid[1].some(cell => cell.color !== null);
+  
+  let safetyScore = 1000;
+  safetyScore -= Math.pow(maxResultHeight, 2) * 5;
+  safetyScore -= dangerousColumns * 200;
+  
+  const isSafe = !wouldCauseGameOver && 
+                 maxResultHeight < CPU_AI_CONSTANTS.DANGEROUS_HEIGHT_LIMIT && 
+                 dangerousColumns === 0;
+  
+  return {
+    isSafe,
+    safetyScore,
+    resultingHeight: maxResultHeight,
+    wouldCauseGameOver
+  };
+};
 
-  // 中央付近配置ボーナス
-  placedPositions.forEach(pos => {
-    const centerDistance = Math.abs(pos.x - (GAME_CONFIG.gridWidth / 2 - 0.5));
-    score += (3 - centerDistance) * 0.5;
-  });
-
-  // おじゃまぷよ対応（難易度別）
+export const evaluateEmergencySituation = (grid: PuyoCell[][]): EmergencySituation => {
+  let maxHeight = 0;
   let ojamaCount = 0;
+  let criticalOjamaCount = 0;
+  let dangerousColumns: number[] = [];
+  
+  for (let col = 0; col < GAME_CONFIG.gridWidth; col++) {
+    const height = getColumnHeight(grid, col);
+    maxHeight = Math.max(maxHeight, height);
+    
+    if (height >= CPU_AI_CONSTANTS.SAFE_HEIGHT_LIMIT) {
+      dangerousColumns.push(col);
+    }
+  }
+  
   for (let row = 0; row < GAME_CONFIG.gridHeight; row++) {
     for (let col = 0; col < GAME_CONFIG.gridWidth; col++) {
       if (grid[row][col].color === 'ojama') {
         ojamaCount++;
+        if (row < GAME_CONFIG.gridHeight / 2) {
+          criticalOjamaCount++;
+        }
       }
     }
   }
   
-  // パニック閾値を超えるとランダム性が増加（EASY用）
-  if (ojamaCount > config.panicThreshold && config.panicThreshold < 5) {
-    score += (Math.random() - 0.5) * 20; // パニック状態
+  const urgencyLevel = maxHeight + (ojamaCount * 1.5) + (criticalOjamaCount * 2.5);
+  const isEmergency = urgencyLevel > CPU_AI_CONSTANTS.EMERGENCY_URGENCY_THRESHOLD || 
+                     maxHeight > 8;
+  const isCritical = maxHeight > CPU_AI_CONSTANTS.DANGEROUS_HEIGHT_LIMIT || 
+                    dangerousColumns.length > CPU_AI_CONSTANTS.MAX_DANGEROUS_COLUMNS;
+  
+  let recommendedAction: EmergencySituation['recommendedAction'];
+  
+  if (isCritical) {
+    recommendedAction = 'survive';
+  } else if (maxHeight > CPU_AI_CONSTANTS.SAFE_HEIGHT_LIMIT) {
+    recommendedAction = 'immediate_clear';
+  } else if (criticalOjamaCount > CPU_AI_CONSTANTS.CRITICAL_OJAMA_COUNT) {
+    recommendedAction = 'immediate_clear';
+  } else if (ojamaCount > CPU_AI_CONSTANTS.DANGEROUS_OJAMA_COUNT) {
+    recommendedAction = 'ojama_clear';
+  } else {
+    recommendedAction = 'build_chain';
+  }
+  
+  return { 
+    isEmergency, 
+    isCritical,
+    urgencyLevel, 
+    recommendedAction, 
+    dangerousColumns 
+  };
+};
+
+// ========================================
+// Easy難易度関数
+// ========================================
+
+export const evaluateEasyMove = (
+  grid: PuyoCell[][],
+  col: number,
+  rotation: number,
+  mainColor: ColoredPuyoColor,
+  subColor: ColoredPuyoColor
+): number => {
+  const simulatedGrid = simulatePlacePuyo(grid, col, rotation, mainColor, subColor);
+  if (!simulatedGrid) return -1000;
+
+  // (A) その手を置いた直後に消えるぷよの数 × 100
+  const gravityGrid = applyGravity(simulatedGrid);
+  const { chainOccurred, deletedCount } = processChains(gravityGrid);
+  const scoreA = chainOccurred ? deletedCount * 100 : 0;
+
+  // (B) 新たに隣接する同色ぷよのペアの数 × 10
+  const testPair: PuyoPair = { main: mainColor, sub: subColor, x: col, y: 1, rotation };
+  const positions = getPairPositions(testPair);
+  
+  const mainFinalY = findLowestPosition(simulatedGrid, positions.main.x, 0);
+  const adjacentToMain = countAdjacentSameColor(simulatedGrid, positions.main.x, mainFinalY, mainColor);
+  
+  let adjacentToSub = 0;
+  if (positions.main.x === positions.sub.x) {
+    const subFinalY = Math.max(0, mainFinalY - 1);
+    adjacentToSub = countAdjacentSameColor(simulatedGrid, positions.sub.x, subFinalY, subColor);
+  } else {
+    const subFinalY = findLowestPosition(simulatedGrid, positions.sub.x, 0);
+    adjacentToSub = countAdjacentSameColor(simulatedGrid, positions.sub.x, subFinalY, subColor);
+  }
+  
+  const scoreB = (adjacentToMain + adjacentToSub) * 10;
+
+  // (C) ぷよを置いた後のフィールドで、最も高い位置にあるぷよの高さ × -5
+  let maxHeight = 0;
+  for (let c = 0; c < GAME_CONFIG.gridWidth; c++) {
+    const height = getColumnHeight(gravityGrid, c);
+    maxHeight = Math.max(maxHeight, height);
+  }
+  const scoreC = maxHeight * -5;
+
+  return scoreA + scoreB + scoreC;
+};
+
+export const findBestMoveEasy = (
+  grid: PuyoCell[][], 
+  pair: PuyoPair
+): CpuMove | null => {
+  const legalMoves = getAllLegalMoves(grid, pair.main, pair.sub);
+  
+  if (legalMoves.length === 0) {
+    return { x: Math.floor(GAME_CONFIG.gridWidth / 2), rotation: 0, score: 0 };
   }
 
-  // おじゃまぷよ除去ボーナス
-  let ojamaRemovalBonus = 0;
-  placedPositions.forEach(pos => {
-    const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
-    directions.forEach(([dy, dx]) => {
-      const newRow = pos.y + dy;
-      const newCol = pos.x + dx;
-      if (newRow >= 0 && newRow < GAME_CONFIG.gridHeight && 
-          newCol >= 0 && newCol < GAME_CONFIG.gridWidth) {
-        if (grid[newRow][newCol].color === 'ojama') {
-          ojamaRemovalBonus += ojamaCount > config.panicThreshold ? 1 : 5;
+  let bestMove: CpuMove | null = null;
+  let bestScore = -Infinity;
+
+  legalMoves.forEach(move => {
+    const score = evaluateEasyMove(grid, move.col, move.rotation, pair.main, pair.sub);
+    
+    if (score > bestScore) {
+      bestScore = score;
+      bestMove = { x: move.col, rotation: move.rotation, score };
+    }
+  });
+
+  return bestMove;
+};
+
+// ========================================
+// Normal難易度関数
+// ========================================
+
+const evaluateFieldStrategy = (grid: PuyoCell[][]): {
+  ojamaCount: number;
+  ojamaUrgency: number;
+  chainPotential: number;
+  fieldStability: number;
+} => {
+  let ojamaCount = 0;
+  let highOjamaCount = 0;
+  let chainPotential = 0;
+  const colorGroups: Record<string, number> = {};
+  
+  for (let row = 0; row < GAME_CONFIG.gridHeight; row++) {
+    for (let col = 0; col < GAME_CONFIG.gridWidth; col++) {
+      const cell = grid[row][col];
+      
+      if (cell.color === 'ojama') {
+        ojamaCount++;
+        if (row < GAME_CONFIG.gridHeight / 2) {
+          highOjamaCount++;
+        }
+      } else if (cell.color && cell.color !== 'ojama') {
+        colorGroups[cell.color] = (colorGroups[cell.color] || 0) + 1;
+      }
+    }
+  }
+  
+  Object.values(colorGroups).forEach(count => {
+    if (count >= 3) chainPotential += count - 2;
+  });
+  
+  const heights = [];
+  for (let col = 0; col < GAME_CONFIG.gridWidth; col++) {
+    heights.push(getColumnHeight(grid, col));
+  }
+  const avgHeight = heights.reduce((a, b) => a + b, 0) / heights.length;
+  const heightVariance = heights.reduce((sum, h) => sum + Math.pow(h - avgHeight, 2), 0) / heights.length;
+  const fieldStability = 100 - heightVariance;
+  
+  return {
+    ojamaCount,
+    ojamaUrgency: highOjamaCount * 2 + ojamaCount,
+    chainPotential,
+    fieldStability
+  };
+};
+
+const calculateOjamaRemovalEfficiency = (
+  grid: PuyoCell[][],
+  col: number,
+  rotation: number,
+  mainColor: ColoredPuyoColor,
+  subColor: ColoredPuyoColor
+): number => {
+  const simulatedGrid = simulatePlacePuyo(grid, col, rotation, mainColor, subColor);
+  if (!simulatedGrid) return 0;
+  
+  const gravityGrid = applyGravity(simulatedGrid);
+  let removedOjama = 0;
+  
+  let currentGrid = gravityGrid;
+  while (true) {
+    const beforeOjama = currentGrid.flat().filter(cell => cell.color === 'ojama').length;
+    const { newGrid, chainOccurred } = processChains(currentGrid);
+    
+    if (!chainOccurred) break;
+    
+    const afterOjama = newGrid.flat().filter(cell => cell.color === 'ojama').length;
+    removedOjama += beforeOjama - afterOjama;
+    currentGrid = applyGravity(newGrid);
+  }
+  
+  return removedOjama;
+};
+
+export const evaluateNormalMove = (
+  grid: PuyoCell[][],
+  col: number,
+  rotation: number,
+  mainColor: ColoredPuyoColor,
+  subColor: ColoredPuyoColor
+): { scoreA: number; scoreB: number; totalScore: number } => {
+  const simulatedGrid = simulatePlacePuyo(grid, col, rotation, mainColor, subColor);
+  if (!simulatedGrid) {
+    return { scoreA: -1000, scoreB: 0, totalScore: -1000 };
+  }
+
+  const fieldAnalysis = evaluateFieldStrategy(grid);
+  
+  const chainCount = simulateChainCount(grid, col, rotation, mainColor, subColor);
+  const ojamaRemovalBonus = calculateOjamaRemovalEfficiency(grid, col, rotation, mainColor, subColor) * CPU_AI_CONSTANTS.OJAMA_REMOVAL_BONUS;
+  const scoreA = chainCount * CPU_AI_CONSTANTS.CHAIN_SCORE_MULTIPLIER + ojamaRemovalBonus;
+
+  if (chainCount > 0 || ojamaRemovalBonus > 0) {
+    console.log(`[NORMAL CPU] 手の評価: ${chainCount}連鎖, おじゃま除去${ojamaRemovalBonus/CPU_AI_CONSTANTS.OJAMA_REMOVAL_BONUS}個 at (${col}, ${rotation})`);
+  }
+
+  let scoreB = 0;
+  
+  if (fieldAnalysis.ojamaUrgency > 5) {
+    const immediateDelete = simulateChainCount(grid, col, rotation, mainColor, subColor);
+    if (immediateDelete > 0) {
+      scoreB += 500;
+    } else {
+      const testPair: PuyoPair = { main: mainColor, sub: subColor, x: col, y: 1, rotation };
+      const positions = getPairPositions(testPair);
+      
+      let ojamaAdjacentCount = 0;
+      [positions.main, positions.sub].forEach(pos => {
+        const finalY = findLowestPosition(simulatedGrid, pos.x, 0);
+        const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+        directions.forEach(([dy, dx]) => {
+          const checkY = finalY + dy;
+          const checkX = pos.x + dx;
+          if (checkY >= 0 && checkY < GAME_CONFIG.gridHeight && 
+              checkX >= 0 && checkX < GAME_CONFIG.gridWidth) {
+            if (grid[checkY][checkX].color === 'ojama') {
+              ojamaAdjacentCount++;
+            }
+          }
+        });
+      });
+      
+      scoreB += ojamaAdjacentCount * 100;
+    }
+  } else {
+    if (chainCount === 0) {
+      const gravityGrid = applyGravity(simulatedGrid);
+      let chainPotentialBonus = 0;
+      const visited = new Set<string>();
+      
+      for (let row = 0; row < GAME_CONFIG.gridHeight; row++) {
+        for (let c = 0; c < GAME_CONFIG.gridWidth; c++) {
+          const cell = gravityGrid[row][c];
+          if (cell.color && cell.color !== 'ojama' && !visited.has(`${row}-${c}`)) {
+            const connected = findConnectedPuyos(gravityGrid, row, c, cell.color, new Set());
+            if (connected.length === 3) {
+              chainPotentialBonus += 80;
+              connected.forEach(pos => visited.add(`${pos.y}-${pos.x}`));
+            } else if (connected.length === 2) {
+              chainPotentialBonus += 20;
+              connected.forEach(pos => visited.add(`${pos.y}-${pos.x}`));
+            }
+          }
         }
       }
+      
+      const colorCounts: Record<string, number> = {};
+      gravityGrid.flat().forEach(cell => {
+        if (cell.color && cell.color !== 'ojama') {
+          colorCounts[cell.color] = (colorCounts[cell.color] || 0) + 1;
+        }
+      });
+      
+      const colorBalance = Object.values(colorCounts).reduce((balance, count) => {
+        return balance + Math.min(count, 6);
+      }, 0) * 5;
+      
+      scoreB = chainPotentialBonus + colorBalance;
+    }
+  }
+  
+  const gravityGrid = applyGravity(simulatedGrid);
+  let maxHeight = 0;
+  for (let c = 0; c < GAME_CONFIG.gridWidth; c++) {
+    const height = getColumnHeight(gravityGrid, c);
+    maxHeight = Math.max(maxHeight, height);
+  }
+  const heightPenalty = Math.pow(maxHeight, 1.5) * -5;
+  
+  const totalScore = scoreA + scoreB + heightPenalty;
+  return { scoreA, scoreB: scoreB + heightPenalty, totalScore };
+};
+
+export const findBestMoveNormal = (
+  grid: PuyoCell[][], 
+  pair: PuyoPair
+): CpuMove | null => {
+  const legalMoves = getAllLegalMoves(grid, pair.main, pair.sub);
+  
+  if (legalMoves.length === 0) {
+    return { x: Math.floor(GAME_CONFIG.gridWidth / 2), rotation: 0, score: 0 };
+  }
+
+  let bestMoves: Array<{move: CpuMove; scoreA: number; scoreB: number}> = [];
+  let maxScoreA = -Infinity;
+
+  legalMoves.forEach(move => {
+    const { scoreA, scoreB, totalScore } = evaluateNormalMove(grid, move.col, move.rotation, pair.main, pair.sub);
+    
+    const cpuMove: CpuMove = { x: move.col, rotation: move.rotation, score: totalScore };
+    
+    if (scoreA > maxScoreA) {
+      maxScoreA = scoreA;
+      bestMoves = [{ move: cpuMove, scoreA, scoreB }];
+    } else if (scoreA === maxScoreA) {
+      bestMoves.push({ move: cpuMove, scoreA, scoreB });
+    }
+  });
+
+  if (bestMoves.length === 0) {
+    return { x: Math.floor(GAME_CONFIG.gridWidth / 2), rotation: 0, score: 0 };
+  }
+
+  let finalBestMove = bestMoves[0];
+  for (let i = 1; i < bestMoves.length; i++) {
+    if (bestMoves[i].scoreB > finalBestMove.scoreB) {
+      finalBestMove = bestMoves[i];
+    }
+  }
+
+  return finalBestMove.move;
+};
+
+// ========================================
+// Hard難易度関数
+// ========================================
+
+export const calculateAdvancedChainPotential = (grid: PuyoCell[][]): ChainPotentialAnalysis => {
+  let maxPotential = 0;
+  const triggerPositions: Array<{x: number, y: number, chainCount: number}> = [];
+  let fieldValue = 0;
+  let ojamaImpact = 0;
+  
+  for (let row = 0; row < GAME_CONFIG.gridHeight; row++) {
+    for (let col = 0; col < GAME_CONFIG.gridWidth; col++) {
+      const cell = grid[row][col];
+      
+      if (cell.color && cell.color !== 'ojama') {
+        const testGrid = grid.map(r => r.map(c => ({ ...c })));
+        testGrid[row][col] = { color: null, id: Math.random().toString(36) };
+        
+        let currentGrid = applyGravity(testGrid);
+        let chainCount = 0;
+        let totalDeleted = 0;
+        
+        while (true) {
+          const { newGrid, chainOccurred, deletedCount } = processChains(currentGrid);
+          if (!chainOccurred) break;
+          
+          chainCount++;
+          totalDeleted += deletedCount;
+          currentGrid = applyGravity(newGrid);
+          
+          if (chainCount > CPU_AI_CONSTANTS.MAX_CHAIN_POTENTIAL) break;
+        }
+        
+        if (chainCount > 0) {
+          triggerPositions.push({ x: col, y: row, chainCount });
+          maxPotential = Math.max(maxPotential, chainCount);
+          fieldValue += chainCount * totalDeleted;
+        }
+      }
+    }
+  }
+  
+  let ojamaCount = 0;
+  let criticalOjamaCount = 0;
+  
+  for (let row = 0; row < GAME_CONFIG.gridHeight; row++) {
+    for (let col = 0; col < GAME_CONFIG.gridWidth; col++) {
+      if (grid[row][col].color === 'ojama') {
+        ojamaCount++;
+        if (row < GAME_CONFIG.gridHeight / 2) {
+          criticalOjamaCount++;
+        }
+      }
+    }
+  }
+  
+  ojamaImpact = ojamaCount * 10 + criticalOjamaCount * 20;
+  
+  const colorCounts: Record<string, number> = {};
+  grid.flat().forEach(cell => {
+    if (cell.color && cell.color !== 'ojama') {
+      colorCounts[cell.color] = (colorCounts[cell.color] || 0) + 1;
+    }
+  });
+  
+  const colorBalance = Object.values(colorCounts).reduce((balance, count) => {
+    return balance + Math.min(count, 8) * (count >= 4 ? 2 : 1);
+  }, 0);
+  
+  fieldValue += colorBalance;
+  
+  return {
+    maxChainPotential: maxPotential,
+    triggerPositions,
+    fieldValue,
+    ojamaImpact
+  };
+};
+
+export const evaluateChainBuildingStrategy = (
+  grid: PuyoCell[][],
+  currentPair: PuyoPair,
+  nextPair: PuyoPair
+): number => {
+  const currentAnalysis = calculateAdvancedChainPotential(grid);
+  
+  const pairColors = [currentPair.main, currentPair.sub, nextPair.main, nextPair.sub];
+  const colorCounts: Record<string, number> = {};
+  
+  grid.flat().forEach(cell => {
+    if (cell.color && cell.color !== 'ojama') {
+      colorCounts[cell.color] = (colorCounts[cell.color] || 0) + 1;
+    }
+  });
+  
+  let colorSynergy = 0;
+  pairColors.forEach(color => {
+    const existingCount = colorCounts[color] || 0;
+    if (existingCount >= 2) {
+      colorSynergy += existingCount * 15;
+    }
+  });
+  
+  let triggerProximity = 0;
+  currentAnalysis.triggerPositions.forEach(trigger => {
+    const distanceFromCenter = Math.abs(trigger.x - (GAME_CONFIG.gridWidth / 2 - 0.5));
+    triggerProximity += (trigger.chainCount * 10) / (1 + distanceFromCenter);
+  });
+  
+  return colorSynergy + triggerProximity + currentAnalysis.fieldValue;
+};
+
+export const evaluateTwoMoveCombo = (
+  grid: PuyoCell[][],
+  currentPair: PuyoPair,
+  nextPair: PuyoPair,
+  firstMove: { col: number; rotation: number },
+  secondMove: { col: number; rotation: number }
+): number => {
+  const firstGrid = simulatePlacePuyo(grid, firstMove.col, firstMove.rotation, currentPair.main, currentPair.sub);
+  if (!firstGrid) return -10000;
+  
+  let currentGrid = applyGravity(firstGrid);
+  let firstMoveChains = 0;
+  let firstMoveScore = 0;
+  
+  while (true) {
+    const { newGrid, chainOccurred, deletedCount } = processChains(currentGrid);
+    if (!chainOccurred) break;
+    
+    firstMoveChains++;
+    firstMoveScore += deletedCount * Math.pow(2, firstMoveChains - 1);
+    currentGrid = applyGravity(newGrid);
+    
+    if (firstMoveChains > CPU_AI_CONSTANTS.MAX_CHAIN_COUNT) break;
+  }
+  
+  const secondGrid = simulatePlacePuyo(currentGrid, secondMove.col, secondMove.rotation, nextPair.main, nextPair.sub);
+  if (!secondGrid) {
+    const firstAnalysis = calculateAdvancedChainPotential(currentGrid);
+    return (firstMoveScore * 100) + firstAnalysis.fieldValue - (firstAnalysis.ojamaImpact * 5);
+  }
+  
+  let finalGrid = applyGravity(secondGrid);
+  let secondMoveChains = 0;
+  let secondMoveScore = 0;
+  
+  while (true) {
+    const { newGrid, chainOccurred, deletedCount } = processChains(finalGrid);
+    if (!chainOccurred) break;
+    
+    secondMoveChains++;
+    secondMoveScore += deletedCount * Math.pow(2, secondMoveChains - 1);
+    finalGrid = applyGravity(newGrid);
+    
+    if (secondMoveChains > CPU_AI_CONSTANTS.MAX_CHAIN_COUNT) break;
+  }
+  
+  const finalAnalysis = calculateAdvancedChainPotential(finalGrid);
+  
+  const immediateChainScore = (firstMoveScore + secondMoveScore) * 150;
+  const potentialScore = finalAnalysis.maxChainPotential * CPU_AI_CONSTANTS.POTENTIAL_SCORE_MULTIPLIER;
+  const fieldValueScore = finalAnalysis.fieldValue * CPU_AI_CONSTANTS.FIELD_VALUE_MULTIPLIER;
+  const ojamaPenalty = finalAnalysis.ojamaImpact * CPU_AI_CONSTANTS.OJAMA_PENALTY_MULTIPLIER;
+  const strategyBonus = evaluateChainBuildingStrategy(finalGrid, currentPair, nextPair);
+  
+  let maxHeight = 0;
+  for (let col = 0; col < GAME_CONFIG.gridWidth; col++) {
+    maxHeight = Math.max(maxHeight, getColumnHeight(finalGrid, col));
+  }
+  const heightPenalty = Math.pow(maxHeight, 2) * -10;
+  
+  const totalScore = immediateChainScore + potentialScore + fieldValueScore + 
+                     ojamaPenalty + strategyBonus + heightPenalty;
+  
+  if (totalScore > 5000 || immediateChainScore > 1000) {
+    console.log(`[HARD CPU] 高評価手発見: 総合${Math.round(totalScore)}, 即座連鎖${Math.round(immediateChainScore)}, ポテンシャル${finalAnalysis.maxChainPotential} at (${firstMove.col},${firstMove.rotation})→(${secondMove.col},${secondMove.rotation})`);
+  }
+  
+  return totalScore;
+};
+
+export const findBestMoveHard = (
+  grid: PuyoCell[][],
+  currentPair: PuyoPair,
+  nextPair: PuyoPair | null
+): CpuMove | null => {
+  if (!nextPair) {
+    console.log('[HARD CPU] nextPairなし - 安全モード');
+    return findBestMoveNormal(grid, currentPair);
+  }
+  
+  const emergency = evaluateEmergencySituation(grid);
+  const currentLegalMoves = getAllLegalMoves(grid, currentPair.main, currentPair.sub);
+  
+  if (currentLegalMoves.length === 0) {
+    console.log('[HARD CPU] 合法手なし - 中央配置');
+    return { x: Math.floor(GAME_CONFIG.gridWidth / 2), rotation: 0, score: 0 };
+  }
+  
+  let bestMove: CpuMove | null = null;
+  let bestScore = -Infinity;
+  const safeMoves: Array<{move: {col: number, rotation: number}, score: number, safety: MoveSafety}> = [];
+  let evaluatedMoves = 0;
+  const startTime = Date.now();
+  
+  console.log(`[HARD CPU] 思考開始: ${emergency.recommendedAction}モード, 緊急度${emergency.urgencyLevel}, 危険列${emergency.dangerousColumns.length}`);
+  
+  // フェーズ1: 安全性評価
+  currentLegalMoves.forEach(firstMove => {
+    const safety = evaluateMoveSafety(grid, firstMove.col, firstMove.rotation, currentPair.main, currentPair.sub);
+    
+    if (safety.wouldCauseGameOver) {
+      console.log(`[HARD CPU] 危険手除外: (${firstMove.col}, ${firstMove.rotation}) - ゲームオーバーリスク`);
+      return;
+    }
+    
+    if (emergency.isCritical && !safety.isSafe) return;
+    
+    safeMoves.push({
+      move: firstMove,
+      score: safety.safetyScore,
+      safety
     });
   });
-  score += ojamaRemovalBonus;
-
-  // ランダム性を追加（難易度別で大きく調整）
-  score += (Math.random() - 0.5) * config.randomness * 20;
-
-  return score;
+  
+  if (safeMoves.length === 0) {
+    console.log('[HARD CPU] 安全手なし - 最も安全な手を選択');
+    let safestMove = null;
+    let bestSafetyScore = -Infinity;
+    
+    currentLegalMoves.forEach(move => {
+      const safety = evaluateMoveSafety(grid, move.col, move.rotation, currentPair.main, currentPair.sub);
+      if (safety.safetyScore > bestSafetyScore) {
+        bestSafetyScore = safety.safetyScore;
+        safestMove = { x: move.col, rotation: move.rotation, score: safety.safetyScore };
+      }
+    });
+    
+    return safestMove || { x: Math.floor(GAME_CONFIG.gridWidth / 2), rotation: 0, score: 0 };
+  }
+  
+  // フェーズ2: 最適解探索
+  console.log(`[HARD CPU] 安全手${safeMoves.length}個から最適解を探索`);
+  
+  safeMoves.forEach(safeMove => {
+    if (Date.now() - startTime > CPU_AI_CONSTANTS.HARD_MAX_THINK_TIME) return;
+    
+    const firstMove = safeMove.move;
+    const firstGrid = simulatePlacePuyo(grid, firstMove.col, firstMove.rotation, currentPair.main, currentPair.sub);
+    if (!firstGrid) return;
+    
+    let intermediateGrid = applyGravity(firstGrid);
+    let firstMoveChains = 0;
+    let firstMoveScore = 0;
+    
+    while (true) {
+      const { newGrid, chainOccurred, deletedCount } = processChains(intermediateGrid);
+      if (!chainOccurred) break;
+      firstMoveChains++;
+      firstMoveScore += deletedCount * Math.pow(2, firstMoveChains - 1);
+      intermediateGrid = applyGravity(newGrid);
+      if (firstMoveChains > CPU_AI_CONSTANTS.MAX_CHAIN_COUNT) break;
+    }
+    
+    if ((emergency.isEmergency || emergency.isCritical) && firstMoveChains > 0) {
+      const emergencyScore = firstMoveScore * 1000 + safeMove.safety.safetyScore;
+      if (emergencyScore > bestScore) {
+        bestScore = emergencyScore;
+        bestMove = { x: firstMove.col, rotation: firstMove.rotation, score: emergencyScore };
+        console.log(`[HARD CPU] 緊急安全連鎖: ${firstMoveChains}連鎖 at (${firstMove.col}, ${firstMove.rotation})`);
+      }
+      return;
+    }
+    
+    if (!emergency.isCritical) {
+      const nextLegalMoves = getAllLegalMoves(intermediateGrid, nextPair.main, nextPair.sub);
+      const maxNextMoves = emergency.isEmergency ? 
+        CPU_AI_CONSTANTS.EMERGENCY_NEXT_MOVES_LIMIT : 
+        CPU_AI_CONSTANTS.HARD_NORMAL_NEXT_MOVES;
+      const limitedNextMoves = nextLegalMoves.slice(0, maxNextMoves);
+      
+      let maxScoreForThisFirst = firstMoveScore * 200 + safeMove.safety.safetyScore;
+      
+      limitedNextMoves.forEach(secondMove => {
+        const secondSafety = evaluateMoveSafety(intermediateGrid, secondMove.col, secondMove.rotation, nextPair.main, nextPair.sub);
+        
+        if (!secondSafety.isSafe && emergency.isEmergency) return;
+        
+        const comboScore = evaluateTwoMoveCombo(grid, currentPair, nextPair, firstMove, secondMove);
+        const adjustedScore = comboScore + secondSafety.safetyScore;
+        maxScoreForThisFirst = Math.max(maxScoreForThisFirst, adjustedScore);
+      });
+      
+      if (limitedNextMoves.length === 0) {
+        const analysis = calculateAdvancedChainPotential(intermediateGrid);
+        maxScoreForThisFirst = Math.max(maxScoreForThisFirst, 
+          analysis.fieldValue + (analysis.maxChainPotential * 300) + safeMove.safety.safetyScore);
+      }
+      
+      if (maxScoreForThisFirst > bestScore) {
+        bestScore = maxScoreForThisFirst;
+        bestMove = { x: firstMove.col, rotation: firstMove.rotation, score: maxScoreForThisFirst };
+      }
+    } else {
+      const criticalScore = safeMove.safety.safetyScore + (firstMoveScore * 100);
+      if (criticalScore > bestScore) {
+        bestScore = criticalScore;
+        bestMove = { x: firstMove.col, rotation: firstMove.rotation, score: criticalScore };
+      }
+    }
+    
+    evaluatedMoves++;
+  });
+  
+  const thinkTime = Date.now() - startTime;
+  console.log(`[HARD CPU] 思考完了: ${evaluatedMoves}手評価, ${thinkTime}ms, 最高評価${Math.round(bestScore)}`);
+  
+  return bestMove || { x: Math.floor(GAME_CONFIG.gridWidth / 2), rotation: 0, score: 0 };
 };
+
+// ========================================
+// メイン関数
+// ========================================
 
 export const findBestMove = (
   grid: PuyoCell[][], 
   pair: PuyoPair, 
-  difficulty: GameDifficulty
+  difficulty: GameDifficulty,
+  nextPair?: PuyoPair | null
 ): CpuMove | null => {
-  
-  const config = AI_CONFIGS[difficulty];
-  let bestMove: CpuMove | null = null;
-  let bestScore = -Infinity;
-  let validMoves = 0;
-  let allMoves: CpuMove[] = [];
-
-  // 全ての可能な配置をテスト
-  for (let x = 0; x < GAME_CONFIG.gridWidth; x++) {
-    for (let rotation = 0; rotation < 4; rotation++) {
-      const testPair: PuyoPair = { ...pair, x, rotation, y: 1 };
-      const score = evaluateMove(grid, testPair, config);
-      
-      if (score > -999) { // 配置可能な手のみカウント
-        validMoves++;
-        allMoves.push({ x, rotation, score });
-      }
-      
-      if (score > bestScore) {
-        bestScore = score;
-        bestMove = { x, rotation, score };
-      }
-    }
+  switch (difficulty) {
+    case 'easy':
+      return findBestMoveEasy(grid, pair);
+    case 'normal':
+      return findBestMoveNormal(grid, pair);
+    case 'hard':
+      return findBestMoveHard(grid, pair, nextPair || null);
+    default:
+      return findBestMoveEasy(grid, pair);
   }
-
-  // 即落とし判定は実行段階で行うため、ここでは削除
-
-  // EASY難易度では時々ランダムな手を選ぶ（自然落下のみ）
-  if (difficulty === 'easy' && Math.random() < 0.4 && allMoves.length > 0) {
-    const randomMove = allMoves[Math.floor(Math.random() * allMoves.length)];
-    return randomMove;
-  }
-  
-  // フォールバック：最適手が見つからない場合はデフォルトの動作
-  if (!bestMove || bestScore === -Infinity) {
-    return { x: Math.floor(GAME_CONFIG.gridWidth / 2), rotation: 0, score: 0 };
-  }
-
-  return bestMove;
-}
+};
 
 export const getCpuAiConfig = (difficulty: GameDifficulty): CpuAiConfig => {
   return AI_CONFIGS[difficulty];

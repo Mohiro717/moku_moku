@@ -109,7 +109,6 @@ export const usePuyoGame = () => {
         ...prev,
         grid: newGrid,
         currentPair: null,
-        nextPair: createRandomPair(),
         isGameOver,
         isPlaying: !isGameOver
       };
@@ -127,7 +126,6 @@ export const usePuyoGame = () => {
         ...prev,
         grid: newGrid,
         currentPair: null,
-        nextPair: createRandomPair(),
         isGameOver,
         isPlaying: !isGameOver
       };
@@ -357,15 +355,27 @@ export const usePuyoGame = () => {
         } else {
           // No chains, spawn new pair
           setGameState(prev => {
+            if (prev.isGameOver) {
+              console.log('[PUYO GAME] Blocked pair spawn - game is over');
+              return prev;
+            }
+            
             const newPair = prev.nextPair || createRandomPair();
+            const nextPair = createRandomPair();
+            
+            console.log('[PUYO GAME] Spawning new pair:', {
+              current: newPair,
+              next: nextPair
+            });
             
             if (canPlacePair(prev.grid, newPair)) {
               return { 
                 ...prev, 
                 currentPair: newPair,
-                nextPair: createRandomPair()
+                nextPair
               };
             } else {
+              console.log('[PUYO GAME] Cannot place new pair - game over');
               return { 
                 ...prev, 
                 isGameOver: true, 
@@ -422,16 +432,27 @@ export const usePuyoGame = () => {
 
   // Game control functions
   const startGame = useCallback(() => {
-    setGameState(prev => ({
-      ...prev,
-      isPlaying: true,
-      isPaused: false,
-      isGameOver: false,
-      currentPair: createRandomPair(),
-      nextPair: createRandomPair(),
-      chainAnimationStep: 'idle',
-      currentChainStep: 0
-    }));
+    setGameState(prev => {
+      if (prev.isGameOver) {
+        const newState = createInitialGameState();
+        return {
+          ...newState,
+          isPlaying: true,
+          currentPair: createRandomPair(),
+          nextPair: createRandomPair()
+        };
+      }
+      return {
+        ...prev,
+        isPlaying: true,
+        isPaused: false,
+        isGameOver: false,
+        currentPair: createRandomPair(),
+        nextPair: createRandomPair(),
+        chainAnimationStep: 'idle',
+        currentChainStep: 0
+      };
+    });
   }, []);
 
   const pauseGame = useCallback(() => {

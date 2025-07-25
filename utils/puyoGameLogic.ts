@@ -382,3 +382,126 @@ export const calculateChainScore = (deletedCount: number, chainCount: number): n
   
   return limitedScore;
 };
+
+// CPU AI ヘルパー関数群
+
+// ぷよを指定位置に置いた後の新しいフィールドを返す
+export const simulatePlacePuyo = (
+  grid: PuyoCell[][],
+  col: number,
+  rotation: number,
+  mainColor: ColoredPuyoColor,
+  subColor: ColoredPuyoColor
+): PuyoCell[][] | null => {
+  // 回転に基づいて配置位置を計算
+  const getPlacementPositions = (column: number, rot: number) => {
+    const lowestY = findLowestPosition(grid, column, 0);
+    
+    switch (rot) {
+      case 0: // sub on top
+        return {
+          main: { x: column, y: lowestY },
+          sub: { x: column, y: lowestY - 1 }
+        };
+      case 1: // sub on right
+        return {
+          main: { x: column, y: lowestY },
+          sub: { x: column + 1, y: findLowestPosition(grid, column + 1, 0) }
+        };
+      case 2: // sub on bottom (main on top)
+        return {
+          main: { x: column, y: lowestY - 1 },
+          sub: { x: column, y: lowestY }
+        };
+      case 3: // sub on left
+        return {
+          main: { x: column, y: lowestY },
+          sub: { x: column - 1, y: findLowestPosition(grid, column - 1, 0) }
+        };
+      default:
+        return null;
+    }
+  };
+
+  const positions = getPlacementPositions(col, rotation);
+  if (!positions) return null;
+
+  // 配置可能かチェック
+  if (!isValidPosition(positions.main, grid) || !isValidPosition(positions.sub, grid)) {
+    return null;
+  }
+
+  // 新しいグリッドに配置
+  const newGrid = grid.map(row => row.map(cell => ({ ...cell })));
+  newGrid[positions.main.y][positions.main.x] = {
+    color: mainColor,
+    id: Math.random().toString(36)
+  };
+  newGrid[positions.sub.y][positions.sub.x] = {
+    color: subColor,
+    id: Math.random().toString(36)
+  };
+
+  return newGrid;
+};
+
+// フィールドの連鎖数を計算する
+export const calculateMaxChains = (grid: PuyoCell[][]): number => {
+  let chainCount = 0;
+  let currentGrid = grid.map(row => row.map(cell => ({ ...cell })));
+
+  while (true) {
+    // 重力を適用
+    currentGrid = applyGravity(currentGrid);
+    
+    // 連鎖をチェック
+    const { newGrid, chainOccurred } = processChains(currentGrid);
+    
+    if (!chainOccurred) {
+      break;
+    }
+    
+    chainCount++;
+    currentGrid = newGrid;
+    
+    // 無限ループ防止
+    if (chainCount > 10) {
+      break;
+    }
+  }
+
+  return chainCount;
+};
+
+// 合法手をすべてリストアップする
+export const getAllLegalMoves = (
+  grid: PuyoCell[][],
+  mainColor: ColoredPuyoColor,
+  subColor: ColoredPuyoColor
+): Array<{ col: number; rotation: number }> => {
+  const legalMoves: Array<{ col: number; rotation: number }> = [];
+
+  for (let col = 0; col < GAME_CONFIG.gridWidth; col++) {
+    for (let rotation = 0; rotation < 4; rotation++) {
+      // 仮想的なぷよペアを作成
+      const testPair: PuyoPair = {
+        main: mainColor,
+        sub: subColor,
+        x: col,
+        y: 1,
+        rotation
+      };
+
+      // 配置可能かチェック
+      if (canPlacePair(grid, testPair)) {
+        // さらに詳細な配置可能性をチェック
+        const simulatedGrid = simulatePlacePuyo(grid, col, rotation, mainColor, subColor);
+        if (simulatedGrid) {
+          legalMoves.push({ col, rotation });
+        }
+      }
+    }
+  }
+
+  return legalMoves;
+};

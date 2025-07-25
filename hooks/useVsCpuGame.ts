@@ -96,10 +96,20 @@ export const useVsCpuGame = (initialDifficulty: GameDifficulty = 'normal') => {
 
   // ゲーム制御関数
   const startGame = useCallback(() => {
+    if (vsGameState.isGameOver) {
+      console.log('[VS CPU] Starting from game over state - restarting game');
+      playerGame.restartGame();
+      cpuGame.restartGame();
+      setVsGameState(prev => resetVsGameState(prev.difficulty));
+      cpuPlayer.stopCpuThinking();
+      cpuOperationManager.cleanup();
+      return;
+    }
+    console.log('[VS CPU] Starting normal game');
     playerGame.startGame();
     cpuGame.startGame();
     setVsGameState(prev => ({ ...prev, isPlaying: true, isPaused: false, isGameOver: false, winner: null }));
-  }, [playerGame, cpuGame]);
+  }, [playerGame, cpuGame, cpuPlayer, vsGameState.isGameOver]);
 
   const pauseGame = useCallback(() => {
     playerGame.pauseGame();
@@ -144,22 +154,37 @@ export const useVsCpuGame = (initialDifficulty: GameDifficulty = 'normal') => {
     };
   }, []);
 
-  // 勝敗判定（どちらかがゲームオーバーで全体終了）
+  // ゲーム終了処理の共通化
+  const handleGameEnd = useCallback((winner: 'player' | 'cpu') => {
+    console.log(`[VS CPU] Game ended - ${winner} wins`);
+    
+    setVsGameState(prev => ({ 
+      ...prev, 
+      isGameOver: true, 
+      winner, 
+      isPlaying: false 
+    }));
+    
+    // 両方のゲームを完全停止
+    setTimeout(() => {
+      playerGame.pauseGame();
+      cpuGame.pauseGame();
+    }, 100);
+    
+    cpuPlayer.stopCpuThinking();
+    cpuOperationManager.cleanup();
+  }, [playerGame, cpuGame, cpuPlayer]);
+
+  // 勝敗判定とゲーム終了処理
   useEffect(() => {
     if (!vsGameState.isGameOver) {
       if (playerGame.gameState.isGameOver) {
-        // プレイヤーがゲームオーバー → CPUの勝利
-        setVsGameState(prev => ({ ...prev, isGameOver: true, winner: 'cpu', isPlaying: false }));
-        // CPU側も強制停止
-        cpuGame.pauseGame();
+        handleGameEnd('cpu');
       } else if (cpuGame.gameState.isGameOver) {
-        // CPUがゲームオーバー → プレイヤーの勝利
-        setVsGameState(prev => ({ ...prev, isGameOver: true, winner: 'player', isPlaying: false }));
-        // プレイヤー側も強制停止
-        playerGame.pauseGame();
+        handleGameEnd('player');
       }
     }
-  }, [playerGame.gameState.isGameOver, cpuGame.gameState.isGameOver, vsGameState.isGameOver, playerGame, cpuGame]);
+  }, [playerGame.gameState.isGameOver, cpuGame.gameState.isGameOver, vsGameState.isGameOver, handleGameEnd]);
 
   // 統合されたゲーム状態
   const gameState = {
