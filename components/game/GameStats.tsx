@@ -53,14 +53,14 @@ export const GameStats: React.FC<GameStatsProps> = memo(({
     <div className="space-y-3">
       <div className="grid grid-cols-2 gap-4 text-sm">
         <div className="bg-coffee-light/20 rounded-lg p-3">
-          <div className="text-coffee-dark/60 text-xs">SCORE</div>
-          <div className="text-xl font-bold text-coffee-dark">
+          <div className="text-coffee-dark/60 text-xs font-serif">SCORE</div>
+          <div className="text-xl font-serif text-coffee-dark">
             {score.toLocaleString()}
           </div>
         </div>
         <div className="bg-coffee-light/20 rounded-lg p-3">
-          <div className="text-coffee-dark/60 text-xs">CHAIN</div>
-          <div className="text-xl font-bold text-coffee-dark">
+          <div className="text-coffee-dark/60 text-xs font-serif">CHAIN</div>
+          <div className="text-xl font-serif text-coffee-dark">
             {chainCount}
           </div>
         </div>
@@ -69,11 +69,11 @@ export const GameStats: React.FC<GameStatsProps> = memo(({
       {/* Chain Animation Status */}
       {isChaining && (
         <div className="bg-yellow-100 border border-yellow-300 rounded-lg p-2 text-center">
-          <div className={`text-sm font-bold ${getChainStatusColor()}`}>
+          <div className={`text-sm font-serif ${getChainStatusColor()}`}>
             {getChainStatusText()}
           </div>
           {currentChainStep > 0 && chainAnimationStep !== 'complete' && (
-            <div className="text-xs text-coffee-dark/60 mt-1">
+            <div className="text-xs text-coffee-dark/60 mt-1 font-serif">
               現在 {currentChainStep} 段目
             </div>
           )}

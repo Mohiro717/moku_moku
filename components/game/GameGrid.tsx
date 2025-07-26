@@ -34,7 +34,7 @@ interface GameGridProps {
 const PauseOverlay: React.FC = () => (
   <div className={`${OVERLAY_STYLES.base} ${OVERLAY_STYLES.pause}`}>
     <div className="text-center text-white">
-      <h3 className="text-4xl font-bold tracking-wider animate-pulse">PAUSE</h3>
+      <h3 className="text-4xl font-serif tracking-wider animate-pulse">PAUSE</h3>
     </div>
   </div>
 );
@@ -42,8 +42,8 @@ const PauseOverlay: React.FC = () => (
 const WinOverlay: React.FC = () => (
   <div className={`${OVERLAY_STYLES.base} ${OVERLAY_STYLES.win}`}>
     <div className="text-center">
-      <h3 className="text-4xl font-bold text-white drop-shadow-lg mb-2">🎉 WIN! 🎉</h3>
-      <div className="text-lg font-bold text-white drop-shadow">Victory!</div>
+      <h3 className="text-4xl font-serif text-white drop-shadow-lg mb-2">🎉 WIN! 🎉</h3>
+      <div className="text-lg font-serif text-white drop-shadow">Victory!</div>
     </div>
   </div>
 );
@@ -51,8 +51,8 @@ const WinOverlay: React.FC = () => (
 const LoseOverlay: React.FC = () => (
   <div className={`${OVERLAY_STYLES.base} ${OVERLAY_STYLES.lose}`}>
     <div className="text-center">
-      <h3 className="text-3xl font-bold text-gray-300 mb-2">💀 LOSE 💀</h3>
-      <div className="text-md font-bold text-gray-400">Defeated...</div>
+      <h3 className="text-3xl font-serif text-gray-300 mb-2">💀 LOSE 💀</h3>
+      <div className="text-md font-serif text-gray-400">Defeated...</div>
     </div>
   </div>
 );
@@ -60,7 +60,7 @@ const LoseOverlay: React.FC = () => (
 const GameOverOverlay: React.FC = () => (
   <div className={`${OVERLAY_STYLES.base} ${OVERLAY_STYLES.fallback}`}>
     <div className="text-center text-white">
-      <h3 className="text-2xl font-bold mb-2">Game Over!</h3>
+      <h3 className="text-2xl font-serif mb-2">Game Over!</h3>
     </div>
   </div>
 );

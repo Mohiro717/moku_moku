@@ -9,17 +9,17 @@ export const GameStatusIndicator: React.FC<GameStatusIndicatorProps> = memo(({ g
   return (
     <div className="text-center">
       {gameState.isChaining && (
-        <div className="text-sm text-vivid-green font-medium animate-pulse">
+        <div className="text-sm text-vivid-green font-serif animate-pulse">
           ⚡ CHAIN {gameState.chainCount}!
         </div>
       )}
       {gameState.isPaused && (
-        <div className="text-sm text-vivid-pink font-medium">
+        <div className="text-sm text-vivid-pink font-serif">
           ⏸️ PAUSED
         </div>
       )}
       {gameState.isPlaying && !gameState.isPaused && !gameState.isChaining && (
-        <div className="text-sm text-vivid-green font-medium">
+        <div className="text-sm text-vivid-green font-serif">
           ▶️ PLAYING
         </div>
       )}

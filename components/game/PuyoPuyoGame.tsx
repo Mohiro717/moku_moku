@@ -25,7 +25,7 @@ export const PuyoPuyoGame: React.FC = () => {
       <div className="max-w-4xl mx-auto p-6 bg-ivory rounded-3xl shadow-lg">
         {/* Game Title */}
         <div className="text-center mb-6">
-          <h3 className="text-2xl font-bold text-coffee-dark mb-2">
+          <h3 className="text-2xl font-serif text-coffee-dark mb-2">
             Moku Moku Puyo - シングルプレイ
           </h3>
         </div>
@@ -63,8 +63,8 @@ export const PuyoPuyoGame: React.FC = () => {
         </div>
 
         {/* Game focus reminder */}
-        <div className="mt-6 text-center text-xs text-coffee-dark/60">
-          <p className="mt-1">
+        <div className="mt-6 text-center text-xs text-coffee-dark/60 font-serif">
+          <p className="mt-1 font-serif">
             {gameState.isPlaying && !gameState.isPaused 
               ? "ゲーム中です！集中してプレイしましょう 🎮" 
               : "リラックスタイムにぴったりなパズルゲームです ☕"

@@ -1,5 +1,6 @@
 import React, { memo } from 'react';
 import type { PuyoColor } from '../../types/game';
+import { ParticleEffect } from './ParticleEffect';
 
 interface PuyoProps {
   color: PuyoColor;
@@ -16,6 +17,15 @@ const PUYO_COLORS = {
   yellow: 'bg-yellow-400 border-yellow-500',
   ojama: 'bg-gray-500 border-gray-600',
   null: 'bg-transparent border-transparent'
+};
+
+const PARTICLE_COLORS = {
+  red: '#ef4444',
+  blue: '#3b82f6',
+  green: '#22c55e',
+  yellow: '#eab308',
+  ojama: '#6b7280',
+  null: '#ffffff'
 };
 
 const PUYO_EYES = {
@@ -48,15 +58,24 @@ export const Puyo: React.FC<PuyoProps> = memo(({
 
   const animationClasses = `
     ${isConnected ? 'ring-4 ring-yellow-300 shadow-lg scale-110 animate-pulse z-10' : ''}
-    ${isDeleting ? 'animate-ping scale-125 opacity-50 bg-white' : ''}
+    ${isDeleting ? 'animate-spin scale-150 opacity-30 bg-gradient-to-r from-yellow-400 via-red-400 to-pink-400 shadow-2xl' : ''}
     ${isFalling ? 'animate-bounce scale-105' : ''}
   `;
 
   return (
-    <div className={`${baseClasses} ${animationClasses}`}>
+    <div className={`${baseClasses} ${animationClasses} relative`}>
       <span className="text-xs select-none">
         {PUYO_EYES[color]}
       </span>
+      {isDeleting && (
+        <ParticleEffect
+          isActive={isDeleting}
+          color={PARTICLE_COLORS[color]}
+          x={16}
+          y={16}
+          particleCount={12}
+        />
+      )}
     </div>
   );
 });

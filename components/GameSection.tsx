@@ -50,7 +50,7 @@ export const GameSection: React.FC = () => {
 
                   {/* Content */}
                   <div className="text-center">
-                    <h3 className="text-2xl font-bold text-coffee-dark mb-6 font-serif">
+                    <h3 className="text-2xl font-serif text-coffee-dark mb-6 font-serif">
                       Moku Moku Puyo
                     </h3>
 
@@ -58,46 +58,46 @@ export const GameSection: React.FC = () => {
                     <div className="bg-white/70 rounded-2xl p-5 mb-6 border border-coffee-light/20">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <h4 className="text-coffee-dark font-bold mb-3 flex items-center">
+                          <h4 className="text-coffee-dark font-serif mb-3 flex items-center">
                             <span className="text-vivid-pink mr-2">🎮</span>
                             操作方法
                           </h4>
-                          <div className="space-y-2 text-sm text-coffee-mid">
+                          <div className="space-y-2 text-sm text-coffee-mid font-serif">
                             <div className="flex items-center">
-                              <span className="bg-coffee-light/10 px-2 py-1 rounded font-mono text-xs mr-2">←→</span>
-                              <span>移動</span>
+                              <span className="bg-coffee-light/10 px-2 py-1 rounded font-serif text-xs mr-2">←→</span>
+                              <span className="font-serif">移動</span>
                             </div>
                             <div className="flex items-center">
-                              <span className="bg-coffee-light/10 px-2 py-1 rounded font-mono text-xs mr-2">Z/X</span>
-                              <span>回転</span>
+                              <span className="bg-coffee-light/10 px-2 py-1 rounded font-serif text-xs mr-2">Z/X</span>
+                              <span className="font-serif">回転</span>
                             </div>
                             <div className="flex items-center">
-                              <span className="bg-coffee-light/10 px-2 py-1 rounded font-mono text-xs mr-2">↓</span>
-                              <span>高速落下</span>
+                              <span className="bg-coffee-light/10 px-2 py-1 rounded font-serif text-xs mr-2">↓</span>
+                              <span className="font-serif">高速落下</span>
                             </div>
                             <div className="flex items-center">
-                              <span className="bg-coffee-light/10 px-2 py-1 rounded font-mono text-xs mr-2">Space</span>
-                              <span>ハードドロップ</span>
+                              <span className="bg-coffee-light/10 px-2 py-1 rounded font-serif text-xs mr-2">Space</span>
+                              <span className="font-serif">ハードドロップ</span>
                             </div>
                           </div>
                         </div>
                         <div>
-                          <h4 className="text-coffee-dark font-bold mb-3 flex items-center">
+                          <h4 className="text-coffee-dark font-serif mb-3 flex items-center">
                             <span className="text-vivid-green mr-2">🧩</span>
                             基本ルール
                           </h4>
-                          <div className="space-y-2 text-sm text-coffee-mid">
+                          <div className="space-y-2 text-sm text-coffee-mid font-serif">
                             <div className="flex items-start">
                               <span className="text-vivid-pink mr-2 mt-1">•</span>
-                              <span>同色4個以上つなげて消去</span>
+                              <span className="font-serif">同色4個以上つなげて消去</span>
                             </div>
                             <div className="flex items-start">
                               <span className="text-vivid-green mr-2 mt-1">•</span>
-                              <span>連鎖でボーナス得点！</span>
+                              <span className="font-serif">連鎖でボーナス得点！</span>
                             </div>
                             <div className="flex items-start">
                               <span className="text-red-500 mr-2 mt-1">•</span>
-                              <span>上端ラインに達するとゲームオーバー</span>
+                              <span className="font-serif">上端ラインに達するとゲームオーバー</span>
                             </div>
                           </div>
                         </div>
@@ -108,14 +108,14 @@ export const GameSection: React.FC = () => {
                     <div className="space-y-3">
                       <button
                         onClick={() => setGameMode('single')}
-                        className="w-full py-3 px-6 bg-gradient-to-r from-vivid-pink to-vivid-green text-white font-bold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 hover:from-vivid-pink/90 hover:to-vivid-green/90"
+                        className="w-full py-3 px-6 bg-gradient-to-r from-vivid-pink to-vivid-green text-white font-serif rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 hover:from-vivid-pink/90 hover:to-vivid-green/90"
                       >
                         🎮 シングルプレイ
                       </button>
                       
                       <button
                         onClick={() => setGameMode('vs-cpu-rules')}
-                        className="w-full py-3 px-6 bg-gradient-to-r from-coffee-dark to-vivid-pink text-white font-bold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 hover:from-coffee-dark/90 hover:to-vivid-pink/90"
+                        className="w-full py-3 px-6 bg-gradient-to-r from-coffee-dark to-vivid-pink text-white font-serif rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 hover:from-coffee-dark/90 hover:to-vivid-pink/90"
                       >
                         🤖 CPU対戦モード
                       </button>
@@ -141,13 +141,13 @@ export const GameSection: React.FC = () => {
 
                 {/* Content */}
                 <div className="text-center">
-                  <h3 className="text-2xl font-bold text-coffee-dark mb-6 font-serif">
+                  <h3 className="text-2xl font-serif text-coffee-dark mb-6 font-serif">
                     対戦ルール
                   </h3>
                   
                   {/* Battle Rules */}
                   <div className="text-left bg-coffee-light/10 rounded-xl p-4 mb-6">
-                    <div className="space-y-2 text-sm text-coffee-mid">
+                    <div className="space-y-2 text-sm text-coffee-mid font-serif">
                       <div className="flex items-start">
                         <span className="text-vivid-green mr-2 mt-1">•</span>
                         <span>4個以上同時消去でおじゃまぷよを送信</span>
@@ -166,14 +166,14 @@ export const GameSection: React.FC = () => {
                   {/* Continue button */}
                   <button
                     onClick={() => setGameMode('difficulty-select')}
-                    className="w-full py-3 px-6 bg-gradient-to-r from-vivid-pink to-vivid-green text-white font-bold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 hover:from-vivid-pink/90 hover:to-vivid-green/90 mb-3"
+                    className="w-full py-3 px-6 bg-gradient-to-r from-vivid-pink to-vivid-green text-white font-serif rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 hover:from-vivid-pink/90 hover:to-vivid-green/90 mb-3"
                   >
                     🎯 難易度を選択
                   </button>
                   
                   <button
                     onClick={() => setGameMode(null)}
-                    className="w-full py-2 px-4 bg-gradient-to-r from-coffee-light to-coffee-mid text-white rounded-xl font-medium shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200 hover:from-coffee-light/90 hover:to-coffee-mid/90"
+                    className="w-full py-2 px-4 bg-gradient-to-r from-coffee-light to-coffee-mid text-white rounded-xl font-serif shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200 hover:from-coffee-light/90 hover:to-coffee-mid/90"
                   >
                     ← モード選択に戻る
                   </button>
@@ -197,7 +197,7 @@ export const GameSection: React.FC = () => {
 
                 {/* Content */}
                 <div className="text-center">
-                  <h3 className="text-2xl font-bold text-coffee-dark mb-4 font-serif">
+                  <h3 className="text-2xl font-serif text-coffee-dark mb-4 font-serif">
                     難易度を選択
                   </h3>
                   
@@ -215,13 +215,13 @@ export const GameSection: React.FC = () => {
                       <button
                         key={value}
                         onClick={() => setSelectedDifficulty(value as GameDifficulty)}
-                        className={`w-full p-4 rounded-xl font-medium transition-all transform hover:scale-105 duration-200 text-left ${
+                        className={`w-full p-4 rounded-xl font-serif transition-all transform hover:scale-105 duration-200 text-left ${
                           selectedDifficulty === value 
                             ? `bg-gradient-to-r ${gradient} text-white shadow-lg border-2 border-white` 
                             : 'bg-white/50 text-coffee-dark hover:bg-white/70 border-2 border-transparent'
                         }`}
                       >
-                        <div className="font-bold">{label}</div>
+                        <div className="font-serif">{label}</div>
                         <div className="text-sm opacity-80">{desc}</div>
                       </button>
                     ))}
@@ -230,14 +230,14 @@ export const GameSection: React.FC = () => {
                   {/* Start button */}
                   <button
                     onClick={() => setGameMode('vs-cpu')}
-                    className="w-full py-3 px-6 bg-gradient-to-r from-vivid-pink to-vivid-green text-white font-bold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 hover:from-vivid-pink/90 hover:to-vivid-green/90 mb-3"
+                    className="w-full py-3 px-6 bg-gradient-to-r from-vivid-pink to-vivid-green text-white font-serif rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 hover:from-vivid-pink/90 hover:to-vivid-green/90 mb-3"
                   >
                     🎮 対戦スタート
                   </button>
                   
                   <button
                     onClick={() => setGameMode(null)}
-                    className="w-full py-2 px-4 bg-gradient-to-r from-coffee-light to-coffee-mid text-white rounded-xl font-medium shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200 hover:from-coffee-light/90 hover:to-coffee-mid/90"
+                    className="w-full py-2 px-4 bg-gradient-to-r from-coffee-light to-coffee-mid text-white rounded-xl font-serif shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200 hover:from-coffee-light/90 hover:to-coffee-mid/90"
                   >
                     ← モード選択に戻る
                   </button>
@@ -254,7 +254,7 @@ export const GameSection: React.FC = () => {
               
               <button
                 onClick={() => setGameMode(null)}
-                className="mt-6 py-2 px-4 bg-gradient-to-r from-coffee-light to-coffee-mid text-white rounded-xl font-medium shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200 hover:from-coffee-light/90 hover:to-coffee-mid/90"
+                className="mt-6 py-2 px-4 bg-gradient-to-r from-coffee-light to-coffee-mid text-white rounded-xl font-serif shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200 hover:from-coffee-light/90 hover:to-coffee-mid/90"
               >
                 ← モード選択に戻る
               </button>
