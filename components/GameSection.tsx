@@ -15,15 +15,15 @@ export const GameSection: React.FC = () => {
   const [selectedDifficulty, setSelectedDifficulty] = useState<GameDifficulty>('normal');
 
   return (
-    <section className="py-20 lg:py-32 bg-ivory">
+    <section className="py-20 lg:py-32 bg-ivory min-h-screen">
       <div className="max-w-6xl mx-auto px-4">
         <AnimatedSection id="game" className="text-center">
-          <SectionTitle showLines={true} className="mb-12 text-3xl md:text-4xl lg:text-5xl">
+          <SectionTitle showLines={true} className="mb-32 text-3xl md:text-4xl lg:text-5xl">
             {SITE_CONFIG.gameTitle}
           </SectionTitle>
           
           {!gameMode ? (
-            <div className="relative">
+            <div className="relative mt-8">
               {/* Game Preview Card */}
               <div className="border-2 border-dashed border-coffee-light rounded-3xl p-12 lg:p-16 transition-all duration-500 hover:border-vivid-pink hover:shadow-lg opacity-50 blur-sm">
                 <GameControllerIcon className="w-16 h-16 lg:w-20 lg:h-20 mx-auto text-coffee-light mb-8" />
