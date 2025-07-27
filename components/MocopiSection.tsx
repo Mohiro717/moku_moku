@@ -8,7 +8,7 @@ import { SITE_CONFIG } from '../constants';
 const MOCOPI_CONFIG = {
   name: 'Mocopi',
   title: 'Moku Moku House Mascot',
-  imageSrc: '/moku_moku/images/mocopi.jpg',
+  imageSrc: './images/mocopi.jpg',
   imageAlt: 'Mocopi mascot character'
 } as const;
 

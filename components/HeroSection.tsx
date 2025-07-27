@@ -13,7 +13,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onScrollToNext }) => {
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{
-          backgroundImage: 'url(/moku_moku/images/latte-art.jpg)'
+          backgroundImage: 'url(./images/latte-art.jpg)'
         }}
       />
       <div className="absolute inset-0 bg-gradient-to-br from-ivory/70 via-pastel-blue/50 to-coffee-light/60" />
