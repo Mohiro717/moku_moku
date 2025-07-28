@@ -92,7 +92,7 @@
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&family=Noto+Sans+JP:wght@300;400;500;700&family=Yomogi&display=swap" rel="stylesheet">
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -117,7 +117,10 @@
                         'fade-in-up': 'fadeInUp 1s ease-out forwards',
                         'bounce-slow': 'bounce 2s infinite',
                         'loading-progress': 'loadingProgress 2s ease-in-out infinite',
-                        'poyopoyo': 'poyopoyo 1.5s ease-in-out infinite'
+                        'poyopoyo': 'poyopoyo 1.5s ease-in-out infinite',
+                        'shake': 'shake 0.5s ease-in-out infinite',
+                        'sparkle': 'sparkle 2s ease-in-out infinite',
+                        'glow': 'glow 2s ease-in-out infinite'
                     },
                     keyframes: {
                         fadeInUp: {
@@ -148,12 +151,48 @@
                             '75%': { 
                                 transform: 'scale(1.1) translateY(-2px)' 
                             }
+                        },
+                        shake: {
+                            '0%, 100%': { transform: 'translateX(0)' },
+                            '10%, 30%, 50%, 70%, 90%': { transform: 'translateX(-2px)' },
+                            '20%, 40%, 60%, 80%': { transform: 'translateX(2px)' }
+                        },
+                        sparkle: {
+                            '0%, 100%': { 
+                                transform: 'scale(1) rotate(0deg)',
+                                opacity: '1'
+                            },
+                            '25%': { 
+                                transform: 'scale(1.2) rotate(90deg)',
+                                opacity: '0.8'
+                            },
+                            '50%': { 
+                                transform: 'scale(0.8) rotate(180deg)',
+                                opacity: '0.6'
+                            },
+                            '75%': { 
+                                transform: 'scale(1.1) rotate(270deg)',
+                                opacity: '0.9'
+                            }
+                        },
+                        glow: {
+                            '0%, 100%': { 
+                                textShadow: '0 0 5px rgba(236, 72, 153, 0.3)'
+                            },
+                            '50%': { 
+                                textShadow: '0 0 20px rgba(236, 72, 153, 0.8), 0 0 30px rgba(147, 51, 234, 0.4)'
+                            }
                         }
                     }
                 }
             }
         }
     </script>
+    <style>
+        .text-glow {
+            text-shadow: 0 0 10px rgba(236, 72, 153, 0.5), 0 0 20px rgba(147, 51, 234, 0.3);
+        }
+    </style>
 </head>
 <body class="bg-ivory text-coffee-dark font-sans overflow-x-hidden">
     <div id="root"></div>
