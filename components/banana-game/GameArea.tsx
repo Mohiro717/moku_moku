@@ -50,11 +50,14 @@ export const GameArea: React.FC<GameAreaProps> = ({
         </div>
       ) : (
         <button
-          onClick={onBananaClick}
+          onTouchStart={onBananaClick}
+          onMouseDown={onBananaClick}
           className="absolute transform -translate-x-1/2 -translate-y-1/2 text-4xl hover:scale-110 transition-transform cursor-pointer select-none"
           style={{
             left: gameState.banana.x + BANANA_GAME_CONFIG.BANANA_SIZE / 2,
             top: gameState.banana.y + BANANA_GAME_CONFIG.BANANA_SIZE / 2,
+            touchAction: 'manipulation',
+            WebkitTapHighlightColor: 'transparent',
           }}
         >
           🍌

@@ -139,13 +139,19 @@ export const useBananaGameRefactored = ({ dimensions }: UseBananaGameProps): Use
     setGameState(createInitialGameState(dimensions));
   }, [dimensions, stopTimer]);
 
-  const handleBananaClick = useCallback(() => {
+  const handleBananaClick = useCallback((event?: React.TouchEvent | React.MouseEvent) => {
+    if (event) {
+      event.preventDefault();
+    }
+    
     if (!gameState.isPlaying) return;
 
+    const newPosition = generateRandomBananaPosition(dimensions);
+    
     setGameState(prevState => ({
       ...prevState,
       score: prevState.score + 1,
-      banana: generateRandomBananaPosition(dimensions),
+      banana: newPosition,
     }));
   }, [gameState.isPlaying, dimensions]);
 

@@ -21,7 +21,7 @@ const GameMainArea: React.FC<{
   const showInstructions = getGameStateType(gameState) === GAME_STATES.IDLE;
 
   return (
-    <div className="max-w-2xl mx-auto bg-white rounded-3xl shadow-2xl border-4 border-yellow-300 p-8">
+    <div className="max-w-2xl mx-auto bg-white rounded-3xl shadow-2xl border-4 border-yellow-300 p-4 sm:p-8">
       <GameHeader />
       <GameStats score={gameState.score} timeLeft={gameState.timeLeft} />
       <GameArea
