@@ -50,7 +50,7 @@
     <link rel="icon" href="./images/192x192px.png" sizes="192x192" type="image/png">
     <link rel="apple-touch-icon" href="./images/180x180px.png">
     
-    <!-- PWA Manifest (Data URI to avoid file system issues) -->
+    <!-- PWA Manifest (Data URI方式でキャッシュ警告を回避) -->
     <script>
         // Manifest configuration object
         const manifestData = {
@@ -80,12 +80,12 @@
             ]
         };
         
-        // Create and inject manifest link
-        const manifestBlob = new Blob([JSON.stringify(manifestData)], {type: 'application/json'});
-        const manifestURL = URL.createObjectURL(manifestBlob);
+        // Data URI方式でBlob URLを避ける
+        const manifestJson = JSON.stringify(manifestData);
+        const manifestDataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(manifestJson);
         const manifestLink = document.createElement('link');
         manifestLink.rel = 'manifest';
-        manifestLink.href = manifestURL;
+        manifestLink.href = manifestDataUri;
         document.head.appendChild(manifestLink);
     </script>
     
@@ -94,8 +94,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&family=Noto+Sans+JP:wght@300;400;500;700&family=Yomogi&display=swap" rel="stylesheet">
     
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tailwind CSS - 最新版を明示的に指定 -->
+    <script src="https://cdn.tailwindcss.com/3.4.0"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -189,6 +189,16 @@
         }
     </script>
     <style>
+        /* CSS互換性のための修正 - Tailwind CDNの古いプレフィックスを上書き */
+        html, :host {
+            text-size-adjust: 100% !important;
+        }
+        
+        /* Tailwindのマークダウンクラスも上書き */
+        .markdown-SpwdOz {
+            text-size-adjust: 100% !important;
+        }
+        
         .text-glow {
             text-shadow: 0 0 10px rgba(236, 72, 153, 0.5), 0 0 20px rgba(147, 51, 234, 0.3);
         }

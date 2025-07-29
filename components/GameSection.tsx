@@ -5,11 +5,12 @@ import { GameControllerIcon } from './icons/GameControllerIcon';
 import { PuyoPuyoGame } from './game/PuyoPuyoGame';
 import { PuyoVsCpuGame } from './game/PuyoVsCpuGame';
 import { FrogPrincessMaze } from './frog-maze/FrogPrincessMaze';
+import { CatchTheBananaGameRefactored as CatchTheBananaGame } from './banana-game/CatchTheBananaGameRefactored';
 import { Button } from './ui/Button';
 import { SITE_CONFIG } from '../constants';
 import type { GameDifficulty } from '../types/game';
 
-type GameMode = 'single' | 'vs-cpu' | 'vs-cpu-rules' | 'difficulty-select' | 'frog-maze' | 'frog-detail' | 'playing-single' | null;
+type GameMode = 'single' | 'vs-cpu' | 'vs-cpu-rules' | 'difficulty-select' | 'frog-maze' | 'frog-detail' | 'playing-single' | 'banana-game' | null;
 
 export const GameSection: React.FC = () => {
   const [gameMode, setGameMode] = useState<GameMode>(null);
@@ -24,7 +25,7 @@ export const GameSection: React.FC = () => {
           </SectionTitle>
           
           {!gameMode ? (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
               {/* Moku Moku Puyo Card */}
               <div className="bg-white rounded-3xl shadow-2xl border-4 border-coffee-light p-8 transform animate-fade-in-up">
                 {/* Close decoration */}
@@ -197,6 +198,72 @@ export const GameSection: React.FC = () => {
                       className="w-full py-3 px-6 bg-gradient-to-r from-purple-400 to-pink-400 text-white font-serif rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 hover:from-purple-500 hover:to-pink-500"
                     >
                       🐸 迷宮に入る
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Catch The Banana Card */}
+              <div className="bg-white rounded-3xl shadow-2xl border-4 border-yellow-300 p-8 transform animate-fade-in-up">
+                {/* Close decoration */}
+                <div className="flex justify-center mb-6">
+                  <div className="w-12 h-1 bg-yellow-400 rounded-full"></div>
+                </div>
+                
+                {/* Banana icon */}
+                <div className="flex justify-center mb-6">
+                  <div className="bg-gradient-to-br from-yellow-400 to-orange-400 p-4 rounded-full">
+                    <div className="text-3xl">🍌</div>
+                  </div>
+                </div>
+
+                {/* Content */}
+                <div className="text-center">
+                  <h3 className="text-2xl font-serif text-coffee-dark mb-6">
+                    CATCH THE BANANA
+                  </h3>
+
+                  {/* Game Instructions */}
+                  <div className="bg-yellow-50/70 rounded-2xl p-5 mb-6 border border-yellow-200">
+                    <div className="grid grid-cols-1 gap-4">
+                      <div>
+                        <h4 className="text-coffee-dark font-serif mb-3 flex items-center justify-center">
+                          <span className="text-yellow-500 mr-2">🎮</span>
+                          操作方法
+                        </h4>
+                        <div className="space-y-2 text-sm text-coffee-mid font-serif">
+                          <div className="flex items-center justify-center">
+                            <span className="bg-yellow-100 px-2 py-1 rounded font-serif text-xs mr-2">クリック</span>
+                            <span className="font-serif">バナナをタップ</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div>
+                        <h4 className="text-coffee-dark font-serif mb-3 flex items-center justify-center">
+                          <span className="text-orange-500 mr-2">🍌</span>
+                          基本ルール
+                        </h4>
+                        <div className="space-y-2 text-sm text-coffee-mid font-serif">
+                          <div className="flex items-start justify-center">
+                            <span className="text-yellow-500 mr-2 mt-1">•</span>
+                            <span className="font-serif">30秒でバナナをクリック</span>
+                          </div>
+                          <div className="flex items-start justify-center">
+                            <span className="text-orange-500 mr-2 mt-1">•</span>
+                            <span className="font-serif">高スコアを目指そう！</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Action button */}
+                  <div className="space-y-3">
+                    <button
+                      onClick={() => setGameMode('banana-game')}
+                      className="w-full py-3 px-6 bg-gradient-to-r from-yellow-400 to-orange-400 text-white font-serif rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 hover:from-yellow-500 hover:to-orange-500"
+                    >
+                      🍌 ゲームスタート
                     </button>
                   </div>
                 </div>
@@ -515,6 +582,8 @@ export const GameSection: React.FC = () => {
                 <div className="w-full">
                   <FrogPrincessMaze />
                 </div>
+              ) : gameMode === 'banana-game' ? (
+                <CatchTheBananaGame />
               ) : null}
               
               <button
