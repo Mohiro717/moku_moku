@@ -1,9 +1,7 @@
 export enum GameState {
-  LOADING = 'LOADING',
   INTRO = 'INTRO',
   PLAYING = 'PLAYING',
   WON = 'WON',
-  ERROR = 'ERROR'
 }
 
 export type Occupant = 'orb' | 'trap' | null;
@@ -23,19 +21,17 @@ export interface Cell {
 
 export type Grid = Cell[][];
 
-export interface PlayerPosition {
+export interface Position {
   x: number;
   y: number;
 }
 
-export interface MonsterPosition {
-  x: number;
-  y: number;
+export interface PlayerPosition extends Position {}
+
+export interface MonsterPosition extends Position {
   id: number;
 }
 
-export interface TrapPosition {
-  x: number;
-  y: number;
-  revealed: boolean; // 踏んだことがあるかどうか
+export interface TrapPosition extends Position {
+  revealed: boolean;
 }

@@ -1,9 +1,7 @@
 import type { Grid, Cell, PlayerPosition, MonsterPosition } from '../types';
+import { GAME_CONFIG } from '../constants/gameConstants';
 
-export const NUM_ORBS = 3;
-export const NUM_TRAPS = 20; // 大きくなったマップに合わせて罠数を増加
-export const NUM_MONSTERS = 12; // 大きくなったマップに合わせてモンスター数を増加
-export const MAZE_SIZE = 31; // マップサイズを大幅に拡大
+export const { NUM_ORBS, NUM_TRAPS, NUM_MONSTERS, MAZE_SIZE } = GAME_CONFIG;
 
 export function generateMaze(): {
   grid: Grid;

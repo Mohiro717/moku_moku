@@ -34,6 +34,7 @@ export const MazeCell: React.FC<MazeCellProps> = ({
   const getCellClasses = () => {
     const classes = [
       MAZE_STYLES.CELL.BASE,
+      'overflow-visible',
       cell.walls.top ? MAZE_STYLES.CELL.BORDERS.TOP : '',
       cell.walls.right ? MAZE_STYLES.CELL.BORDERS.RIGHT : '',
       cell.walls.bottom ? MAZE_STYLES.CELL.BORDERS.BOTTOM : '',

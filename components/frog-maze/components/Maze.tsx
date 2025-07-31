@@ -9,7 +9,8 @@ import {
   getTrapWarningLevel 
 } from '../utils/mazeUtils';
 import type { Grid, PlayerPosition, MonsterPosition, TrapPosition } from '../types';
-import { GAME_TEXT, MAZE_STYLES, GAME_FONT } from '../constants/gameConstants';
+import { GAME_TEXT, MAZE_STYLES, GAME_FONT, GAME_CONFIG } from '../constants/gameConstants';
+import { useKeyboardInput } from '../hooks/useKeyboardInput';
 import { GameStatus } from './GameStatus';
 import { MazeGrid } from './MazeGrid';
 import { GameControls } from './GameControls';
@@ -208,32 +209,20 @@ export const Maze: React.FC<MazeProps> = ({ onWin }) => {
   useEffect(() => {
     const monsterTimer = setInterval(() => {
       dispatch({ type: 'MOVE_MONSTERS' });
-    }, 1500);
+    }, GAME_CONFIG.MONSTER_MOVE_INTERVAL);
 
     return () => clearInterval(monsterTimer);
   }, []);
 
   // Handle keyboard input
-  const handleKeyPress = useCallback((event: KeyboardEvent) => {
-    if (gameData.gameWon || gameData.gameOver) return;
+  const handleMove = useCallback((direction: { x: number; y: number }) => {
+    dispatch({ type: 'MOVE_PLAYER', direction });
+  }, []);
 
-    const directions: { [key: string]: { x: number; y: number } } = {
-      'ArrowUp': { x: 0, y: -1 },
-      'ArrowDown': { x: 0, y: 1 },
-      'ArrowLeft': { x: -1, y: 0 },
-      'ArrowRight': { x: 1, y: 0 },
-      'w': { x: 0, y: -1 },
-      's': { x: 0, y: 1 },
-      'a': { x: -1, y: 0 },
-      'd': { x: 1, y: 0 }
-    };
-
-    const direction = directions[event.key];
-    if (direction) {
-      event.preventDefault();
-      dispatch({ type: 'MOVE_PLAYER', direction });
-    }
-  }, [gameData.gameWon, gameData.gameOver]);
+  useKeyboardInput({
+    onMove: handleMove,
+    disabled: gameData.gameWon || gameData.gameOver
+  });
 
   // Handle cell tap/click
   const handleCellTap = useCallback((targetX: number, targetY: number) => {
@@ -261,10 +250,6 @@ export const Maze: React.FC<MazeProps> = ({ onWin }) => {
     }
   }, [gameData.gameWon, gameData.gameOver, gameData.playerPosition]);
 
-  useEffect(() => {
-    window.addEventListener('keydown', handleKeyPress);
-    return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [handleKeyPress]);
 
   if (gameData.grid.length === 0) {
     return (
