@@ -1,92 +1,61 @@
 import type { PuyoCell, PuyoColor, ColoredPuyoColor } from '../types/game';
-import { GAME_CONFIG, createEmptyGrid } from './puyoGameLogic';
+import { GAME_CONFIG } from './puyoGameLogic';
 
-export interface OjamaCalcResult {
-  ojamaCount: number;
-  remainingScore: number;
-}
+// ========================================
+// おじゃまの量
+//
+// 連鎖の k 段目で n 個消すと n × 倍率(k) ÷ 8 個ぶん送る。倍率は1段目だけ 1、
+// 2段目からは 2^k（4, 8, 16, …）で、段が進むごとに倍になる。
+// 端数は捨てずに持ち越す（4個消しを2回で1個）。
+//   毎段4個なら 1連鎖 0.5 / 2連鎖 2.5 / 3連鎖 6.5 / 4連鎖 14.5 / 5連鎖 30.5
+// ========================================
 
-export const calculateOjamaFromChain = (chainCount: number, deletedPuyos: number): OjamaCalcResult => {
-  // 異常な連鎖数を制限（20連鎖以上は無効とみなす）
-  if (chainCount > 20) {
-    console.warn(`[OJAMA CALCULATION] Abnormal chain count ${chainCount} detected - limiting to 20`);
-    chainCount = 20;
-  }
-  
-  // 異常な削除数を制限
-  if (deletedPuyos > 100) {
-    console.warn(`[OJAMA CALCULATION] Abnormal deleted count ${deletedPuyos} detected - limiting to 100`);
-    deletedPuyos = 100;
-  }
+const OJAMA_DIVISOR = 8;
+const MAX_STEP_POWER = 256;
 
-  let baseOjama = 0;
-
-  // 連鎖によるボーナス（制限付き - 最大1個）
-  if (chainCount >= 2) {
-    const chainTable = [
-      0,    // 0連鎖
-      0,    // 1連鎖 - 基本消去では発生しない
-      1,    // 2連鎖 - 1個
-      1,    // 3連鎖 - 1個
-      1,    // 4連鎖 - 1個
-      1,    // 5連鎖 - 1個
-      1,    // 6連鎖 - 1個
-      1,    // 7連鎖 - 1個
-      1,    // 8連鎖以上 - 1個
-    ];
-
-    const chainIndex = Math.min(chainCount, chainTable.length - 1);
-    baseOjama = chainTable[chainIndex];
-  }
-
-  // 一度に大量消去によるボーナス（制限付き - 最大1個）
-  let massDeleteBonus = 0;
-  if (deletedPuyos >= 4) {
-    // 4個以上消去でおじゃまぷよ発生（1個固定）
-    massDeleteBonus = 1;
-  }
-  
-  // 総おじゃまぷよ数（最大2個に制限）
-  const totalOjama = Math.min(Math.floor(baseOjama + massDeleteBonus), 2);
-  
-  console.log(`[OJAMA CALCULATION] chainCount: ${chainCount}, deletedPuyos: ${deletedPuyos} -> baseOjama: ${baseOjama}, massDeleteBonus: ${massDeleteBonus}, total: ${totalOjama}`);
-  
-  return {
-    ojamaCount: totalOjama,
-    remainingScore: 0
-  };
+/** 連鎖の step 段目（1始まり）で deleted 個消したときに送る量（端数あり） */
+export const ojamaForStep = (step: number, deleted: number): number => {
+  const power = step <= 1 ? 1 : Math.min(2 ** step, MAX_STEP_POWER);
+  return (deleted * power) / OJAMA_DIVISOR;
 };
 
+/** 毎段4個ずつ消す chains 連鎖で送る量の目安（CPU の見積もり用） */
+export const chainAttack = (chains: number): number => {
+  let total = 0;
+  for (let step = 1; step <= chains; step++) total += ojamaForStep(step, GAME_CONFIG.minChainLength);
+  return total;
+};
+
+/** 1回に降るおじゃまの上限（6列×5段） */
+export const MAX_OJAMA_PER_DROP = 30;
+
+/**
+ * おじゃまを降らせた盤面を返す。
+ * 横一列ぶんは全列に1個ずつ、余りは重ならない列をランダムに選ぶので、列が偏らない。
+ * 積もる場所が無い列に行く分は消える。
+ */
 export const dropOjamaPuyos = (grid: PuyoCell[][], ojamaCount: number): PuyoCell[][] => {
   if (ojamaCount <= 0) return grid;
 
+  const width = GAME_CONFIG.gridWidth;
+  const perColumn = Array(width).fill(Math.floor(ojamaCount / width));
+  const columns = Array.from({ length: width }, (_, x) => x);
+  for (let i = columns.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [columns[i], columns[j]] = [columns[j], columns[i]];
+  }
+  columns.slice(0, ojamaCount % width).forEach(x => perColumn[x]++);
+
+  // 死亡ラインとスポーン行には積もらせない
+  const topRow = GAME_CONFIG.gameOverLine + 1;
   const newGrid = grid.map(row => row.map(cell => ({ ...cell })));
-  
-  // おじゃまぷよを下から上に向かって積み上げる（重力に従う）
-  let remainingOjama = ojamaCount;
-  
-  // 各列の一番下から配置していく
-  for (let attempts = 0; attempts < ojamaCount * 2 && remainingOjama > 0; attempts++) {
-    const col = Math.floor(Math.random() * GAME_CONFIG.gridWidth);
-    
-    // 下から上に向かって空いている場所を探す（重力シミュレーション）
-    for (let row = GAME_CONFIG.gridHeight - 1; row >= 2 && remainingOjama > 0; row--) { // row >= 2 でゲームオーバーライン回避
-      if (!newGrid[row][col].color) {
-        newGrid[row][col] = {
-          color: 'ojama',
-          id: Math.random().toString(36)
-        };
-        remainingOjama--;
-        console.log(`[OJAMA DROP] Placed ojama at row ${row}, col ${col}`);
-        break;
-      }
+  perColumn.forEach((count, x) => {
+    for (let y = GAME_CONFIG.gridHeight - 1; y >= topRow && count > 0; y--) {
+      if (newGrid[y][x].color) continue;
+      newGrid[y][x] = { color: 'ojama', id: Math.random().toString(36) };
+      count--;
     }
-  }
-  
-  if (remainingOjama > 0) {
-    console.log(`[OJAMA DROP] Warning: Could not place ${remainingOjama} ojama puyos (field too full)`);
-  }
-  
+  });
   return newGrid;
 };
 
@@ -148,41 +117,6 @@ export const removeAdjacentOjama = (
 
   console.log(`[OJAMA ADJACENT] Completed - removed ${removedOjamaCount} ojama puyos`);
   return { newGrid, removedOjamaCount };
-};
-
-export const calculateOjamaOffset = (
-  incomingOjama: number, 
-  outgoingOjama: number
-): { playerReceives: number; cpuReceives: number } => {
-  // 相殺計算
-  if (incomingOjama > outgoingOjama) {
-    return {
-      playerReceives: incomingOjama - outgoingOjama,
-      cpuReceives: 0
-    };
-  } else if (outgoingOjama > incomingOjama) {
-    return {
-      playerReceives: 0,
-      cpuReceives: outgoingOjama - incomingOjama
-    };
-  } else {
-    return {
-      playerReceives: 0,
-      cpuReceives: 0
-    };
-  }
-};
-
-export const countOjamaPuyos = (grid: PuyoCell[][]): number => {
-  let count = 0;
-  for (let row = 0; row < GAME_CONFIG.gridHeight; row++) {
-    for (let col = 0; col < GAME_CONFIG.gridWidth; col++) {
-      if (grid[row][col].color === 'ojama') {
-        count++;
-      }
-    }
-  }
-  return count;
 };
 
 export const isOjamaPuyo = (color: PuyoColor): boolean => {

@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import type { GameState, PuyoPair, PuyoCell, ChainResult, ChainProcessingState } from '../types/game';
+import type { GameState, PuyoPair, PuyoCell, ChainResult, ChainProcessingState, OjamaLink } from '../types/game';
 import {
   GAME_CONFIG,
   createEmptyGrid,
@@ -15,7 +15,7 @@ import {
   lockPairToGrid,
   calculateChainScore
 } from '../utils/puyoGameLogic';
-import { removeAdjacentOjama } from '../utils/ojamaSystem';
+import { removeAdjacentOjama, dropOjamaPuyos } from '../utils/ojamaSystem';
 import { attemptRotationWithKick } from '../utils/puyoKickSystem';
 import { GAME_TIMINGS } from '../constants/gameTimings';
 
@@ -34,8 +34,11 @@ const createInitialGameState = (): GameState => ({
   currentChainStep: 0
 });
 
-export const usePuyoGame = () => {
+export const usePuyoGame = (ojamaLink?: OjamaLink) => {
   const [gameState, setGameState] = useState<GameState>(createInitialGameState);
+  // 連鎖の途中や着地のタイマーから呼ぶので、毎回最新の口を見る
+  const ojamaLinkRef = useRef(ojamaLink);
+  ojamaLinkRef.current = ojamaLink;
   const gameLoopRef = useRef<number>();
   const lastUpdateTime = useRef<number>(0);
 
@@ -257,6 +260,9 @@ export const usePuyoGame = () => {
         break;
       }
       
+      // 消えた瞬間に相手へのおじゃまを積む（相殺もここで効く）
+      ojamaLinkRef.current?.onChainStep(deletionRounds, deletedCount);
+
       // Step 1: Show highlighted puyos (before deletion)
       const highlightGrid = findChainsToHighlight(currentGrid);
       await showHighlightedPuyos(highlightGrid.newGrid, actualChains);
@@ -353,6 +359,14 @@ export const usePuyoGame = () => {
           // Process chains
           await processChainReaction();
         } else {
+          // 連鎖が起きなかったら、ためていたおじゃまを先に降らせる。
+          // grid が変わるのでこの effect がもう一度走り、落ち切ってから次のペアが出る
+          const ojama = ojamaLinkRef.current?.takeOjama() ?? 0;
+          if (ojama > 0) {
+            setGameState(prev => (prev.isGameOver ? prev : { ...prev, grid: dropOjamaPuyos(prev.grid, ojama) }));
+            return;
+          }
+
           // No chains, spawn new pair
           setGameState(prev => {
             if (prev.isGameOver) {
