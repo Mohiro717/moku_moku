@@ -4,19 +4,16 @@ import { GAME_CONFIG } from './puyoGameLogic';
 // ========================================
 // おじゃまの量
 //
-// 連鎖の k 段目で n 個消すと n × 倍率(k) ÷ 8 個ぶん送る。倍率は1段目だけ 1、
-// 2段目からは 2^k（4, 8, 16, …）で、段が進むごとに倍になる。
-// 端数は捨てずに持ち越す（4個消しを2回で1個）。
-//   毎段4個なら 1連鎖 0.5 / 2連鎖 2.5 / 3連鎖 6.5 / 4連鎖 14.5 / 5連鎖 30.5
+// 連鎖の k 段目で n 個消すと n ÷ 4 × 倍率(k) 個ぶん送る。倍率は1段目だけ 1、
+// 2段目からは 2(k-1)（2, 4, 6, 8, …）で、1段ごとの上乗せが段を追うほど増える。
+// 端数は捨てずに持ち越す（5個消しは1個送って 0.25 を次へ）。
+//   毎段4個なら 1連鎖 1 / 2連鎖 3 / 3連鎖 7 / 4連鎖 13 / 5連鎖 21 / 6連鎖 31 / 7連鎖 43
 // ========================================
-
-const OJAMA_DIVISOR = 8;
-const MAX_STEP_POWER = 256;
 
 /** 連鎖の step 段目（1始まり）で deleted 個消したときに送る量（端数あり） */
 export const ojamaForStep = (step: number, deleted: number): number => {
-  const power = step <= 1 ? 1 : Math.min(2 ** step, MAX_STEP_POWER);
-  return (deleted * power) / OJAMA_DIVISOR;
+  const power = step <= 1 ? 1 : 2 * (step - 1);
+  return (deleted / GAME_CONFIG.minChainLength) * power;
 };
 
 /** 毎段4個ずつ消す chains 連鎖で送る量の目安（CPU の見積もり用） */
