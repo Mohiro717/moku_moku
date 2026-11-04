@@ -1,5 +1,6 @@
 import type { PuyoCell, PuyoPair, GameDifficulty, ColoredPuyoColor } from '../types/game';
 import { GAME_CONFIG } from './puyoGameLogic';
+import { chainAttack } from './ojamaSystem';
 
 // ========================================
 // CPU AI
@@ -209,8 +210,8 @@ const legalMoves = (main: number, sub: number): Move[] =>
 // 盤面評価
 // ========================================
 
-/** この連鎖で相手に送るおじゃまの目安（useVsCpuGame の送信ロジックに合わせた近似） */
-const attackOf = (chains: number): number => (chains <= 0 ? 0 : chains === 1 ? 1 : 2 * chains - 2);
+/** この連鎖で相手に送るおじゃまの目安（実際の送信と同じ式で、毎段4個消しと見なす） */
+const attackOf = chainAttack;
 
 /**
  * あと1〜2個（同色）をどこかの列に足したら何連鎖が起きるか。
