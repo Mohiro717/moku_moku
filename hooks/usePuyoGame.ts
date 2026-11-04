@@ -41,6 +41,19 @@ export const usePuyoGame = (ojamaLink?: OjamaLink) => {
   ojamaLinkRef.current = ojamaLink;
   // おじゃまを降らせた直後の着地判定ではもう取らない（1回の着地で降るのは1回まで）
   const ojamaDropped = useRef(false);
+  // 連鎖の処理は await をまたぐので、ポーズで止める・始め直しで打ち切るための目印
+  const pausedRef = useRef(false);
+  pausedRef.current = gameState.isPaused;
+  const gameIdRef = useRef(0);
+
+  /** ms 待つ。ポーズ中は再開まで待つ。その間に試合が始め直されていたら false */
+  const wait = useCallback(async (ms: number, gameId: number): Promise<boolean> => {
+    await new Promise<void>(resolve => setTimeout(resolve, ms));
+    while (pausedRef.current && gameIdRef.current === gameId) {
+      await new Promise<void>(resolve => setTimeout(resolve, 100));
+    }
+    return gameIdRef.current === gameId;
+  }, []);
   const gameLoopRef = useRef<number>();
   const lastUpdateTime = useRef<number>(0);
 
@@ -146,7 +159,6 @@ export const usePuyoGame = (ojamaLink?: OjamaLink) => {
       currentChainStep: actualChains,
       isChaining: true
     }));
-    await new Promise<void>(resolve => setTimeout(resolve, GAME_TIMINGS.highlight));
   }, []);
 
   const showDeletingPuyos = useCallback(async (grid: PuyoCell[][]): Promise<PuyoCell[][]> => {
@@ -157,7 +169,6 @@ export const usePuyoGame = (ojamaLink?: OjamaLink) => {
       chainAnimationStep: 'deleting',
       isChaining: true
     }));
-    await new Promise<void>(resolve => setTimeout(resolve, GAME_TIMINGS.deletion));
     return deletingGrid;
   }, []);
 
@@ -199,7 +210,6 @@ export const usePuyoGame = (ojamaLink?: OjamaLink) => {
       chainAnimationStep: 'falling',
       isChaining: true
     }));
-    await new Promise<void>(resolve => setTimeout(resolve, GAME_TIMINGS.falling));
   }, []);
 
 
@@ -215,11 +225,11 @@ export const usePuyoGame = (ojamaLink?: OjamaLink) => {
       chainCount: Math.max(actualChains, prev.chainCount),
       chainAnimationStep: 'complete'
     }));
-    await new Promise<void>(resolve => setTimeout(resolve, GAME_TIMINGS.complete));
   }, []);
 
   // Main chain processing function
   const processChainReaction = useCallback(async () => {
+    const gameId = gameIdRef.current;
     setGameState(prev => ({ 
       ...prev, 
       isChaining: true,
@@ -268,9 +278,11 @@ export const usePuyoGame = (ojamaLink?: OjamaLink) => {
       // Step 1: Show highlighted puyos (before deletion)
       const highlightGrid = findChainsToHighlight(currentGrid);
       await showHighlightedPuyos(highlightGrid.newGrid, actualChains);
+      if (!(await wait(GAME_TIMINGS.highlight, gameId))) return;
       
       // Step 2: Show deleting animation
       await showDeletingPuyos(highlightGrid.newGrid);
+      if (!(await wait(GAME_TIMINGS.deletion, gameId))) return;
       
       // Step 3: Apply deletion (use processChains result which includes ojama removal)
       currentGrid = newGrid.map(row => row.map(cell => ({ ...cell })));
@@ -279,12 +291,14 @@ export const usePuyoGame = (ojamaLink?: OjamaLink) => {
       const remainingPuyos = currentGrid.flat().filter(cell => cell.color && cell.color !== null).length;
       
       await showFallingAnimation(currentGrid);
+      if (!(await wait(GAME_TIMINGS.falling, gameId))) return;
       
       // 重力適用
       currentGrid = applyGravity(currentGrid);
       totalScore += calculateChainScore(deletedCount, Math.max(1, actualChains + 1));
       
       await updateFinalState(currentGrid, totalScore, actualChains);
+      if (!(await wait(GAME_TIMINGS.complete, gameId))) return;
     }
 
     if (deletionRounds >= MAX_CHAIN_ROUNDS) {
@@ -304,7 +318,8 @@ export const usePuyoGame = (ojamaLink?: OjamaLink) => {
     showHighlightedPuyos, 
     showDeletingPuyos, 
     showFallingAnimation, 
-    updateFinalState
+    updateFinalState,
+    wait
   ]);
 
   // Simple auto-fall mechanism
@@ -351,7 +366,7 @@ export const usePuyoGame = (ojamaLink?: OjamaLink) => {
 
   // Chain processing trigger - should happen BEFORE spawning new pair
   useEffect(() => {
-    if (!gameState.currentPair && !gameState.isChaining && gameState.isPlaying && !gameState.isGameOver) {
+    if (!gameState.currentPair && !gameState.isChaining && gameState.isPlaying && !gameState.isPaused && !gameState.isGameOver) {
       // First check for chains, then spawn new pair
       const timer = setTimeout(async () => {
         // Check if there are any chains to process
@@ -408,7 +423,7 @@ export const usePuyoGame = (ojamaLink?: OjamaLink) => {
 
       return () => clearTimeout(timer);
     }
-  }, [gameState.currentPair, gameState.isChaining, gameState.isPlaying, gameState.isGameOver, gameState.grid, processChainReaction]);
+  }, [gameState.currentPair, gameState.isChaining, gameState.isPlaying, gameState.isPaused, gameState.isGameOver, gameState.grid, processChainReaction]);
 
   // Keyboard controls
   useEffect(() => {
@@ -481,6 +496,7 @@ export const usePuyoGame = (ojamaLink?: OjamaLink) => {
 
   const restartGame = useCallback(() => {
     ojamaDropped.current = false;
+    gameIdRef.current++; // 走っている連鎖を打ち切る
     setGameState(createInitialGameState());
   }, []);
 
