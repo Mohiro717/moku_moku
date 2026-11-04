@@ -1,6 +1,6 @@
 import type { PuyoCell, PuyoPair, GameDifficulty, ColoredPuyoColor } from '../types/game';
 import { GAME_CONFIG } from './puyoGameLogic';
-import { chainAttack } from './ojamaSystem';
+import { chainAttack, MAX_OJAMA_PER_DROP } from './ojamaSystem';
 
 // ========================================
 // CPU AI
@@ -308,6 +308,9 @@ const evaluateBoard = (b: Board, config: CpuAiConfig): number => {
   return score;
 };
 
+/** 自分宛ての予告がこれ以上なら、目標に届かない連鎖でも撃って相殺する（2段分） */
+export const INCOMING_DANGER = 12;
+
 const isInDanger = (b: Board): boolean => {
   for (let x = 0; x < W; x++) if (columnHeight(b, x) >= MAX_HEIGHT - 3) return true;
   return false;
@@ -326,6 +329,30 @@ const fireValue = (chains: number, danger: boolean, config: CpuAiConfig): number
 
 interface Placed { board: Board; chains: number; }
 
+/**
+ * 予告ぶんのおじゃまを盤面に降らせる（破壊的）。本物は余りの列がランダムなので、
+ * 読みでは低い列から埋まると見なす。死亡ラインとスポーン行には積もらない。
+ */
+const dropOjamaOnBoard = (b: Board, count: number): void => {
+  let left = Math.min(count, MAX_OJAMA_PER_DROP);
+  if (left <= 0) return;
+  const perColumn = new Array(W).fill(Math.floor(left / W));
+  const byHeight = Array.from({ length: W }, (_, x) => x)
+    .sort((p, q) => columnHeight(b, p) - columnHeight(b, q));
+  for (let i = 0; i < left % W; i++) perColumn[byHeight[i]]++;
+  for (let x = 0; x < W; x++) {
+    for (let y = H - 1, n = perColumn[x]; y > DEATH_ROW && n > 0; y--) {
+      if (b[y * W + x] !== EMPTY) continue;
+      b[y * W + x] = OJAMA;
+      n--;
+    }
+  }
+};
+
+/** 連鎖で相殺したあと、まだ自分に降る量 */
+const afterOffset = (incoming: number, chains: number): number =>
+  Math.max(0, incoming - Math.floor(attackOf(chains)));
+
 const placeAndResolve = (b: Board, move: Move, main: number, sub: number): Placed | null => {
   const board = placePair(b, move, main, sub);
   if (!board) return null;
@@ -333,8 +360,15 @@ const placeAndResolve = (b: Board, move: Move, main: number, sub: number): Place
   return { board, chains };
 };
 
-const searchHardOrNormal = (b: Board, cur: [number, number], next: [number, number] | null, config: CpuAiConfig): CpuMove | null => {
-  const danger = isInDanger(b);
+const searchHardOrNormal = (
+  b: Board,
+  cur: [number, number],
+  next: [number, number] | null,
+  config: CpuAiConfig,
+  incoming: number
+): CpuMove | null => {
+  // 盤面が高いか、大きめの予告が来ているなら、目標未満でも撃つ（相殺・早撃ち）
+  const danger = isInDanger(b) || incoming >= INCOMING_DANGER;
   let best: CpuMove | null = null;
 
   for (const move of legalMoves(cur[0], cur[1])) {
@@ -342,12 +376,18 @@ const searchHardOrNormal = (b: Board, cur: [number, number], next: [number, numb
     if (!first) continue;
     let score = fireValue(first.chains, danger, config);
 
+    // 本物と同じく、連鎖しなかった着地の後に予告が降る。降った盤面で先を読む
+    const left = afterOffset(incoming, first.chains);
+    if (first.chains === 0) dropOjamaOnBoard(first.board, left);
+    const leftAfterFirst = first.chains === 0 ? Math.max(0, left - MAX_OJAMA_PER_DROP) : left;
+
     if (config.lookAhead && next) {
-      const danger2 = danger || isInDanger(first.board);
+      const danger2 = danger || isInDanger(first.board) || leftAfterFirst >= INCOMING_DANGER;
       let bestSecond = -Infinity;
       for (const move2 of legalMoves(next[0], next[1])) {
         const second = placeAndResolve(first.board, move2, next[0], next[1]);
         if (!second) continue;
+        if (second.chains === 0) dropOjamaOnBoard(second.board, leftAfterFirst);
         // 1手先の発火は少しだけ割り引く（今撃てるなら今撃つ）
         const v = fireValue(second.chains, danger2, config) * 0.9 + evaluateBoard(second.board, config);
         if (v > bestSecond) bestSecond = v;
@@ -391,7 +431,9 @@ export const findBestMove = (
   grid: PuyoCell[][],
   pair: PuyoPair,
   difficulty: GameDifficulty,
-  nextPair?: PuyoPair | null
+  nextPair?: PuyoPair | null,
+  /** 自分に降る予定のおじゃま数（予告） */
+  incoming: number = 0
 ): CpuMove | null => {
   const board = toBoard(grid);
   const cur: [number, number] = [code(pair.main), code(pair.sub)];
@@ -399,7 +441,7 @@ export const findBestMove = (
 
   const move = difficulty === 'easy'
     ? searchEasy(board, cur)
-    : searchHardOrNormal(board, cur, next, AI_CONFIGS[difficulty]);
+    : searchHardOrNormal(board, cur, next, AI_CONFIGS[difficulty], incoming);
 
   // どこに置いても負けるときはスポーン位置のまま落とす
   return move ?? { x: SPAWN_X, rotation: 0, score: -Infinity };

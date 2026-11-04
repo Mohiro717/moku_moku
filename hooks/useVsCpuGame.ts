@@ -115,7 +115,7 @@ export const useVsCpuGame = (initialDifficulty: GameDifficulty = 'normal') => {
     const vsConditions = { isGameOver: vsGameState.isGameOver, isPlaying: vsGameState.isPlaying };
 
     if (canOperateCpu(cpuConditions, vsConditions)) {
-      cpuOperationManager.executeCpuTurn(cpuGame.gameState, vsGameState.difficulty, cpuGame);
+      cpuOperationManager.executeCpuTurn(cpuGame.gameState, vsGameState.difficulty, cpuGame, () => pending.current.cpu);
     }
   }, [!!cpuGame.gameState.currentPair, cpuGame.gameState.isPlaying, vsGameState.isPlaying, vsGameState.isGameOver, vsGameState.difficulty]);
 

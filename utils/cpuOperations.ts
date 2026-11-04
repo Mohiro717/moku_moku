@@ -114,7 +114,9 @@ export class CpuOperationManager {
   public executeCpuTurn(
     cpuState: GameState,
     difficulty: GameDifficulty,
-    cpuGame: any
+    cpuGame: any,
+    /** 考え終わった時点の予告数を読む（考える間にも増える） */
+    getIncoming: () => number = () => 0
   ): CpuOperationResult {
     if (!cpuState.currentPair || cpuState.isPaused || cpuState.isChaining || cpuState.isGameOver) {
       return { success: false, error: 'Invalid state for CPU operation' };
@@ -145,7 +147,7 @@ export class CpuOperationManager {
       }
       
       console.log(CPU_MESSAGES.thinking(difficulty));
-      const bestMove = findBestMove(cpuState.grid, cpuState.currentPair, difficulty, cpuState.nextPair);
+      const bestMove = findBestMove(cpuState.grid, cpuState.currentPair, difficulty, cpuState.nextPair, getIncoming());
       
       if (bestMove) {
         console.log(CPU_MESSAGES.foundMove(difficulty, bestMove.x, bestMove.rotation));
