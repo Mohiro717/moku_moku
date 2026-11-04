@@ -39,6 +39,8 @@ export const usePuyoGame = (ojamaLink?: OjamaLink) => {
   // 連鎖の途中や着地のタイマーから呼ぶので、毎回最新の口を見る
   const ojamaLinkRef = useRef(ojamaLink);
   ojamaLinkRef.current = ojamaLink;
+  // おじゃまを降らせた直後の着地判定ではもう取らない（1回の着地で降るのは1回まで）
+  const ojamaDropped = useRef(false);
   const gameLoopRef = useRef<number>();
   const lastUpdateTime = useRef<number>(0);
 
@@ -361,11 +363,15 @@ export const usePuyoGame = (ojamaLink?: OjamaLink) => {
         } else {
           // 連鎖が起きなかったら、ためていたおじゃまを先に降らせる。
           // grid が変わるのでこの effect がもう一度走り、落ち切ってから次のペアが出る
-          const ojama = ojamaLinkRef.current?.takeOjama() ?? 0;
-          if (ojama > 0) {
-            setGameState(prev => (prev.isGameOver ? prev : { ...prev, grid: dropOjamaPuyos(prev.grid, ojama) }));
-            return;
+          if (!ojamaDropped.current) {
+            const ojama = ojamaLinkRef.current?.takeOjama() ?? 0;
+            if (ojama > 0) {
+              ojamaDropped.current = true;
+              setGameState(prev => (prev.isGameOver ? prev : { ...prev, grid: dropOjamaPuyos(prev.grid, ojama) }));
+              return;
+            }
           }
+          ojamaDropped.current = false;
 
           // No chains, spawn new pair
           setGameState(prev => {
@@ -474,6 +480,7 @@ export const usePuyoGame = (ojamaLink?: OjamaLink) => {
   }, []);
 
   const restartGame = useCallback(() => {
+    ojamaDropped.current = false;
     setGameState(createInitialGameState());
   }, []);
 
