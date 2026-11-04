@@ -116,11 +116,14 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
           </h3>
         </div>
 
-        {/* Main Game Layout - 3 Column Grid */}
-        <div className="grid grid-cols-1 xl:grid-cols-5 gap-6 items-start">
-          
+        {/* Main Game Layout
+            xl 以上: 自分 | 情報 | CPU の3列
+            md〜xl: 情報を上に横長で置き、その下に2つの盤面を横並び
+            md 未満: 縦に積む */}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-6 items-start">
+
           {/* Player Field - Left Side */}
-          <div className="xl:col-span-2 order-2 xl:order-1">
+          <div className="md:col-span-1 xl:col-span-2 order-2 xl:order-1">
             <div className="bg-white/20 rounded-2xl p-4">
               <div className="text-center mb-4">
                 <h4 className="text-xl font-serif text-coffee-dark">YOUR FIELD</h4>
@@ -158,8 +161,8 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
           </div>
 
           {/* Central Info Area */}
-          <div className="xl:col-span-1 order-1 xl:order-2">
-            <div className="space-y-4">
+          <div className="md:col-span-2 xl:col-span-1 order-1 xl:order-2">
+            <div className="space-y-4 md:space-y-0 md:grid md:grid-cols-4 md:gap-4 md:items-stretch xl:block xl:space-y-4">
               
 
               {/* Next Puyo Preview - Both Player and CPU */}
@@ -265,7 +268,7 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
           </div>
 
           {/* CPU Field - Right Side */}
-          <div className="xl:col-span-2 order-3">
+          <div className="md:col-span-1 xl:col-span-2 order-3">
             <div className="bg-white/20 rounded-2xl p-4">
               <div className="text-center mb-4">
                 <h4 className="text-xl font-serif text-coffee-dark">CPU FIELD</h4>
