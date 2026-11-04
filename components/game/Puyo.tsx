@@ -1,22 +1,33 @@
 import React, { memo } from 'react';
 import type { PuyoColor } from '../../types/game';
 import { ParticleEffect } from './ParticleEffect';
+import { GAME_TIMINGS } from '../../constants/gameTimings';
+import './puyoAnimations.css';
 
 interface PuyoProps {
   color: PuyoColor;
   isConnected?: boolean;
-  willDelete?: boolean;
   isDeleting?: boolean;
-  isFalling?: boolean;
+  /** true のとき、fallRows マス上から落ちてきて着地でつぶれる（マウント時に1回） */
+  landed?: boolean;
+  fallRows?: number;
 }
 
-const PUYO_COLORS = {
+export const PUYO_COLORS = {
   red: 'bg-red-400 border-red-500',
   blue: 'bg-blue-400 border-blue-500',
   green: 'bg-green-400 border-green-500',
   yellow: 'bg-yellow-400 border-yellow-500',
   ojama: 'bg-gray-500 border-gray-600',
   null: 'bg-transparent border-transparent'
+};
+
+/** つながりの橋の色（枠線なしで玉の色に合わせる） */
+export const BRIDGE_COLORS: Record<string, string> = {
+  red: 'bg-red-400',
+  blue: 'bg-blue-400',
+  green: 'bg-green-400',
+  yellow: 'bg-yellow-400'
 };
 
 const PARTICLE_COLORS = {
@@ -37,36 +48,38 @@ const PUYO_EYES = {
   null: ''
 };
 
-export const Puyo: React.FC<PuyoProps> = memo(({ 
-  color, 
-  isConnected = false, 
+/** 落ちる距離に応じた落下時間（ms）。遠いほど少し長いが、連鎖のテンポを崩さないよう上限あり */
+export const dropDuration = (rows: number): number => (rows > 0 ? Math.min(GAME_TIMINGS.drop, 100 + rows * 20) : 0);
+
+const SIZE = 'w-8 h-8 sm:w-10 sm:h-10';
+
+export const Puyo: React.FC<PuyoProps> = memo(({
+  color,
+  isConnected = false,
   isDeleting = false,
-  isFalling = false
+  landed = false,
+  fallRows = 0
 }) => {
   if (!color) {
-    return <div className="w-8 h-8 sm:w-10 sm:h-10" />;
+    return <div className={SIZE} />;
   }
 
-  const baseClasses = `
-    w-8 h-8 sm:w-10 sm:h-10 
-    rounded-full 
-    border-2 
-    flex items-center justify-center
-    transition-all duration-300
-    ${PUYO_COLORS[color]}
-  `;
-
-  const animationClasses = `
-    ${isConnected ? 'ring-4 ring-yellow-300 shadow-lg scale-110 animate-pulse z-10' : ''}
-    ${isDeleting ? 'animate-spin scale-150 opacity-30 bg-gradient-to-r from-yellow-400 via-red-400 to-pink-400 shadow-2xl' : ''}
-    ${isFalling ? 'animate-bounce scale-105' : ''}
-  `;
+  const stateClass = isDeleting ? 'puyo-pop' : isConnected ? 'puyo-blink' : '';
+  const dropStyle = landed
+    ? ({ '--fall-rows': fallRows, '--drop-ms': `${dropDuration(fallRows)}ms` } as React.CSSProperties)
+    : undefined;
 
   return (
-    <div className={`${baseClasses} ${animationClasses} relative`}>
-      <span className="text-xs select-none">
-        {PUYO_EYES[color]}
-      </span>
+    <div className={`${SIZE} relative z-[1]`}>
+      <div className={`w-full h-full ${landed ? 'puyo-drop' : ''}`} style={dropStyle}>
+        <div className={`w-full h-full ${landed ? 'puyo-squash' : ''}`} style={dropStyle}>
+          <div
+            className={`w-full h-full rounded-full border-2 flex items-center justify-center ${PUYO_COLORS[color]} ${stateClass}`}
+          >
+            <span className="text-xs select-none">{PUYO_EYES[color]}</span>
+          </div>
+        </div>
+      </div>
       {isDeleting && (
         <ParticleEffect
           isActive={isDeleting}

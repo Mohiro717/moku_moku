@@ -384,7 +384,7 @@ export const usePuyoGame = () => {
             }
           });
         }
-      }, 100);
+      }, GAME_TIMINGS.landing);
 
       return () => clearTimeout(timer);
     }

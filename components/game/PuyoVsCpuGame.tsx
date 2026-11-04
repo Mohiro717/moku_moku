@@ -141,6 +141,7 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
                     isGameOver={gameState.player.isGameOver}
                     isPaused={gameState.isPaused}
                     gameResult={getGameResult(gameState.isGameOver, gameState.winner, 'player')}
+                    chainStep={gameState.player.currentChainStep}
                   />
                 </TouchControls>
               </div>
@@ -277,6 +278,7 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
                   isGameOver={gameState.cpu.isGameOver}
                   isPaused={gameState.isPaused}
                   gameResult={getGameResult(gameState.isGameOver, gameState.winner, 'cpu')}
+                  chainStep={gameState.cpu.currentChainStep}
                 />
               </div>
 

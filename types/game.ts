@@ -68,6 +68,8 @@ export interface GameTimings {
   deletion: number;
   falling: number;
   complete: number;
+  drop: number;     // 着地アニメーション（落下）の最長時間
+  landing: number;  // ペアを置いてから連鎖の判定を始めるまで（落ち切って、つぶれが落ち着くまで）
   puyoFallInterval: number;
 }
 

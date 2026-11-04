@@ -458,7 +458,7 @@ export const usePuyoGameWithoutInput = () => {
             }
           });
         }
-      }, 100);
+      }, GAME_TIMINGS.landing);
 
       return () => clearTimeout(timer);
     }
