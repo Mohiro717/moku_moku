@@ -255,6 +255,7 @@ export const GameGrid: React.FC<GameGridProps> = ({
                   isDeleting={cell.isDeleting}
                   landed={anim.landed}
                   fallRows={anim.fallRows}
+                  idle
                 />
               </div>
             );
@@ -282,10 +283,20 @@ export const GameGrid: React.FC<GameGridProps> = ({
         {chainPopup && (
           <div
             key={`chain-${chainNumber}`}
-            className="chain-popup absolute z-20 pointer-events-none whitespace-nowrap font-serif text-2xl sm:text-3xl text-vivid-pink"
+            className="chain-popup absolute z-20 pointer-events-none font-serif"
             style={{ left: `${chainPopup.left}%`, top: `${chainPopup.top}%` }}
           >
-            {chainNumber}連鎖!
+            <svg width="170" height="100" viewBox="-85 -50 170 100" className="overflow-visible" aria-label={`${chainNumber}連鎖`}>
+              <g className="chain-rays" fill="#ffe27a" opacity="0.8">
+                {Array.from({ length: 12 }, (_, i) => (
+                  <path key={i} d="M0 0 L-4 -70 L4 -70 Z" transform={`rotate(${i * 30})`} />
+                ))}
+              </g>
+              <g className="chain-text" fontSize="32" fontWeight="900" textAnchor="middle">
+                <text x="0" y="11" fill="#fff" stroke="#fff" strokeWidth="8" strokeLinejoin="round">{chainNumber}連鎖!</text>
+                <text x="0" y="11" fill="#ff4f9a" stroke="#c2185b" strokeWidth="1.2">{chainNumber}連鎖!</text>
+              </g>
+            </svg>
           </div>
         )}
       </div>

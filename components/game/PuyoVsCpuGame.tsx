@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useRef } from 'react';
+import { AttackBeamLayer, useAttackBeams } from './AttackBeams';
 import { GameGrid } from './GameGrid';
 import { ErrorBoundary } from '../ErrorBoundary';
 import { GameErrorFallback } from './GameErrorFallback';
@@ -64,7 +65,19 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
       getPlayerPairPositions,
       getCpuPairPositions
     } = useVsCpuGame(initialDifficulty);
-    
+
+    // 攻撃の光：盤面と予告欄の位置を取るための参照
+    const playerBoardRef = useRef<HTMLDivElement>(null);
+    const cpuBoardRef = useRef<HTMLDivElement>(null);
+    const playerNoticeRef = useRef<HTMLDivElement>(null);
+    const cpuNoticeRef = useRef<HTMLDivElement>(null);
+    const { beams, hits } = useAttackBeams({
+      pending: { player: gameState?.pendingOjamaPlayer ?? 0, cpu: gameState?.pendingOjamaCpu ?? 0 },
+      chaining: { player: !!gameState?.player.isChaining, cpu: !!gameState?.cpu.isChaining },
+      boards: { player: playerBoardRef, cpu: cpuBoardRef },
+      notices: { player: playerNoticeRef, cpu: cpuNoticeRef }
+    });
+
     if (!gameState) {
       return (
         <div className="max-w-7xl mx-auto p-6 bg-ivory rounded-3xl shadow-lg">
@@ -128,10 +141,16 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
               <div className="text-center mb-4">
                 <h4 className="text-xl font-serif text-coffee-dark">YOUR FIELD</h4>
               </div>
-              <OjamaNotice count={gameState.pendingOjamaPlayer} />
-              
+              <div ref={playerNoticeRef}>
+                <OjamaNotice
+                  count={gameState.pendingOjamaPlayer}
+                  ready={gameState.isPlaying && !gameState.cpu.isChaining}
+                  hit={hits.player}
+                />
+              </div>
+
               {/* Player Game Grid */}
-              <div className="flex justify-center mb-4">
+              <div ref={playerBoardRef} className="flex justify-center mb-4">
                 <TouchControls
                   onMove={(direction) => handlePlayerMove(direction)}
                   onRotateClockwise={handlePlayerRotateClockwise}
@@ -273,10 +292,16 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
               <div className="text-center mb-4">
                 <h4 className="text-xl font-serif text-coffee-dark">CPU FIELD</h4>
               </div>
-              <OjamaNotice count={gameState.pendingOjamaCpu} />
-              
+              <div ref={cpuNoticeRef}>
+                <OjamaNotice
+                  count={gameState.pendingOjamaCpu}
+                  ready={gameState.isPlaying && !gameState.player.isChaining}
+                  hit={hits.cpu}
+                />
+              </div>
+
               {/* CPU Game Grid */}
-              <div className="flex justify-center mb-4">
+              <div ref={cpuBoardRef} className="flex justify-center mb-4">
                 <GameGrid
                   grid={gameState.cpu.grid}
                   currentPair={gameState.cpu.currentPair}
@@ -297,6 +322,8 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
             </div>
           </div>
         </div>
+
+        <AttackBeamLayer beams={beams} />
 
         {/* Game Focus Message */}
         <div className="mt-6 text-center text-xs text-coffee-dark/60">
