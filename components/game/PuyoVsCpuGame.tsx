@@ -4,6 +4,7 @@ import { ErrorBoundary } from '../ErrorBoundary';
 import { GameErrorFallback } from './GameErrorFallback';
 import { TouchControls } from './TouchControls';
 import { NextPiecePreview } from './NextPiecePreview';
+import { OjamaNotice } from './OjamaNotice';
 import { useVsCpuGame } from '../../hooks/useVsCpuGame';
 import type { GameDifficulty, GameResult } from '../../types/game';
 
@@ -124,6 +125,7 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
               <div className="text-center mb-4">
                 <h4 className="text-xl font-serif text-coffee-dark">YOUR FIELD</h4>
               </div>
+              <OjamaNotice count={gameState.pendingOjamaPlayer} />
               
               {/* Player Game Grid */}
               <div className="flex justify-center mb-4">
@@ -268,6 +270,7 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
               <div className="text-center mb-4">
                 <h4 className="text-xl font-serif text-coffee-dark">CPU FIELD</h4>
               </div>
+              <OjamaNotice count={gameState.pendingOjamaCpu} />
               
               {/* CPU Game Grid */}
               <div className="flex justify-center mb-4">
