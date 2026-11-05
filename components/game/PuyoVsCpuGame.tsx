@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useLayoutEffect, useRef, useState } from 'react';
 import { AttackBeamLayer, useAttackBeams } from './AttackBeams';
 import { GameGrid } from './GameGrid';
 import { ErrorBoundary } from '../ErrorBoundary';
@@ -10,7 +10,7 @@ import { useVsCpuGame } from '../../hooks/useVsCpuGame';
 import { useCpuCharacterReactions } from '../../hooks/game/useCpuCharacterReactions';
 import { useVsGameSound } from '../../hooks/game/useVsGameSound';
 import { isMuted, setMuted, unlockAudio } from '../../utils/gameAudio';
-import { CpuCharacterPanel, CpuCutinOverlay, KitanCredit } from './CpuCharacter';
+import { CpuCharacterPanel, CpuCutinOverlay, KitanCredit, PlayerPanel } from './CpuCharacter';
 import { FANWORKS_URL } from '../../constants/cpuCharacters';
 import type { GameDifficulty, GameResult } from '../../types/game';
 
@@ -93,6 +93,17 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
     });
 
     useVsGameSound({ gameState, character, lineKind, lineTick, cutin });
+
+    // 左右の盤面の上端をそろえる：相手の札（台詞で高さが変わる）の高さを自分の札にも使う
+    const cpuPanelRef = useRef<HTMLDivElement>(null);
+    const [panelHeight, setPanelHeight] = useState<number>();
+    useLayoutEffect(() => {
+      const el = cpuPanelRef.current;
+      if (!el) return;
+      const observer = new ResizeObserver(() => setPanelHeight(el.offsetHeight));
+      observer.observe(el);
+      return () => observer.disconnect();
+    }, [!!gameState]);
     const [muted, setMutedState] = useState(isMuted);
     const toggleMuted = () => {
       unlockAudio();
@@ -162,9 +173,7 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
           {/* Player Field - Left Side */}
           <div className="md:col-span-1 xl:col-span-2 order-2 xl:order-1">
             <div className="bg-white/20 rounded-2xl p-4">
-              <div className="text-center mb-4">
-                <h4 className="text-xl font-serif text-coffee-dark">YOUR FIELD</h4>
-              </div>
+              <PlayerPanel minHeight={panelHeight} />
               <div ref={playerNoticeRef}>
                 <OjamaNotice
                   count={gameState.pendingOjamaPlayer}
@@ -321,7 +330,7 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
           {/* CPU Field - Right Side */}
           <div className="md:col-span-1 xl:col-span-2 order-3">
             <div className="relative bg-white/20 rounded-2xl p-4">
-              <CpuCharacterPanel character={character} line={line} />
+              <CpuCharacterPanel ref={cpuPanelRef} character={character} line={line} />
               <div ref={cpuNoticeRef}>
                 <OjamaNotice
                   count={gameState.pendingOjamaCpu}

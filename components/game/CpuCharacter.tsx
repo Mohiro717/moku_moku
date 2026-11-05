@@ -14,12 +14,36 @@ interface PanelProps {
   line: string;
 }
 
+const PANEL_CLASS = 'flex items-center gap-3 rounded-xl p-3 mb-4';
+const PANEL_STYLE: React.CSSProperties = { backgroundColor: YOIYAMI, boxShadow: '0 4px 14px rgba(19,19,32,0.35)' };
+
+/**
+ * 自分の盤面の上に置く札。相手の札と同じ形にして、左右の盤面の上端をそろえる。
+ * 相手の札は台詞の長さで高さが変わるので、minHeight に相手の札の高さを渡す
+ */
+export const PlayerPanel: React.FC<{ minHeight?: number }> = ({ minHeight }) => (
+  <div className={PANEL_CLASS} style={{ ...PANEL_STYLE, minHeight }}>
+    <div
+      className="w-16 h-16 shrink-0 rounded-full flex items-center justify-center font-serif text-lg"
+      style={{ boxShadow: `0 0 0 2px ${KINDEI}`, color: KINDEI }}
+    >
+      YOU
+    </div>
+    <div className="min-w-0 flex-1 text-left">
+      <div className="flex items-baseline gap-2">
+        <span className="font-serif text-lg" style={{ color: KINDEI }}>あなた</span>
+        <span className="text-xs" style={{ color: SUBLABEL }}>YOUR FIELD</span>
+      </div>
+      <p className="mt-1 rounded-lg px-3 py-2 text-xs leading-snug" style={{ backgroundColor: BUBBLE, color: SUBLABEL }}>
+        ← → 移動　Z / X 回転　↓ 速く　Space 落とす
+      </p>
+    </div>
+  </div>
+);
+
 /** CPU 盤面の上に置く、相手キャラの顔・名前・台詞 */
-export const CpuCharacterPanel: React.FC<PanelProps> = ({ character, line }) => (
-  <div
-    className="flex items-center gap-3 rounded-xl p-3 mb-4"
-    style={{ backgroundColor: YOIYAMI, boxShadow: '0 4px 14px rgba(19,19,32,0.35)' }}
-  >
+export const CpuCharacterPanel = React.forwardRef<HTMLDivElement, PanelProps>(({ character, line }, ref) => (
+  <div ref={ref} className={PANEL_CLASS} style={PANEL_STYLE}>
     <img
       src={character.icon}
       alt={character.name}
@@ -42,7 +66,8 @@ export const CpuCharacterPanel: React.FC<PanelProps> = ({ character, line }) => 
       </p>
     </div>
   </div>
-);
+));
+CpuCharacterPanel.displayName = 'CpuCharacterPanel';
 
 /** CPU の大連鎖で盤面に重ねる必殺カットイン */
 export const CpuCutinOverlay: React.FC<{ cutin: CpuCutin | null; name: string }> = ({ cutin, name }) => {
