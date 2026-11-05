@@ -57,6 +57,7 @@ export const PuyoPuyoGame: React.FC = () => {
                 getPairPositions={getPairPositions}
                 isGameOver={gameState.isGameOver}
                 isPaused={gameState.isPaused}
+                chainStep={gameState.currentChainStep}
               />
             </TouchControls>
           </div>

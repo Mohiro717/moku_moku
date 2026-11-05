@@ -151,6 +151,21 @@ export const findChainsToHighlight = (grid: PuyoCell[][]): {
   }
 
   
+  // 消えるぷよに隣接するおじゃまも同時に点滅・消去させる（削除数には数えない）
+  if (chainOccurred) {
+    const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+    const connectedCells: Array<[number, number]> = [];
+    newGrid.forEach((row, y) => row.forEach((cell, x) => {
+      if (cell.isConnected) connectedCells.push([y, x]);
+    }));
+    connectedCells.forEach(([y, x]) => {
+      directions.forEach(([dy, dx]) => {
+        const neighbour = newGrid[y + dy]?.[x + dx];
+        if (neighbour && neighbour.color === 'ojama') neighbour.isConnected = true;
+      });
+    });
+  }
+
   // 異常検知: 削除数が全セル数を超える場合
   if (totalDeleted > GAME_CONFIG.gridWidth * GAME_CONFIG.gridHeight) {
     console.error(`[CHAIN DETECTION] ERROR: Total deleted (${totalDeleted}) exceeds grid size! Resetting.`);

@@ -68,6 +68,8 @@ export interface GameTimings {
   deletion: number;
   falling: number;
   complete: number;
+  drop: number;     // 着地アニメーション（落下）の最長時間
+  landing: number;  // ペアを置いてから連鎖の判定を始めるまで（落ち切って、つぶれが落ち着くまで）
   puyoFallInterval: number;
 }
 
@@ -88,8 +90,18 @@ export interface VsGameState extends GameControlState {
   gameMode: 'single' | 'vs-cpu';
   difficulty: GameDifficulty;
   winner: GamePlayer | null;
+  /** プレイヤーに降る予定のおじゃま（予告） */
   pendingOjamaPlayer: number;
+  /** CPU に降る予定のおじゃま（予告） */
   pendingOjamaCpu: number;
+}
+
+/** 対戦のおじゃまのやりとりを、1人ぶんのゲームにつなぐ口 */
+export interface OjamaLink {
+  /** 連鎖の1段ごとに呼ぶ。step は1始まり、deleted は消えた色ぷよの数 */
+  onChainStep: (step: number, deleted: number) => void;
+  /** ペアを置いて連鎖が起きなかったときに呼ぶ。いま降らせる数を返す */
+  takeOjama: () => number;
 }
 
 export interface GameFieldProps {

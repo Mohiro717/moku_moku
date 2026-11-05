@@ -1,11 +1,11 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { usePuyoGame } from './usePuyoGame';
 import { usePuyoGameWithoutInput } from './usePuyoGameWithoutInput';
 import { useCpuPlayer } from './game/useCpuPlayer';
-import type { GameDifficulty, VsGameState } from '../types/game';
+import type { GameDifficulty, VsGameState, OjamaLink } from '../types/game';
 import { getPairPositions } from '../utils/puyoGameLogic';
 import { cpuOperationManager } from '../utils/cpuOperations';
-import { calculateOjamaFromChain, dropOjamaPuyos } from '../utils/ojamaSystem';
+import { ojamaForStep, MAX_OJAMA_PER_DROP } from '../utils/ojamaSystem';
 import { 
   getGameConditions, 
   canOperateCpu, 
@@ -19,80 +19,57 @@ export const useVsCpuGame = (initialDifficulty: GameDifficulty = 'normal') => {
     createInitialVsGameState(initialDifficulty)
   );
   
+  // おじゃまのやりとり。連鎖の途中や着地のタイマーから触るので ref が正本で、
+  // 予告の表示用に vsGameState へ写す。
+  //   pending: その側に降る予定の数 / carry: その側が送る量の端数
+  const pending = useRef({ player: 0, cpu: 0 });
+  const carry = useRef({ player: 0, cpu: 0 });
+  const chaining = useRef({ player: false, cpu: false });
+
+  const showPending = useCallback(() => {
+    const { player, cpu } = pending.current;
+    setVsGameState(prev => ({ ...prev, pendingOjamaPlayer: player, pendingOjamaCpu: cpu }));
+  }, []);
+
+  const resetOjama = useCallback(() => {
+    pending.current = { player: 0, cpu: 0 };
+    carry.current = { player: 0, cpu: 0 };
+  }, []);
+
+  const ojamaLinks = useMemo(() => {
+    const link = (self: 'player' | 'cpu', rival: 'player' | 'cpu'): OjamaLink => ({
+      onChainStep: (step, deleted) => {
+        carry.current[self] += ojamaForStep(step, deleted);
+        let attack = Math.floor(carry.current[self]);
+        carry.current[self] -= attack;
+        // 相殺：自分に来ている分を先に打ち消し、残りを相手へ
+        const offset = Math.min(attack, pending.current[self]);
+        pending.current[self] -= offset;
+        attack -= offset;
+        pending.current[rival] += attack;
+        showPending();
+      },
+      takeOjama: () => {
+        // 相手の連鎖が終わるまでは降らせない（まだ増えるかもしれない）
+        if (chaining.current[rival] || pending.current[self] === 0) return 0;
+        const count = Math.min(pending.current[self], MAX_OJAMA_PER_DROP);
+        pending.current[self] -= count;
+        showPending();
+        return count;
+      }
+    });
+    return { player: link('player', 'cpu'), cpu: link('cpu', 'player') };
+  }, [showPending]);
+
   // プレイヤー用のゲーム（キーボード操作あり）
-  const playerGame = usePuyoGame();
-  
+  const playerGame = usePuyoGame(ojamaLinks.player);
+
   // CPU用のゲーム（キーボード操作なし）
-  const cpuGame = usePuyoGameWithoutInput();
-  
+  const cpuGame = usePuyoGameWithoutInput(ojamaLinks.cpu);
+
   const cpuPlayer = useCpuPlayer();
 
-  // 前回の状態を追跡
-  const prevPlayerChainCount = useRef(0);
-  const prevPlayerScore = useRef(0);
-  const prevCpuChainCount = useRef(0);  
-  const prevCpuScore = useRef(0);
-
-  // プレイヤーの連鎖/大量消去によるおじゃまぷよ送信
-  useEffect(() => {
-    const currentScore = playerGame.gameState.score;
-    const currentChainCount = playerGame.gameState.chainCount;
-    const scoreDiff = currentScore - prevPlayerScore.current;
-    
-    // スコアが増加した場合
-    if (scoreDiff > 0) {
-      const deletedPuyos = Math.floor(scoreDiff / 10);
-      const ojamaResult = calculateOjamaFromChain(currentChainCount, deletedPuyos);
-      
-      if (ojamaResult.ojamaCount > 0) {
-        setTimeout(() => {
-          if (cpuGame.gameState) {
-            const newGrid = dropOjamaPuyos(cpuGame.gameState.grid, ojamaResult.ojamaCount);
-            for (let row = 0; row < newGrid.length; row++) {
-              for (let col = 0; col < newGrid[row].length; col++) {
-                cpuGame.gameState.grid[row][col] = { ...newGrid[row][col] };
-              }
-            }
-          }
-        }, 100);
-      }
-    }
-    
-    prevPlayerChainCount.current = currentChainCount;
-    prevPlayerScore.current = currentScore;
-  }, [playerGame.gameState.chainCount, playerGame.gameState.isChaining, playerGame.gameState.score, cpuGame]);
-
-  // CPUの連鎖/大量消去によるおじゃまぷよ送信
-  useEffect(() => {
-    const currentScore = cpuGame.gameState.score;
-    const currentChainCount = cpuGame.gameState.chainCount;
-    const scoreDiff = currentScore - prevCpuScore.current;
-    
-    // スコアが増加した場合
-    if (scoreDiff > 0) {
-      const limitedChainCount = Math.min(Math.max(currentChainCount, 1), 10);
-      const baseDeletedPuyos = 4;
-      const estimatedDeletedPuyos = Math.min(baseDeletedPuyos + Math.floor(limitedChainCount / 2), 20);
-      
-      const ojamaResult = calculateOjamaFromChain(limitedChainCount, estimatedDeletedPuyos);
-      
-      if (ojamaResult.ojamaCount > 0) {
-        setTimeout(() => {
-          if (playerGame.gameState) {
-            const newGrid = dropOjamaPuyos(playerGame.gameState.grid, ojamaResult.ojamaCount);
-            for (let row = 0; row < newGrid.length; row++) {
-              for (let col = 0; col < newGrid[row].length; col++) {
-                playerGame.gameState.grid[row][col] = { ...newGrid[row][col] };
-              }
-            }
-          }
-        }, 100);
-      }
-    }
-    
-    prevCpuChainCount.current = currentChainCount;
-    prevCpuScore.current = currentScore;
-  }, [cpuGame.gameState.chainCount, cpuGame.gameState.isChaining, cpuGame.gameState.score, playerGame]);
+  chaining.current = { player: playerGame.gameState.isChaining, cpu: cpuGame.gameState.isChaining };
 
   // ゲーム制御関数
   const startGame = useCallback(() => {
@@ -100,6 +77,7 @@ export const useVsCpuGame = (initialDifficulty: GameDifficulty = 'normal') => {
       console.log('[VS CPU] Starting from game over state - restarting game');
       playerGame.restartGame();
       cpuGame.restartGame();
+      resetOjama();
       setVsGameState(prev => resetVsGameState(prev.difficulty));
       cpuPlayer.stopCpuThinking();
       cpuOperationManager.cleanup();
@@ -109,7 +87,7 @@ export const useVsCpuGame = (initialDifficulty: GameDifficulty = 'normal') => {
     playerGame.startGame();
     cpuGame.startGame();
     setVsGameState(prev => ({ ...prev, isPlaying: true, isPaused: false, isGameOver: false, winner: null }));
-  }, [playerGame, cpuGame, cpuPlayer, vsGameState.isGameOver]);
+  }, [playerGame, cpuGame, cpuPlayer, vsGameState.isGameOver, resetOjama]);
 
   const pauseGame = useCallback(() => {
     playerGame.pauseGame();
@@ -121,10 +99,11 @@ export const useVsCpuGame = (initialDifficulty: GameDifficulty = 'normal') => {
   const restartGame = useCallback(() => {
     playerGame.restartGame();
     cpuGame.restartGame();
+    resetOjama();
     setVsGameState(prev => resetVsGameState(prev.difficulty));
     cpuPlayer.stopCpuThinking();
     cpuOperationManager.cleanup();
-  }, [playerGame, cpuGame, cpuPlayer]);
+  }, [playerGame, cpuGame, cpuPlayer, resetOjama]);
 
   const setDifficulty = useCallback((difficulty: GameDifficulty) => {
     setVsGameState(prev => ({ ...prev, difficulty }));
@@ -136,7 +115,7 @@ export const useVsCpuGame = (initialDifficulty: GameDifficulty = 'normal') => {
     const vsConditions = { isGameOver: vsGameState.isGameOver, isPlaying: vsGameState.isPlaying };
 
     if (canOperateCpu(cpuConditions, vsConditions)) {
-      cpuOperationManager.executeCpuTurn(cpuGame.gameState, vsGameState.difficulty, cpuGame);
+      cpuOperationManager.executeCpuTurn(cpuGame.gameState, vsGameState.difficulty, cpuGame, () => pending.current.cpu);
     }
   }, [!!cpuGame.gameState.currentPair, cpuGame.gameState.isPlaying, vsGameState.isPlaying, vsGameState.isGameOver, vsGameState.difficulty]);
 

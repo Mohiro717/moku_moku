@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import type { GameState, PuyoPair, PuyoCell, ChainResult, ChainProcessingState } from '../types/game';
+import type { GameState, PuyoPair, PuyoCell, ChainResult, ChainProcessingState, OjamaLink } from '../types/game';
 import {
   GAME_CONFIG,
   createEmptyGrid,
@@ -15,7 +15,7 @@ import {
   lockPairToGrid,
   calculateChainScore
 } from '../utils/puyoGameLogic';
-import { removeAdjacentOjama } from '../utils/ojamaSystem';
+import { removeAdjacentOjama, dropOjamaPuyos } from '../utils/ojamaSystem';
 import { attemptRotationWithKick } from '../utils/puyoKickSystem';
 import { GAME_TIMINGS } from '../constants/gameTimings';
 
@@ -35,8 +35,26 @@ const createInitialGameState = (): GameState => ({
 });
 
 // キーボード入力なしのぷよぷよゲーム（CPU用）
-export const usePuyoGameWithoutInput = () => {
+export const usePuyoGameWithoutInput = (ojamaLink?: OjamaLink) => {
   const [gameState, setGameState] = useState<GameState>(createInitialGameState);
+  // 連鎖の途中や着地のタイマーから呼ぶので、毎回最新の口を見る
+  const ojamaLinkRef = useRef(ojamaLink);
+  ojamaLinkRef.current = ojamaLink;
+  // おじゃまを降らせた直後の着地判定ではもう取らない（1回の着地で降るのは1回まで）
+  const ojamaDropped = useRef(false);
+  // 連鎖の処理は await をまたぐので、ポーズで止める・始め直しで打ち切るための目印
+  const pausedRef = useRef(false);
+  pausedRef.current = gameState.isPaused;
+  const gameIdRef = useRef(0);
+
+  /** ms 待つ。ポーズ中は再開まで待つ。その間に試合が始め直されていたら false */
+  const wait = useCallback(async (ms: number, gameId: number): Promise<boolean> => {
+    await new Promise<void>(resolve => setTimeout(resolve, ms));
+    while (pausedRef.current && gameIdRef.current === gameId) {
+      await new Promise<void>(resolve => setTimeout(resolve, 100));
+    }
+    return gameIdRef.current === gameId;
+  }, []);
   const gameLoopRef = useRef<number>();
   const lastUpdateTime = useRef<number>(0);
   const pairStuckTime = useRef<number>(0);
@@ -167,7 +185,6 @@ export const usePuyoGameWithoutInput = () => {
       currentChainStep: actualChains,
       isChaining: true
     }));
-    await new Promise<void>(resolve => setTimeout(resolve, GAME_TIMINGS.highlight));
   }, []);
 
   const showDeletingPuyos = useCallback(async (grid: PuyoCell[][]): Promise<PuyoCell[][]> => {
@@ -178,7 +195,6 @@ export const usePuyoGameWithoutInput = () => {
       chainAnimationStep: 'deleting',
       isChaining: true
     }));
-    await new Promise<void>(resolve => setTimeout(resolve, GAME_TIMINGS.deletion));
     return deletingGrid;
   }, []);
 
@@ -220,7 +236,6 @@ export const usePuyoGameWithoutInput = () => {
       chainAnimationStep: 'falling',
       isChaining: true
     }));
-    await new Promise<void>(resolve => setTimeout(resolve, GAME_TIMINGS.falling));
   }, []);
 
   const updateFinalState = useCallback(async (
@@ -235,11 +250,11 @@ export const usePuyoGameWithoutInput = () => {
       chainCount: Math.max(actualChains, prev.chainCount),
       chainAnimationStep: 'complete'
     }));
-    await new Promise<void>(resolve => setTimeout(resolve, GAME_TIMINGS.complete));
   }, []);
 
   // Main chain processing function
   const processChainReaction = useCallback(async () => {
+    const gameId = gameIdRef.current;
     setGameState(prev => ({ 
       ...prev, 
       isChaining: true,
@@ -287,12 +302,17 @@ export const usePuyoGameWithoutInput = () => {
         break;
       }
       
+      // 消えた瞬間に相手へのおじゃまを積む（相殺もここで効く）
+      ojamaLinkRef.current?.onChainStep(deletionRounds, deletedCount);
+
       // Step 1: Show highlighted puyos (before deletion)
       const highlightGrid = findChainsToHighlight(currentGrid);
       await showHighlightedPuyos(highlightGrid.newGrid, actualChains);
+      if (!(await wait(GAME_TIMINGS.highlight, gameId))) return;
       
       // Step 2: Show deleting animation
       await showDeletingPuyos(highlightGrid.newGrid);
+      if (!(await wait(GAME_TIMINGS.deletion, gameId))) return;
       
       // Step 3: Apply deletion (use processChains result which includes ojama removal)
       currentGrid = newGrid.map(row => row.map(cell => ({ ...cell })));
@@ -302,12 +322,14 @@ export const usePuyoGameWithoutInput = () => {
       console.log(`[PUYO CHAIN WITHOUT INPUT] After deletion: ${remainingPuyos} puyos remaining`);
       
       await showFallingAnimation(currentGrid);
+      if (!(await wait(GAME_TIMINGS.falling, gameId))) return;
       
       // 重力適用
       currentGrid = applyGravity(currentGrid);
       totalScore += calculateChainScore(deletedCount, Math.max(1, actualChains + 1));
       
       await updateFinalState(currentGrid, totalScore, actualChains);
+      if (!(await wait(GAME_TIMINGS.complete, gameId))) return;
     }
 
     if (deletionRounds >= MAX_CHAIN_ROUNDS) {
@@ -328,7 +350,8 @@ export const usePuyoGameWithoutInput = () => {
     showHighlightedPuyos, 
     showDeletingPuyos, 
     showFallingAnimation, 
-    updateFinalState
+    updateFinalState,
+    wait
   ]);
 
   // Simple auto-fall mechanism
@@ -417,7 +440,7 @@ export const usePuyoGameWithoutInput = () => {
 
   // Chain processing trigger - should happen BEFORE spawning new pair
   useEffect(() => {
-    if (!gameState.currentPair && !gameState.isChaining && gameState.isPlaying && !gameState.isGameOver) {
+    if (!gameState.currentPair && !gameState.isChaining && gameState.isPlaying && !gameState.isPaused && !gameState.isGameOver) {
       // First check for chains, then spawn new pair
       const timer = setTimeout(async () => {
         // Check if there are any chains to process
@@ -427,6 +450,18 @@ export const usePuyoGameWithoutInput = () => {
           // Process chains
           await processChainReaction();
         } else {
+          // 連鎖が起きなかったら、ためていたおじゃまを先に降らせる。
+          // grid が変わるのでこの effect がもう一度走り、落ち切ってから次のペアが出る
+          if (!ojamaDropped.current) {
+            const ojama = ojamaLinkRef.current?.takeOjama() ?? 0;
+            if (ojama > 0) {
+              ojamaDropped.current = true;
+              setGameState(prev => (prev.isGameOver ? prev : { ...prev, grid: dropOjamaPuyos(prev.grid, ojama) }));
+              return;
+            }
+          }
+          ojamaDropped.current = false;
+
           // No chains, spawn new pair
           setGameState(prev => {
             if (prev.isGameOver) {
@@ -458,11 +493,11 @@ export const usePuyoGameWithoutInput = () => {
             }
           });
         }
-      }, 100);
+      }, GAME_TIMINGS.landing);
 
       return () => clearTimeout(timer);
     }
-  }, [gameState.currentPair, gameState.isChaining, gameState.isPlaying, gameState.isGameOver, gameState.grid, processChainReaction]);
+  }, [gameState.currentPair, gameState.isChaining, gameState.isPlaying, gameState.isPaused, gameState.isGameOver, gameState.grid, processChainReaction]);
 
   // *** キーボード操作は削除 ***
 
@@ -496,6 +531,8 @@ export const usePuyoGameWithoutInput = () => {
   }, []);
 
   const restartGame = useCallback(() => {
+    ojamaDropped.current = false;
+    gameIdRef.current++; // 走っている連鎖を打ち切る
     setGameState(createInitialGameState());
   }, []);
 
