@@ -33,6 +33,12 @@ const roundsOf = (side: SideState) => (side.isChaining ? side.currentChainStep +
 export const useCpuCharacterReactions = ({ difficulty, isGameOver, winner, player, cpu }: Params) => {
   const character: CpuCharacter = CPU_CHARACTERS[difficulty];
   const [lineKind, setLineKind] = useState<CpuLineKind>('intro');
+  // 同じ台詞をもう一度言ったときも分かるように、言うたびに数える（ボイスの合図）
+  const [lineTick, setLineTick] = useState(0);
+  const say = (kind: CpuLineKind) => {
+    setLineKind(kind);
+    setLineTick(t => t + 1);
+  };
   const [cutin, setCutin] = useState<CpuCutin | null>(null);
   const cutinCount = useRef(0);
   const cpuFired = useRef(false);
@@ -62,7 +68,7 @@ export const useCpuCharacterReactions = ({ difficulty, isGameOver, winner, playe
     const lap = Math.floor(n / len);
     const src = character.cutins[n % len] + (lap > 0 ? `?lap=${lap}` : '');
     setCutin({ src, id: n });
-    setLineKind('attack');
+    say('attack');
   }, [cpuRounds, character]);
 
   // プレイヤーの大連鎖を受けたとき
@@ -73,13 +79,13 @@ export const useCpuCharacterReactions = ({ difficulty, isGameOver, winner, playe
     }
     if (playerFired.current || playerRounds < CUTIN_MIN_CHAIN) return;
     playerFired.current = true;
-    setLineKind('attacked');
+    say('attacked');
   }, [playerRounds]);
 
   // 勝敗。RESTART で isGameOver が戻ったら最初の台詞へ
   useEffect(() => {
     if (isGameOver) {
-      setLineKind(winner === 'cpu' ? 'win' : 'lose');
+      say(winner === 'cpu' ? 'win' : 'lose');
     } else {
       setLineKind('intro');
       setCutin(null);
@@ -92,5 +98,5 @@ export const useCpuCharacterReactions = ({ difficulty, isGameOver, winner, playe
     return () => clearTimeout(timer);
   }, [cutin]);
 
-  return { character, line: character.lines[lineKind], lineKind, cutin };
+  return { character, line: character.lines[lineKind], lineKind, lineTick, cutin };
 };

@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { AttackBeamLayer, useAttackBeams } from './AttackBeams';
 import { GameGrid } from './GameGrid';
 import { ErrorBoundary } from '../ErrorBoundary';
@@ -8,6 +8,8 @@ import { NextPiecePreview } from './NextPiecePreview';
 import { OjamaNotice } from './OjamaNotice';
 import { useVsCpuGame } from '../../hooks/useVsCpuGame';
 import { useCpuCharacterReactions } from '../../hooks/game/useCpuCharacterReactions';
+import { useVsGameSound } from '../../hooks/game/useVsGameSound';
+import { isMuted, setMuted, unlockAudio } from '../../utils/gameAudio';
 import { CpuCharacterPanel, CpuCutinOverlay, KitanCredit } from './CpuCharacter';
 import { FANWORKS_URL } from '../../constants/cpuCharacters';
 import type { GameDifficulty, GameResult } from '../../types/game';
@@ -82,13 +84,21 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
     });
 
     const idleSide = { isChaining: false, currentChainStep: 0 };
-    const { character, line, cutin } = useCpuCharacterReactions({
+    const { character, line, lineKind, lineTick, cutin } = useCpuCharacterReactions({
       difficulty: gameState?.difficulty ?? initialDifficulty,
       isGameOver: !!gameState?.isGameOver,
       winner: gameState?.winner ?? null,
       player: gameState?.player ?? idleSide,
       cpu: gameState?.cpu ?? idleSide
     });
+
+    useVsGameSound({ gameState, character, lineKind, lineTick, cutin });
+    const [muted, setMutedState] = useState(isMuted);
+    const toggleMuted = () => {
+      unlockAudio();
+      setMuted(!muted);
+      setMutedState(!muted);
+    };
 
     if (!gameState) {
       return (
@@ -106,10 +116,12 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
     }
 
   const handleStart = () => {
+    unlockAudio();
     startGame();
   };
 
   const handlePause = () => {
+    unlockAudio();
     pauseGame();
   };
 
@@ -292,6 +304,14 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
                   className="w-full py-2 px-4 bg-gradient-to-r from-coffee-light to-coffee-mid text-white rounded-xl font-serif shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200 hover:from-coffee-light/90 hover:to-coffee-mid/90"
                 >
                   RESTART
+                </button>
+
+                <button
+                  onClick={toggleMuted}
+                  aria-pressed={!muted}
+                  className="w-full py-2 px-4 bg-white/60 text-coffee-dark rounded-xl font-serif shadow-sm hover:bg-white/80 transition-colors duration-200"
+                >
+                  {muted ? '🔇 SOUND OFF' : '🔊 SOUND ON'}
                 </button>
               </div>
 

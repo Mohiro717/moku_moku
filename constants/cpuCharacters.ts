@@ -3,21 +3,28 @@ import type { GameDifficulty } from '../types/game';
 // CPU 対戦の相手キャラ。『月蝕綺譚 -Luna Occulta-』の二次創作ガイドラインに沿って使う（非公式）。
 // 絵とカットインは公式の素材蔵から直接読む（素材そのものは同梱しない）。
 // 台詞は各キャラの公開設定（一人称・呼び方・口調）に合わせてこのゲーム用に書いたもの。
+// BGM は公式の楽曲（ゲームの BGM に使ってよい）を直接読む。ナルカは自分の曲がないのでタイトル曲。
+// ボイスは公式の声の見本（咲耶・ナルカ）を参照に Irodori-TTS で作り、public/audio/voice/ に置いた。
+// 於兎は公式の見本が ElevenLabs の声 ID だけなので、設定文から声を作った（公式の声ではない）。
 
 export type CpuLineKind = 'intro' | 'attack' | 'attacked' | 'win' | 'lose';
 
 export interface CpuCharacter {
+  /** ボイスのファイル名の頭 */
+  id: string;
   name: string;
   kana: string;
   tagline: string;
   icon: string;
   /** 大きな連鎖のたびに、この順で1本ずつ流す */
   cutins: string[];
+  bgm: string;
   lines: Record<CpuLineKind, string>;
 }
 
 const CANON = 'https://vibe.co.jp/luna-occulta/media/img/canon';
 const ULT = 'https://kura.vibe.co.jp/ult';
+const MUSIC = 'https://vibe.co.jp/luna-occulta/media/music';
 
 export const FANWORKS_URL = 'https://vibe.co.jp/luna-occulta/fanworks';
 
@@ -25,13 +32,20 @@ export const FANWORKS_URL = 'https://vibe.co.jp/luna-occulta/fanworks';
 export const CUTIN_MIN_CHAIN = 3;
 export const CUTIN_DURATION_MS = 2400;
 
+export const LINE_KINDS: CpuLineKind[] = ['intro', 'attack', 'attacked', 'win', 'lose'];
+
+export const voiceOf = (character: CpuCharacter, kind: CpuLineKind) =>
+  `${import.meta.env.BASE_URL}audio/voice/${character.id}_${kind}.mp3`;
+
 export const CPU_CHARACTERS: Record<GameDifficulty, CpuCharacter> = {
   easy: {
+    id: 'oto',
     name: '於兎',
     kana: 'おと',
     tagline: '甲賀・土',
     icon: `${CANON}/oto_icon.webp`,
     cutins: [1, 2, 3, 4].map(n => `${ULT}/cutin_anim_oto_s${n}_v3.webp`).concat(`${ULT}/cutin_anim_oto_s5_v5.webp`),
+    bgm: `${MUSIC}/akarui_kakari.mp3`,
     lines: {
       intro: 'あるじどの、いっしょに遊ぼ？ 負けないもん',
       attack: 'えいっ！ 地面ごと、揺らしちゃうよ？',
@@ -41,6 +55,7 @@ export const CPU_CHARACTERS: Record<GameDifficulty, CpuCharacter> = {
     }
   },
   normal: {
+    id: 'sakuya',
     name: '咲耶',
     kana: 'さくや',
     tagline: '甲賀・火',
@@ -52,6 +67,7 @@ export const CPU_CHARACTERS: Record<GameDifficulty, CpuCharacter> = {
       `${ULT}/cutin_anim_sakuya_s4_v3.webp`,
       `${ULT}/cutin_anim_sakuya_s5_v3.webp`
     ],
+    bgm: `${MUSIC}/muyou_no_hi.mp3`,
     lines: {
       intro: 'あんたとの手合わせ、楽しみにしてたんだよね',
       attack: 'いくよっ！ 緋桜、受けてみな！',
@@ -61,6 +77,7 @@ export const CPU_CHARACTERS: Record<GameDifficulty, CpuCharacter> = {
     }
   },
   hard: {
+    id: 'naruka',
     name: 'ナルカ',
     kana: 'なるか',
     tagline: '伊賀・木',
@@ -72,6 +89,7 @@ export const CPU_CHARACTERS: Record<GameDifficulty, CpuCharacter> = {
       `${ULT}/cutin_anim_naruka_s4_v3.webp`,
       `${ULT}/cutin_anim_naruka_s5_v3.webp`
     ],
+    bgm: `${MUSIC}/kitan_maintheme.mp3`,
     lines: {
       intro: 'わたくしに挑むおつもり？ よろしくてよ。上から全部、見えていますわ',
       attack: 'わたくしの空からは、すべて丸見えでしてよ！',
