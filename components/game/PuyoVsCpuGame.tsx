@@ -7,6 +7,9 @@ import { TouchControls } from './TouchControls';
 import { NextPiecePreview } from './NextPiecePreview';
 import { OjamaNotice } from './OjamaNotice';
 import { useVsCpuGame } from '../../hooks/useVsCpuGame';
+import { useCpuCharacterReactions } from '../../hooks/game/useCpuCharacterReactions';
+import { CpuCharacterPanel, CpuCutinOverlay, KitanCredit } from './CpuCharacter';
+import { FANWORKS_URL } from '../../constants/cpuCharacters';
 import type { GameDifficulty, GameResult } from '../../types/game';
 
 // Constants
@@ -76,6 +79,15 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
       chaining: { player: !!gameState?.player.isChaining, cpu: !!gameState?.cpu.isChaining },
       boards: { player: playerBoardRef, cpu: cpuBoardRef },
       notices: { player: playerNoticeRef, cpu: cpuNoticeRef }
+    });
+
+    const idleSide = { isChaining: false, currentChainStep: 0 };
+    const { character, line, cutin } = useCpuCharacterReactions({
+      difficulty: gameState?.difficulty ?? initialDifficulty,
+      isGameOver: !!gameState?.isGameOver,
+      winner: gameState?.winner ?? null,
+      player: gameState?.player ?? idleSide,
+      cpu: gameState?.cpu ?? idleSide
     });
 
     if (!gameState) {
@@ -258,7 +270,7 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
                 </div>
                 <div className="text-center">
                   <div className={`inline-block py-2 px-4 rounded-lg text-sm font-serif ${getDifficultyStyle(gameState.difficulty)}`}>
-                    {getDifficultyLabel(gameState.difficulty)}
+                    {getDifficultyLabel(gameState.difficulty)}・{character.name}
                   </div>
                 </div>
               </div>
@@ -288,10 +300,8 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
 
           {/* CPU Field - Right Side */}
           <div className="md:col-span-1 xl:col-span-2 order-3">
-            <div className="bg-white/20 rounded-2xl p-4">
-              <div className="text-center mb-4">
-                <h4 className="text-xl font-serif text-coffee-dark">CPU FIELD</h4>
-              </div>
+            <div className="relative bg-white/20 rounded-2xl p-4">
+              <CpuCharacterPanel character={character} line={line} />
               <div ref={cpuNoticeRef}>
                 <OjamaNotice
                   count={gameState.pendingOjamaCpu}
@@ -319,6 +329,7 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
                   {gameState.cpu.score.toLocaleString()}
                 </div>
               </div>
+              <CpuCutinOverlay cutin={cutin} name={character.name} />
             </div>
           </div>
         </div>
@@ -333,6 +344,7 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
               : "CPUとの熱いバトルを楽しもう ⚔️"
             }
           </p>
+          <KitanCredit url={FANWORKS_URL} />
         </div>
       </div>
     </ErrorBoundary>

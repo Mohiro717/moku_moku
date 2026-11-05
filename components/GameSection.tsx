@@ -9,6 +9,7 @@ import { CatchTheBananaGameRefactored as CatchTheBananaGame } from './banana-gam
 import { Button } from './ui/Button';
 import { SITE_CONFIG } from '../constants';
 import type { GameDifficulty } from '../types/game';
+import { CPU_CHARACTERS } from '../constants/cpuCharacters';
 
 type GameMode = 'single' | 'vs-cpu' | 'vs-cpu-rules' | 'difficulty-select' | 'frog-maze' | 'frog-detail' | 'playing-single' | 'banana-game' | null;
 
@@ -549,8 +550,21 @@ export const GameSection: React.FC = () => {
                             : 'bg-white/50 text-coffee-dark hover:bg-white/70 border-2 border-transparent'
                         }`}
                       >
-                        <div className="font-serif">{label}</div>
-                        <div className="text-sm opacity-80">{desc}</div>
+                        <div className="flex items-center gap-3">
+                          <img
+                            src={CPU_CHARACTERS[value as GameDifficulty].icon}
+                            alt={CPU_CHARACTERS[value as GameDifficulty].name}
+                            width={48}
+                            height={48}
+                            className="w-12 h-12 shrink-0 rounded-full object-cover bg-[#131320]"
+                          />
+                          <div>
+                            <div className="font-serif">{label}</div>
+                            <div className="text-sm opacity-80">
+                              {desc}・相手：{CPU_CHARACTERS[value as GameDifficulty].name}
+                            </div>
+                          </div>
+                        </div>
                       </button>
                     ))}
                   </div>
