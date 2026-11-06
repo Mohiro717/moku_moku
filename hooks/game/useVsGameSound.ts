@@ -1,14 +1,17 @@
 import { useEffect, useRef } from 'react';
-import type { GameState, PuyoCell, PuyoPair, VsGameState } from '../../types/game';
-import { LINE_KINDS, voiceOf, type CpuCharacter, type CpuLineKind } from '../../constants/cpuCharacters';
+import type { GameState, PuyoPair, VsGameState } from '../../types/game';
+import { allVoicesOf, chainVoiceOf, voiceOf, type CpuCharacter, type CpuLineKind } from '../../constants/cpuCharacters';
 import type { CpuCutin } from './useCpuCharacterReactions';
+import { countOjama } from '../../utils/boardStatus';
 import {
   pauseBgm,
   playBgm,
+  playChainVoice,
   playSe,
   playVoice,
   preloadVoices,
   resumeBgm,
+  setBgmPinch,
   stopBgm,
   stopVoice
 } from '../../utils/gameAudio';
@@ -17,17 +20,17 @@ interface Params {
   gameState: VsGameState | null;
   character: CpuCharacter;
   lineKind: CpuLineKind;
+  lineIndex: number;
   lineTick: number;
   cutin: CpuCutin | null;
+  /** どちらかの盤面が上まで積み上がっているか（BGM を速くする） */
+  pinch: boolean;
 }
 
 /** 相手側の音は小さめに */
 const CPU_VOLUME = 0.45;
-/** 勝ち負けの音を聞かせてから台詞を言う */
-const RESULT_VOICE_DELAY_MS = 900;
-
-const countOjama = (grid: PuyoCell[][]) =>
-  grid.reduce((n, row) => n + row.filter(cell => cell.color === 'ojama').length, 0);
+/** 勝ち負けの決めの音楽を聞かせてから台詞を言う */
+const RESULT_VOICE_DELAY_MS = 2300;
 
 /** 自分のぷよの動き（横移動・回転・着地）を前の状態と比べて鳴らす */
 const pairSound = (prev: PuyoPair | null, cur: PuyoPair | null) => {
@@ -40,8 +43,11 @@ const pairSound = (prev: PuyoPair | null, cur: PuyoPair | null) => {
   else if (cur.x !== prev.x) playSe('move');
 };
 
-/** 連鎖の各段で消える瞬間と、おじゃまが降ってきた瞬間を鳴らす */
-const useBoardSound = (side: GameState | undefined, volume: number) => {
+/**
+ * 連鎖の各段で消える瞬間と、おじゃまが降ってきた瞬間を鳴らす。
+ * onChainStep を渡すと、消える瞬間に段（1始まり）を渡して呼ぶ（掛け声用）
+ */
+const useBoardSound = (side: GameState | undefined, volume: number, onChainStep?: (step: number) => void) => {
   const prevStep = useRef(side?.chainAnimationStep);
   const prevOjama = useRef(0);
   const step = side?.chainAnimationStep;
@@ -50,6 +56,7 @@ const useBoardSound = (side: GameState | undefined, volume: number) => {
   useEffect(() => {
     if (side && step === 'deleting' && prevStep.current !== 'deleting') {
       playSe('pop', side.currentChainStep + 1, volume);
+      onChainStep?.(side.currentChainStep + 1);
     }
     prevStep.current = step;
   }, [step]);
@@ -61,14 +68,14 @@ const useBoardSound = (side: GameState | undefined, volume: number) => {
 };
 
 /** 対戦の BGM・効果音・ボイス */
-export const useVsGameSound = ({ gameState, character, lineKind, lineTick, cutin }: Params) => {
+export const useVsGameSound = ({ gameState, character, lineKind, lineIndex, lineTick, cutin, pinch }: Params) => {
   const isPlaying = !!gameState?.isPlaying;
   const isPaused = !!gameState?.isPaused;
   const isGameOver = !!gameState?.isGameOver;
   const winner = gameState?.winner ?? null;
 
   useEffect(() => {
-    preloadVoices(LINE_KINDS.map(kind => voiceOf(character, kind)));
+    preloadVoices(allVoicesOf(character));
   }, [character]);
 
   // 始まり・ポーズ・終わり
@@ -77,7 +84,7 @@ export const useVsGameSound = ({ gameState, character, lineKind, lineTick, cutin
     if (isPlaying && !wasPlaying.current && !isGameOver) {
       playSe('start');
       playBgm(character.bgm);
-      playVoice(voiceOf(character, 'intro'));
+      if (character.lines.intro.length > 0) playVoice(voiceOf(character, 'intro', lineIndex));
     }
     if (!isPlaying && wasPlaying.current && !isGameOver) {
       // RESTART
@@ -94,6 +101,11 @@ export const useVsGameSound = ({ gameState, character, lineKind, lineTick, cutin
   }, [isPaused]);
 
   useEffect(() => {
+    if (isPlaying && !isGameOver) setBgmPinch(pinch);
+  }, [pinch, isPlaying, isGameOver]);
+
+  // 勝ち負け：BGM を止めて決めの音楽
+  useEffect(() => {
     if (!isGameOver) return;
     stopBgm();
     playSe(winner === 'player' ? 'win' : 'lose');
@@ -107,7 +119,7 @@ export const useVsGameSound = ({ gameState, character, lineKind, lineTick, cutin
   // 台詞を言うたびにボイス（intro は START のときに鳴らす）
   useEffect(() => {
     if (lineTick === 0 || lineKind === 'intro') return;
-    const src = voiceOf(character, lineKind);
+    const src = voiceOf(character, lineKind, lineIndex);
     if (lineKind === 'win' || lineKind === 'lose') {
       const timer = setTimeout(() => playVoice(src), RESULT_VOICE_DELAY_MS);
       return () => clearTimeout(timer);
@@ -128,5 +140,7 @@ export const useVsGameSound = ({ gameState, character, lineKind, lineTick, cutin
   }, [playerPair?.x, playerPair?.y, playerPair?.rotation, !!playerPair]);
 
   useBoardSound(gameState?.player, 1);
-  useBoardSound(gameState?.cpu, CPU_VOLUME);
+  useBoardSound(gameState?.cpu, CPU_VOLUME, step => {
+    if (character.chain.length > 0) playChainVoice(chainVoiceOf(character, step));
+  });
 };

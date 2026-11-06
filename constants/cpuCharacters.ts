@@ -1,13 +1,14 @@
-import type { GameDifficulty } from '../types/game';
+import { CPU_CHARACTER_DATA } from './cpuCharacterData';
 
 // CPU 対戦の相手キャラ。『月蝕綺譚 -Luna Occulta-』の二次創作ガイドラインに沿って使う（非公式）。
 // 絵とカットインは公式の素材蔵から直接読む（素材そのものは同梱しない）。
 // 台詞は各キャラの公開設定（一人称・呼び方・口調）に合わせてこのゲーム用に書いたもの。
-// BGM は公式の楽曲（ゲームの BGM に使ってよい）を直接読む。ナルカは自分の曲がないのでタイトル曲。
-// ボイスは公式の声の見本（咲耶・ナルカ）を参照に Irodori-TTS で作り、public/audio/voice/ に置いた。
-// 於兎は公式の見本が ElevenLabs の声 ID だけなので、設定文から声を作った（公式の声ではない）。
+// BGM は公式の楽曲（ゲームの BGM に使ってよい）を直接読む。テーマ曲のないキャラはタイトル曲かエンディング曲。
+// ボイスは公式の声の見本を参照に Irodori-TTS で作り、public/audio/voice/ に置いた。
+// 見本が ElevenLabs などの声 ID だけのキャラは、設定文から声を作った（公式の声ではない）。
+// 16人の中身は cpuCharacterData.ts。
 
-export type CpuLineKind = 'intro' | 'attack' | 'attacked' | 'win' | 'lose';
+export type CpuLineKind = 'intro' | 'attack' | 'attacked' | 'damaged' | 'pinch' | 'win' | 'lose';
 
 export interface CpuCharacter {
   /** ボイスのファイル名の頭 */
@@ -19,12 +20,11 @@ export interface CpuCharacter {
   /** 大きな連鎖のたびに、この順で1本ずつ流す */
   cutins: string[];
   bgm: string;
-  lines: Record<CpuLineKind, string>;
+  /** 場面ごとの台詞。言うたびにこの中から選ぶ */
+  lines: Record<CpuLineKind, string[]>;
+  /** 連鎖の掛け声。1連鎖目から順に、最後の1本はそれ以上の段でも使う */
+  chain: string[];
 }
-
-const CANON = 'https://vibe.co.jp/luna-occulta/media/img/canon';
-const ULT = 'https://kura.vibe.co.jp/ult';
-const MUSIC = 'https://vibe.co.jp/luna-occulta/media/music';
 
 export const FANWORKS_URL = 'https://vibe.co.jp/luna-occulta/fanworks';
 
@@ -32,71 +32,25 @@ export const FANWORKS_URL = 'https://vibe.co.jp/luna-occulta/fanworks';
 export const CUTIN_MIN_CHAIN = 3;
 export const CUTIN_DURATION_MS = 2400;
 
-export const LINE_KINDS: CpuLineKind[] = ['intro', 'attack', 'attacked', 'win', 'lose'];
+export const LINE_KINDS: CpuLineKind[] = ['intro', 'attack', 'attacked', 'damaged', 'pinch', 'win', 'lose'];
 
-export const voiceOf = (character: CpuCharacter, kind: CpuLineKind) =>
-  `${import.meta.env.BASE_URL}audio/voice/${character.id}_${kind}.mp3`;
+export const CPU_CHARACTERS: CpuCharacter[] = CPU_CHARACTER_DATA;
+export const DEFAULT_CHARACTER_ID = 'sakuya';
 
-export const CPU_CHARACTERS: Record<GameDifficulty, CpuCharacter> = {
-  easy: {
-    id: 'oto',
-    name: '於兎',
-    kana: 'おと',
-    tagline: '甲賀・土',
-    icon: `${CANON}/oto_icon.webp`,
-    cutins: [1, 2, 3, 4].map(n => `${ULT}/cutin_anim_oto_s${n}_v3.webp`).concat(`${ULT}/cutin_anim_oto_s5_v5.webp`),
-    bgm: `${MUSIC}/akarui_kakari.mp3`,
-    lines: {
-      intro: 'あるじどの、いっしょに遊ぼ？ 負けないもん',
-      attack: 'えいっ！ 地面ごと、揺らしちゃうよ？',
-      attacked: 'わわっ、そんなの、ずるいもん……！',
-      win: 'やったぁ！ あるじどの、もう一回やる？',
-      lose: 'むぅ……。つぎは、負けない、もん'
-    }
-  },
-  normal: {
-    id: 'sakuya',
-    name: '咲耶',
-    kana: 'さくや',
-    tagline: '甲賀・火',
-    icon: `${CANON}/sakuya_icon.webp`,
-    cutins: [
-      `${ULT}/cutin_anim_sakuya_s1_v3.webp`,
-      `${ULT}/cutin_anim_sakuya_s2_v4.webp`,
-      `${ULT}/cutin_anim_sakuya_s3_v3.webp`,
-      `${ULT}/cutin_anim_sakuya_s4_v3.webp`,
-      `${ULT}/cutin_anim_sakuya_s5_v3.webp`
-    ],
-    bgm: `${MUSIC}/muyou_no_hi.mp3`,
-    lines: {
-      intro: 'あんたとの手合わせ、楽しみにしてたんだよね',
-      attack: 'いくよっ！ 緋桜、受けてみな！',
-      attacked: 'やるじゃん、あんた！ でも、まだまだでしょ',
-      win: 'あたしの勝ち！ ……いい勝負だったよ',
-      lose: 'くっ……あんたの勝ちだよ。次は負けないからね'
-    }
-  },
-  hard: {
-    id: 'naruka',
-    name: 'ナルカ',
-    kana: 'なるか',
-    tagline: '伊賀・木',
-    icon: `${CANON}/naruka_icon.webp`,
-    cutins: [
-      `${ULT}/cutin_anim_naruka_s1_v3.webp`,
-      `${ULT}/cutin_anim_naruka_s2_v3.webp`,
-      `${ULT}/cutin_anim_naruka_s3_v4.webp`,
-      `${ULT}/cutin_anim_naruka_s4_v3.webp`,
-      `${ULT}/cutin_anim_naruka_s5_v3.webp`
-    ],
-    bgm: `${MUSIC}/kitan_maintheme.mp3`,
-    lines: {
-      intro: 'わたくしに挑むおつもり？ よろしくてよ。上から全部、見えていますわ',
-      attack: 'わたくしの空からは、すべて丸見えでしてよ！',
-      attacked: 'あら……少しはやりますのね',
-      win: '当然の結果ですわ。……コツなら、特別に教えて差し上げてもよろしくてよ？',
-      lose: '……っ、み、認めて差し上げますわ。あなた、なかなかでしてよ'
-    }
-  }
-};
+export const characterById = (id: string) =>
+  CPU_CHARACTERS.find(c => c.id === id) ?? CPU_CHARACTERS[0];
 
+const VOICE_DIR = `${import.meta.env.BASE_URL}audio/voice`;
+
+/** n は lines[kind] の何本目か（0始まり） */
+export const voiceOf = (character: CpuCharacter, kind: CpuLineKind, n: number) =>
+  `${VOICE_DIR}/${character.id}_${kind}_${n + 1}.mp3`;
+
+/** step は連鎖の段（1始まり）。掛け声の本数を超えた段は最後の1本 */
+export const chainVoiceOf = (character: CpuCharacter, step: number) =>
+  `${VOICE_DIR}/${character.id}_chain${Math.min(Math.max(step, 1), character.chain.length)}.mp3`;
+
+export const allVoicesOf = (character: CpuCharacter) => [
+  ...LINE_KINDS.flatMap(kind => character.lines[kind].map((_, n) => voiceOf(character, kind, n))),
+  ...character.chain.map((_, i) => chainVoiceOf(character, i + 1))
+];

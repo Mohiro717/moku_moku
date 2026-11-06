@@ -11,7 +11,8 @@ import { useCpuCharacterReactions } from '../../hooks/game/useCpuCharacterReacti
 import { useVsGameSound } from '../../hooks/game/useVsGameSound';
 import { isMuted, setMuted, unlockAudio } from '../../utils/gameAudio';
 import { CpuCharacterPanel, CpuCutinOverlay, KitanCredit, PlayerPanel } from './CpuCharacter';
-import { FANWORKS_URL } from '../../constants/cpuCharacters';
+import { FANWORKS_URL, characterById } from '../../constants/cpuCharacters';
+import { countOjama, isPinch } from '../../utils/boardStatus';
 import type { GameDifficulty, GameResult } from '../../types/game';
 
 // Constants
@@ -40,6 +41,8 @@ const DIFFICULTY_LABELS = {
 
 interface PuyoVsCpuGameProps {
   initialDifficulty?: GameDifficulty;
+  /** 対戦相手のキャラ（強さとは別に選ぶ） */
+  characterId: string;
 }
 
 // Utility functions
@@ -57,7 +60,7 @@ const getDifficultyLabel = (difficulty: GameDifficulty): string => {
   return DIFFICULTY_LABELS[difficulty];
 };
 
-export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty = 'normal' }) => {
+export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty = 'normal', characterId }) => {
   try {
     const {
       gameState,
@@ -83,16 +86,21 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
       notices: { player: playerNoticeRef, cpu: cpuNoticeRef }
     });
 
+    const character = characterById(characterId);
     const idleSide = { isChaining: false, currentChainStep: 0 };
-    const { character, line, lineKind, lineTick, cutin } = useCpuCharacterReactions({
-      difficulty: gameState?.difficulty ?? initialDifficulty,
+    const cpuPinch = gameState ? isPinch(gameState.cpu.grid) : false;
+    const playerPinch = gameState ? isPinch(gameState.player.grid) : false;
+    const { line, lineKind, lineIndex, lineTick, cutin } = useCpuCharacterReactions({
+      character,
       isGameOver: !!gameState?.isGameOver,
       winner: gameState?.winner ?? null,
       player: gameState?.player ?? idleSide,
-      cpu: gameState?.cpu ?? idleSide
+      cpu: gameState?.cpu ?? idleSide,
+      cpuOjama: gameState ? countOjama(gameState.cpu.grid) : 0,
+      cpuPinch
     });
 
-    useVsGameSound({ gameState, character, lineKind, lineTick, cutin });
+    useVsGameSound({ gameState, character, lineKind, lineIndex, lineTick, cutin, pinch: cpuPinch || playerPinch });
 
     // 左右の盤面の上端をそろえる：相手の札（台詞で高さが変わる）の高さを自分の札にも使う
     const cpuPanelRef = useRef<HTMLDivElement>(null);
