@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useLayoutEffect, useRef, useState } from 'react';
 import { AttackBeamLayer, useAttackBeams } from './AttackBeams';
 import { GameGrid } from './GameGrid';
 import { ErrorBoundary } from '../ErrorBoundary';
@@ -7,6 +7,12 @@ import { TouchControls } from './TouchControls';
 import { NextPiecePreview } from './NextPiecePreview';
 import { OjamaNotice } from './OjamaNotice';
 import { useVsCpuGame } from '../../hooks/useVsCpuGame';
+import { useCpuCharacterReactions } from '../../hooks/game/useCpuCharacterReactions';
+import { useVsGameSound } from '../../hooks/game/useVsGameSound';
+import { isMuted, setMuted, unlockAudio } from '../../utils/gameAudio';
+import { CpuCharacterPanel, CpuCutinOverlay, KitanCredit, PlayerPanel } from './CpuCharacter';
+import { FANWORKS_URL, characterById } from '../../constants/cpuCharacters';
+import { countOjama, isPinch } from '../../utils/boardStatus';
 import type { GameDifficulty, GameResult } from '../../types/game';
 
 // Constants
@@ -35,6 +41,8 @@ const DIFFICULTY_LABELS = {
 
 interface PuyoVsCpuGameProps {
   initialDifficulty?: GameDifficulty;
+  /** 対戦相手のキャラ（強さとは別に選ぶ） */
+  characterId: string;
 }
 
 // Utility functions
@@ -52,7 +60,7 @@ const getDifficultyLabel = (difficulty: GameDifficulty): string => {
   return DIFFICULTY_LABELS[difficulty];
 };
 
-export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty = 'normal' }) => {
+export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty = 'normal', characterId }) => {
   try {
     const {
       gameState,
@@ -78,6 +86,39 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
       notices: { player: playerNoticeRef, cpu: cpuNoticeRef }
     });
 
+    const character = characterById(characterId);
+    const idleSide = { isChaining: false, currentChainStep: 0 };
+    const cpuPinch = gameState ? isPinch(gameState.cpu.grid) : false;
+    const playerPinch = gameState ? isPinch(gameState.player.grid) : false;
+    const { line, lineKind, lineIndex, lineTick, cutin } = useCpuCharacterReactions({
+      character,
+      isGameOver: !!gameState?.isGameOver,
+      winner: gameState?.winner ?? null,
+      player: gameState?.player ?? idleSide,
+      cpu: gameState?.cpu ?? idleSide,
+      cpuOjama: gameState ? countOjama(gameState.cpu.grid) : 0,
+      cpuPinch
+    });
+
+    useVsGameSound({ gameState, character, lineKind, lineIndex, lineTick, cutin, pinch: cpuPinch || playerPinch });
+
+    // 左右の盤面の上端をそろえる：相手の札（台詞で高さが変わる）の高さを自分の札にも使う
+    const cpuPanelRef = useRef<HTMLDivElement>(null);
+    const [panelHeight, setPanelHeight] = useState<number>();
+    useLayoutEffect(() => {
+      const el = cpuPanelRef.current;
+      if (!el) return;
+      const observer = new ResizeObserver(() => setPanelHeight(el.offsetHeight));
+      observer.observe(el);
+      return () => observer.disconnect();
+    }, [!!gameState]);
+    const [muted, setMutedState] = useState(isMuted);
+    const toggleMuted = () => {
+      unlockAudio();
+      setMuted(!muted);
+      setMutedState(!muted);
+    };
+
     if (!gameState) {
       return (
         <div className="max-w-7xl mx-auto p-6 bg-ivory rounded-3xl shadow-lg">
@@ -94,10 +135,12 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
     }
 
   const handleStart = () => {
+    unlockAudio();
     startGame();
   };
 
   const handlePause = () => {
+    unlockAudio();
     pauseGame();
   };
 
@@ -138,9 +181,7 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
           {/* Player Field - Left Side */}
           <div className="md:col-span-1 xl:col-span-2 order-2 xl:order-1">
             <div className="bg-white/20 rounded-2xl p-4">
-              <div className="text-center mb-4">
-                <h4 className="text-xl font-serif text-coffee-dark">YOUR FIELD</h4>
-              </div>
+              <PlayerPanel minHeight={panelHeight} />
               <div ref={playerNoticeRef}>
                 <OjamaNotice
                   count={gameState.pendingOjamaPlayer}
@@ -258,7 +299,7 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
                 </div>
                 <div className="text-center">
                   <div className={`inline-block py-2 px-4 rounded-lg text-sm font-serif ${getDifficultyStyle(gameState.difficulty)}`}>
-                    {getDifficultyLabel(gameState.difficulty)}
+                    {getDifficultyLabel(gameState.difficulty)}・{character.name}
                   </div>
                 </div>
               </div>
@@ -281,6 +322,14 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
                 >
                   RESTART
                 </button>
+
+                <button
+                  onClick={toggleMuted}
+                  aria-pressed={!muted}
+                  className="w-full py-2 px-4 bg-white/60 text-coffee-dark rounded-xl font-serif shadow-sm hover:bg-white/80 transition-colors duration-200"
+                >
+                  {muted ? '🔇 SOUND OFF' : '🔊 SOUND ON'}
+                </button>
               </div>
 
             </div>
@@ -288,10 +337,8 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
 
           {/* CPU Field - Right Side */}
           <div className="md:col-span-1 xl:col-span-2 order-3">
-            <div className="bg-white/20 rounded-2xl p-4">
-              <div className="text-center mb-4">
-                <h4 className="text-xl font-serif text-coffee-dark">CPU FIELD</h4>
-              </div>
+            <div className="relative bg-white/20 rounded-2xl p-4">
+              <CpuCharacterPanel ref={cpuPanelRef} character={character} line={line} />
               <div ref={cpuNoticeRef}>
                 <OjamaNotice
                   count={gameState.pendingOjamaCpu}
@@ -319,6 +366,7 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
                   {gameState.cpu.score.toLocaleString()}
                 </div>
               </div>
+              <CpuCutinOverlay cutin={cutin} name={character.name} />
             </div>
           </div>
         </div>
@@ -333,6 +381,7 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
               : "CPUとの熱いバトルを楽しもう ⚔️"
             }
           </p>
+          <KitanCredit url={FANWORKS_URL} />
         </div>
       </div>
     </ErrorBoundary>
