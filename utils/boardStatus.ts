@@ -8,3 +8,9 @@ export const countOjama = (grid: PuyoCell[][]) =>
 
 export const isPinch = (grid: PuyoCell[][]) =>
   grid.some((row, y) => y <= PINCH_ROW && row.some(cell => cell.color !== null));
+
+/** いちばん高く積もったぷよの行番号（小さいほど高い）。何も無ければ盤面の行数 */
+export const topRow = (grid: PuyoCell[][]) => {
+  const y = grid.findIndex(row => row.some(cell => cell.color !== null));
+  return y === -1 ? grid.length : y;
+};

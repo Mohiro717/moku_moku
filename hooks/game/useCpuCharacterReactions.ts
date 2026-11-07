@@ -19,7 +19,7 @@ interface Params {
   cpu: SideState;
   /** CPU の盤面にあるおじゃまの数（増えたら「食らった」声） */
   cpuOjama: number;
-  /** CPU の盤面が上まで積み上がっているか */
+  /** CPU の盤面が上まで積み上がり、しかもプレイヤーより高いか（ピンチの台詞用） */
   cpuPinch: boolean;
 }
 
@@ -30,6 +30,8 @@ export interface CpuCutin {
 
 /** おじゃまを食らった声は、ほかの台詞からこれだけ空いていれば言う */
 const DAMAGED_GAP_MS = 1500;
+/** ピンチの台詞を続けて言わない間隔 */
+const PINCH_GAP_MS = 8000;
 
 // currentChainStep は「消えた回数 - 1」
 const roundsOf = (side: SideState) => (side.isChaining ? side.currentChainStep + 1 : 0);
@@ -107,9 +109,12 @@ export const useCpuCharacterReactions = ({ character, isGameOver, winner, player
     if (landed && !isGameOver && Date.now() - lastSaidAt.current > DAMAGED_GAP_MS) say('damaged');
   }, [cpuOjama]);
 
-  // 上まで積み上がったとき（下がってからまた積み上がれば、また言う）
+  // 上まで積み上がって、こちらより危ないとき（下がってからまた積み上がれば、また言う。ただし続けて何度も言わない）
+  const lastPinchAt = useRef(0);
   useEffect(() => {
-    if (cpuPinch && !isGameOver) say('pinch');
+    if (!cpuPinch || isGameOver || Date.now() - lastPinchAt.current < PINCH_GAP_MS) return;
+    lastPinchAt.current = Date.now();
+    say('pinch');
   }, [cpuPinch]);
 
   // 勝敗。RESTART で isGameOver が戻ったら最初の台詞へ

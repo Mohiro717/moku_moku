@@ -13,7 +13,7 @@ import { useVsGameSound } from '../../hooks/game/useVsGameSound';
 import { isMuted, setMuted, unlockAudio } from '../../utils/gameAudio';
 import { CpuCharacterPanel, CpuCutinOverlay, KitanCredit, PlayerPanel } from './CpuCharacter';
 import { FANWORKS_URL, characterById } from '../../constants/cpuCharacters';
-import { countOjama, isPinch } from '../../utils/boardStatus';
+import { countOjama, isPinch, topRow } from '../../utils/boardStatus';
 import type { GameDifficulty, GameResult } from '../../types/game';
 
 // Constants
@@ -97,6 +97,8 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
     const idleSide = { isChaining: false, currentChainStep: 0 };
     const cpuPinch = gameState ? isPinch(gameState.cpu.grid) : false;
     const playerPinch = gameState ? isPinch(gameState.player.grid) : false;
+    // 相手の「ピンチ」の台詞は、相手のほうが高く積もっているときだけ（こちらが危ないのに相手があせるのを防ぐ）
+    const cpuLosing = !!gameState && cpuPinch && topRow(gameState.cpu.grid) < topRow(gameState.player.grid);
     const { line, lineKind, lineIndex, lineTick, cutin } = useCpuCharacterReactions({
       character,
       isGameOver: !!gameState?.isGameOver,
@@ -104,7 +106,7 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
       player: gameState?.player ?? idleSide,
       cpu: gameState?.cpu ?? idleSide,
       cpuOjama: gameState ? countOjama(gameState.cpu.grid) : 0,
-      cpuPinch
+      cpuPinch: cpuLosing
     });
 
     useVsGameSound({ gameState, character, lineKind, lineIndex, lineTick, cutin, pinch: cpuPinch || playerPinch });
