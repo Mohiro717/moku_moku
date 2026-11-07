@@ -1,0 +1,136 @@
+/* もくもくぷよの「和ポップ」：和柄と和色を、太い墨の線とぺたっとした影でかわいく見せる。
+   ぷよの画面（シングル・CPU対戦・相手えらび）だけで使う。 */
+
+:root {
+  --wp-kinari: #fbf5e9;   /* 生成り：地 */
+  --wp-washi: #fffdf7;    /* 和紙：盤面 */
+  --wp-sumi: #3b2f2f;     /* 墨：線と文字 */
+  --wp-sakura: #f79ab7;   /* 桜 */
+  --wp-sakura-deep: #e5598a;
+  --wp-sakura-pale: #fde7ee;
+  --wp-yamabuki: #f6b93b; /* 山吹 */
+  --wp-wakatake: #4fc39a; /* 若竹 */
+  --wp-sora: #7ec8e3;     /* 空 */
+  --wp-shu: #e8553d;      /* 朱：はんこ */
+}
+
+/* 地の青海波（桜色をごく薄く） */
+.wp-seigaiha {
+  background-color: var(--wp-kinari);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='24' viewBox='0 0 48 24'%3E%3Cg fill='none' stroke='%23f7b9cb' stroke-width='1.4' opacity='.55'%3E%3Cpath d='M0 24a24 24 0 0 1 48 0M6 24a18 18 0 0 1 36 0M12 24a12 12 0 0 1 24 0M18 24a6 6 0 0 1 12 0'/%3E%3Cpath d='M-24 12a24 24 0 0 1 48 0M-18 12a18 18 0 0 1 36 0M-12 12a12 12 0 0 1 24 0M24 12a24 24 0 0 1 48 0M30 12a18 18 0 0 1 36 0M36 12a12 12 0 0 1 24 0'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 48px 24px;
+}
+
+/* 枠：太い墨の線と、ずらした影 */
+.wp-card {
+  background: var(--wp-washi);
+  border: 3px solid var(--wp-sumi);
+  border-radius: 1.25rem;
+  box-shadow: 0 5px 0 var(--wp-sumi);
+}
+
+/* 盤面：和紙に麻の葉をうっすら、外側に桜の縁 */
+.wp-board {
+  background-color: var(--wp-washi);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='69.28' viewBox='0 0 40 69.28'%3E%3Cg fill='none' stroke='%23e9dcc4' stroke-width='1'%3E%3Cpath d='M20 0v23.09M0 11.55l20 11.54 20-11.54M0 11.55v23.09M40 11.55v23.09M0 34.64l20-11.55 20 11.55M20 23.09l-20 34.64M20 23.09l20 34.64M0 34.64l40 0M20 46.19v23.09M0 57.73l20 11.55 20-11.55M0 57.73l20-11.54 20 11.54'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 40px 69.28px;
+  border: 4px solid var(--wp-sumi);
+  border-radius: 1.25rem;
+  box-shadow: 0 0 0 5px var(--wp-sakura), 0 0 0 8px var(--wp-sumi), 0 9px 0 8px var(--wp-sumi);
+}
+
+/* ボタン：ぷっくり。押すと沈む */
+.wp-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4em;
+  font-family: 'Mochiy Pop One', sans-serif;
+  border: 3px solid var(--wp-sumi);
+  border-radius: 9999px;
+  box-shadow: 0 4px 0 var(--wp-sumi);
+  transition: transform 80ms ease-out, box-shadow 80ms ease-out, filter 120ms;
+  cursor: pointer;
+  user-select: none;
+}
+.wp-btn:hover { filter: brightness(1.05); transform: translateY(-1px); box-shadow: 0 5px 0 var(--wp-sumi); }
+.wp-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--wp-sumi); }
+.wp-btn:disabled { opacity: 0.5; cursor: default; transform: none; box-shadow: 0 4px 0 var(--wp-sumi); }
+.wp-btn:focus-visible { outline: 3px dashed var(--wp-sakura-deep); outline-offset: 3px; }
+.wp-btn-sakura { background: var(--wp-sakura); color: #fff; text-shadow: 0 2px 0 var(--wp-sakura-deep); }
+.wp-btn-yamabuki { background: var(--wp-yamabuki); color: var(--wp-sumi); }
+.wp-btn-wakatake { background: var(--wp-wakatake); color: #fff; text-shadow: 0 2px 0 #2d9672; }
+.wp-btn-kinari { background: var(--wp-washi); color: var(--wp-sumi); }
+
+/* 見出しの小さな札（のれん風） */
+.wp-tag {
+  display: inline-block;
+  font-family: 'Mochiy Pop One', sans-serif;
+  font-size: 0.75rem;
+  line-height: 1;
+  padding: 0.35rem 0.7rem;
+  border: 2px solid var(--wp-sumi);
+  border-radius: 9999px;
+  background: var(--wp-sakura-pale);
+  color: var(--wp-sumi);
+}
+
+/* はんこ（連鎖数・勝ち負け） */
+.wp-hanko {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Mochiy Pop One', sans-serif;
+  color: var(--wp-shu);
+  border: 3px solid var(--wp-shu);
+  border-radius: 0.6rem;
+  transform: rotate(-6deg);
+  background: rgba(255, 253, 247, 0.9);
+}
+.wp-hanko-in { animation: wp-hanko-in 420ms cubic-bezier(0.2, 1.8, 0.4, 1) both; }
+@keyframes wp-hanko-in {
+  from { opacity: 0; transform: rotate(-6deg) scale(1.8); }
+  to   { opacity: 1; transform: rotate(-6deg) scale(1); }
+}
+
+/* 盤面にかぶせる幕 */
+.wp-veil {
+  background: rgba(251, 245, 233, 0.82);
+  backdrop-filter: blur(1.5px);
+}
+.wp-veil-dark { background: rgba(59, 47, 47, 0.62); }
+
+/* 勝ったときの桜吹雪 */
+.wp-petal {
+  position: absolute;
+  top: -12px;
+  width: 12px;
+  height: 10px;
+  background: var(--wp-sakura);
+  border-radius: 100% 0 100% 0;
+  opacity: 0.9;
+  animation: wp-petal 2.8s linear infinite;
+}
+@keyframes wp-petal {
+  0%   { transform: translate(0, 0) rotate(0deg); }
+  50%  { transform: translate(14px, 50%) rotate(180deg); }
+  100% { transform: translate(-8px, 640px) rotate(360deg); }
+}
+
+/* ぽよんと出る */
+.wp-pop-in { animation: wp-pop-in 360ms cubic-bezier(0.2, 1.6, 0.4, 1) both; }
+@keyframes wp-pop-in {
+  from { opacity: 0; transform: scale(0.6); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* 上端の危険ライン：朱の破線 */
+.wp-deadline {
+  height: 0;
+  border-top: 3px dashed var(--wp-shu);
+  opacity: 0.55;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wp-petal, .wp-pop-in, .wp-hanko-in { animation: none; }
+}

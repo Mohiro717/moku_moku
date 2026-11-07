@@ -1,23 +1,31 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { AnimatedSection } from './AnimatedSection';
 import { SectionTitle } from './SectionTitle';
 import { GameControllerIcon } from './icons/GameControllerIcon';
 import { PuyoPuyoGame } from './game/PuyoPuyoGame';
-import { PuyoVsCpuGame } from './game/PuyoVsCpuGame';
+import { PuyoVsCpuGame, DIFFICULTY_LABELS } from './game/PuyoVsCpuGame';
+import { PuyoTitle } from './game/PuyoTitle';
+import './game/wapop.css';
 import { FrogPrincessMaze } from './frog-maze/FrogPrincessMaze';
 import { CatchTheBananaGameRefactored as CatchTheBananaGame } from './banana-game/CatchTheBananaGameRefactored';
-import { Button } from './ui/Button';
 import { SITE_CONFIG } from '../constants';
 import type { GameDifficulty } from '../types/game';
 import { CPU_CHARACTERS, DEFAULT_CHARACTER_ID, characterById } from '../constants/cpuCharacters';
 
-type GameMode = 'single' | 'vs-cpu' | 'vs-cpu-rules' | 'difficulty-select' | 'frog-maze' | 'frog-detail' | 'playing-single' | 'banana-game' | null;
+type GameMode = 'single' | 'vs-cpu' | 'difficulty-select' | 'frog-maze' | 'frog-detail' | 'playing-single' | 'banana-game' | null;
 
 export const GameSection: React.FC = () => {
   const [gameMode, setGameMode] = useState<GameMode>(null);
   const [selectedDifficulty, setSelectedDifficulty] = useState<GameDifficulty>('normal');
   const [selectedCharacterId, setSelectedCharacterId] = useState(DEFAULT_CHARACTER_ID);
   const selectedCharacter = characterById(selectedCharacterId);
+  const isPuyo = gameMode === 'playing-single' || gameMode === 'vs-cpu';
+
+  // ぷよを始めたら、盤面がヘッダーに隠れないよう遊ぶ場所までスクロールする
+  const playAreaRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (isPuyo) playAreaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [gameMode]);
 
   return (
     <section className="py-20 lg:py-32 bg-ivory min-h-screen">
@@ -29,105 +37,24 @@ export const GameSection: React.FC = () => {
           
           {!gameMode ? (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
-              {/* Moku Moku Puyo Card */}
-              <div className="bg-white rounded-3xl shadow-2xl border-4 border-coffee-light p-8 transform animate-fade-in-up">
-                {/* Close decoration */}
-                <div className="flex justify-center mb-6">
-                  <div className="w-12 h-1 bg-coffee-light rounded-full"></div>
-                </div>
-                
-                {/* Puyo icon */}
-                <div className="flex justify-center mb-6">
-                  <div className="bg-gradient-to-br from-vivid-pink to-vivid-green p-4 rounded-full">
-                    <GameControllerIcon className="w-12 h-12 text-white" />
-                  </div>
+              {/* Moku Moku Puyo Card（和ポップ） */}
+              <div className="wp-seigaiha rounded-3xl border-[3px] border-coffee-dark shadow-[0_6px_0_#3b2f2f] p-7 animate-fade-in-up">
+                <PuyoTitle />
+
+                <div className="wp-card p-4 mb-6 text-sm text-coffee-dark font-serif space-y-2">
+                  <p>おなじ色を <span className="text-[#e5598a]">4つ</span> つなげると きえるよ</p>
+                  <p>つづけて きえると <span className="text-[#e5598a]">れんさ</span>！</p>
+                  <p className="hidden sm:block text-xs text-coffee-dark/70 pt-1">←→ うごかす　Z / X まわす　↓ はやく　Space おとす</p>
+                  <p className="sm:hidden text-xs text-coffee-dark/70 pt-1">スワイプで うごかす・タップで まわす</p>
                 </div>
 
-                {/* Content */}
-                <div className="text-center">
-                  <h3 className="text-2xl font-serif text-coffee-dark mb-6 font-serif">
-                    Moku Moku Puyo
-                  </h3>
-
-                  {/* Game Instructions */}
-                  <div className="bg-white/70 rounded-2xl p-5 mb-6 border border-coffee-light/20">
-                    <div className="grid grid-cols-1 gap-4">
-                      <div>
-                        <h4 className="text-coffee-dark font-serif mb-3 flex items-center justify-center">
-                          <span className="text-vivid-pink mr-2">🎮</span>
-                          操作方法
-                        </h4>
-                        <div className="space-y-2 text-sm text-coffee-mid font-serif">
-                          {/* PC操作方法 */}
-                          <div className="hidden sm:block">
-                            <div className="flex items-center justify-center">
-                              <span className="bg-coffee-light/10 px-2 py-1 rounded font-serif text-xs mr-2">←→</span>
-                              <span className="font-serif">移動</span>
-                              <span className="bg-coffee-light/10 px-2 py-1 rounded font-serif text-xs mx-2">Z/X</span>
-                              <span className="font-serif">回転</span>
-                            </div>
-                            <div className="flex items-center justify-center">
-                              <span className="bg-coffee-light/10 px-2 py-1 rounded font-serif text-xs mr-2">↓</span>
-                              <span className="font-serif">高速落下</span>
-                              <span className="bg-coffee-light/10 px-2 py-1 rounded font-serif text-xs mx-2">Space</span>
-                              <span className="font-serif">ハードドロップ</span>
-                            </div>
-                          </div>
-                          {/* スマホ操作方法 */}
-                          <div className="block sm:hidden space-y-1">
-                            <div className="text-center">
-                              <span className="font-serif text-xs">スワイプ操作</span>
-                            </div>
-                            <div className="flex items-center justify-center text-xs">
-                              <span className="bg-coffee-light/10 px-1 py-1 rounded font-serif mr-1">←→</span>
-                              <span className="font-serif mr-2">移動</span>
-                              <span className="bg-coffee-light/10 px-1 py-1 rounded font-serif mr-1">タップ</span>
-                              <span className="font-serif">回転</span>
-                            </div>
-                            <div className="flex items-center justify-center text-xs">
-                              <span className="bg-coffee-light/10 px-1 py-1 rounded font-serif mr-1">↓</span>
-                              <span className="font-serif mr-2">高速落下</span>
-                              <span className="bg-coffee-light/10 px-1 py-1 rounded font-serif mr-1">速↓</span>
-                              <span className="font-serif">ハードドロップ</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      <div>
-                        <h4 className="text-coffee-dark font-serif mb-3 flex items-center justify-center">
-                          <span className="text-vivid-green mr-2">🧩</span>
-                          基本ルール
-                        </h4>
-                        <div className="space-y-2 text-sm text-coffee-mid font-serif">
-                          <div className="flex items-start justify-center">
-                            <span className="text-vivid-pink mr-2 mt-1">•</span>
-                            <span className="font-serif">同色4個以上つなげて消去</span>
-                          </div>
-                          <div className="flex items-start justify-center">
-                            <span className="text-vivid-green mr-2 mt-1">•</span>
-                            <span className="font-serif">連鎖でボーナス得点！</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Mode selection */}
-                  <div className="space-y-3">
-                    <button
-                      onClick={() => setGameMode('playing-single')}
-                      className="w-full py-3 px-6 bg-gradient-to-r from-vivid-pink to-vivid-green text-white font-serif rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 hover:from-vivid-pink/90 hover:to-vivid-green/90"
-                    >
-                      🎮 シングルプレイ
-                    </button>
-                    
-                    <button
-                      onClick={() => setGameMode('vs-cpu-rules')}
-                      className="w-full py-3 px-6 bg-gradient-to-r from-coffee-dark to-vivid-pink text-white font-serif rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 hover:from-coffee-dark/90 hover:to-vivid-pink/90"
-                    >
-                      🤖 CPU対戦モード
-                    </button>
-                  </div>
+                <div className="flex flex-col gap-3">
+                  <button type="button" onClick={() => setGameMode('difficulty-select')} className="wp-btn wp-btn-sakura w-full py-3 text-base">
+                    CPUと たいせん
+                  </button>
+                  <button type="button" onClick={() => setGameMode('playing-single')} className="wp-btn wp-btn-kinari w-full py-3 text-base">
+                    ひとりで あそぶ
+                  </button>
                 </div>
               </div>
 
@@ -353,7 +280,7 @@ export const GameSection: React.FC = () => {
                     </button>
                     
                     <button
-                      onClick={() => setGameMode('vs-cpu-rules')}
+                      onClick={() => setGameMode('difficulty-select')}
                       className="w-full py-3 px-6 bg-gradient-to-r from-coffee-dark to-vivid-pink text-white font-serif rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 hover:from-coffee-dark/90 hover:to-vivid-pink/90"
                     >
                       🤖 CPU対戦モード
@@ -455,146 +382,74 @@ export const GameSection: React.FC = () => {
                 </div>
               </div>
             </div>
-          ) : gameMode === 'vs-cpu-rules' ? (
-            <div className="transition-all duration-500 animate-fade-in-up">
-              <div className="bg-white rounded-3xl shadow-2xl border-4 border-coffee-light p-8 max-w-md mx-auto">
-                {/* Close decoration */}
-                <div className="flex justify-center mb-6">
-                  <div className="w-12 h-1 bg-coffee-light rounded-full"></div>
-                </div>
-                
-                {/* Battle icon */}
-                <div className="flex justify-center mb-6">
-                  <div className="bg-gradient-to-br from-coffee-dark to-vivid-pink p-4 rounded-full">
-                    <div className="text-2xl">⚔️</div>
-                  </div>
-                </div>
-
-                {/* Content */}
-                <div className="text-center">
-                  <h3 className="text-2xl font-serif text-coffee-dark mb-6 font-serif">
-                    対戦ルール
-                  </h3>
-                  
-                  {/* Battle Rules */}
-                  <div className="text-left bg-coffee-light/10 rounded-xl p-4 mb-6">
-                    <div className="space-y-2 text-sm text-coffee-mid font-serif">
-                      <div className="flex items-start">
-                        <span className="text-vivid-green mr-2 mt-1">•</span>
-                        <span>4個以上同時消去でおじゃまぷよを送信</span>
-                      </div>
-                      <div className="flex items-start">
-                        <span className="text-yellow-500 mr-2 mt-1">•</span>
-                        <span>グレーのおじゃまぷよは隣接消去</span>
-                      </div>
-                      <div className="flex items-start">
-                        <span className="text-red-500 mr-2 mt-1">•</span>
-                        <span>相手をゲームオーバーにさせると勝利！</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Continue button */}
-                  <button
-                    onClick={() => setGameMode('difficulty-select')}
-                    className="w-full py-3 px-6 bg-gradient-to-r from-vivid-pink to-vivid-green text-white font-serif rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 hover:from-vivid-pink/90 hover:to-vivid-green/90 mb-3"
-                  >
-                    🎯 相手と強さを選択
-                  </button>
-                  
-                  <button
-                    onClick={() => setGameMode(null)}
-                    className="w-full py-2 px-4 bg-gradient-to-r from-coffee-light to-coffee-mid text-white rounded-xl font-serif shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200 hover:from-coffee-light/90 hover:to-coffee-mid/90"
-                  >
-                    ← モード選択に戻る
-                  </button>
-                </div>
-              </div>
-            </div>
           ) : gameMode === 'difficulty-select' ? (
             <div className="transition-all duration-500 animate-fade-in-up">
-              <div className="bg-white rounded-3xl shadow-2xl border-4 border-coffee-light p-6 sm:p-8 max-w-2xl mx-auto">
-                <div className="flex justify-center mb-6">
-                  <div className="w-12 h-1 bg-coffee-light rounded-full"></div>
+              <div className="wp-seigaiha rounded-3xl border-[3px] border-coffee-dark shadow-[0_6px_0_#3b2f2f] p-5 sm:p-7 max-w-2xl mx-auto">
+                <h3 className="text-2xl font-serif text-coffee-dark mb-1">あいてを えらぶ</h3>
+                <p className="text-xs font-serif text-coffee-dark/70 mb-4">れんさで おじゃまぷよを おくって、あいての上まで うめたら かち</p>
+
+                {/* 相手：顔を並べて選ぶ */}
+                <div className="wp-card p-3 mb-4">
+                  <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
+                    {CPU_CHARACTERS.map(c => {
+                      const selected = selectedCharacterId === c.id;
+                      return (
+                        <button
+                          key={c.id}
+                          type="button"
+                          onClick={() => setSelectedCharacterId(c.id)}
+                          aria-pressed={selected}
+                          className={`flex flex-col items-center rounded-xl p-1 transition-transform duration-150 ${selected ? '-translate-y-1' : 'hover:-translate-y-0.5'}`}
+                        >
+                          <img
+                            src={c.icon}
+                            alt={c.name}
+                            width={56}
+                            height={56}
+                            loading="lazy"
+                            className={`w-14 h-14 rounded-full object-cover bg-[#131320] border-[3px] ${
+                              selected ? 'border-[#e5598a] shadow-[0_3px_0_#3b2f2f]' : 'border-coffee-dark/20'
+                            }`}
+                          />
+                          <span className={`mt-1 text-xs font-serif whitespace-nowrap px-1.5 rounded-full ${selected ? 'bg-[#f79ab7] text-white' : 'text-coffee-dark'}`}>{c.name}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
 
-                <div className="text-center">
-                  <h3 className="text-2xl font-serif text-coffee-dark mb-4">
-                    対戦相手を選択
-                  </h3>
+                <p className="text-coffee-dark mb-5 font-serif">
+                  <span className="wp-tag mr-2">VS {selectedCharacter.name}</span>
+                  <span className="text-xs text-coffee-dark/70">{selectedCharacter.tagline}</span>
+                </p>
 
-                  {/* 相手：顔を並べて選ぶ */}
-                  <div className="grid grid-cols-4 sm:grid-cols-8 gap-2 mb-4">
-                    {CPU_CHARACTERS.map(c => (
-                      <button
-                        key={c.id}
-                        onClick={() => setSelectedCharacterId(c.id)}
-                        aria-pressed={selectedCharacterId === c.id}
-                        className={`flex flex-col items-center rounded-xl p-1 transition-all duration-200 ${
-                          selectedCharacterId === c.id ? 'bg-coffee-light/20 scale-105' : 'hover:bg-coffee-light/10'
-                        }`}
-                      >
-                        <img
-                          src={c.icon}
-                          alt={c.name}
-                          width={56}
-                          height={56}
-                          loading="lazy"
-                          className={`w-14 h-14 rounded-full object-cover bg-[#131320] ${
-                            selectedCharacterId === c.id ? 'ring-4 ring-vivid-pink' : 'ring-1 ring-coffee-light/40'
-                          }`}
-                        />
-                        <span className="mt-1 text-xs font-serif text-coffee-dark whitespace-nowrap">{c.name}</span>
-                      </button>
-                    ))}
-                  </div>
+                {/* 強さ：相手とは別に選ぶ */}
+                <div className="grid grid-cols-3 gap-2 mb-6">
+                  {(['easy', 'normal', 'hard'] as GameDifficulty[]).map(value => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => setSelectedDifficulty(value)}
+                      aria-pressed={selectedDifficulty === value}
+                      className={`wp-btn py-2 text-sm ${selectedDifficulty === value ? 'wp-btn-yamabuki' : 'wp-btn-kinari opacity-70'}`}
+                    >
+                      {DIFFICULTY_LABELS[value]}
+                    </button>
+                  ))}
+                </div>
 
-                  <p className="text-coffee-mid mb-6 font-serif">
-                    相手：<span className="text-coffee-dark">{selectedCharacter.name}</span>
-                    <span className="text-xs ml-2">（{selectedCharacter.tagline}）</span>
-                  </p>
-
-                  {/* 強さ：相手とは別に選ぶ */}
-                  <h4 className="text-lg font-serif text-coffee-dark mb-3">強さ</h4>
-                  <div className="grid grid-cols-3 gap-2 mb-6">
-                    {[
-                      { value: 'easy', label: 'EASY', desc: '初心者向け', gradient: 'from-green-400 to-green-500' },
-                      { value: 'normal', label: 'NORMAL', desc: 'バランス良い', gradient: 'from-yellow-400 to-orange-400' },
-                      { value: 'hard', label: 'HARD', desc: '上級者向け', gradient: 'from-red-400 to-red-500' }
-                    ].map(({ value, label, desc, gradient }) => (
-                      <button
-                        key={value}
-                        onClick={() => setSelectedDifficulty(value as GameDifficulty)}
-                        className={`p-3 rounded-xl font-serif transition-all transform hover:scale-105 duration-200 ${
-                          selectedDifficulty === value
-                            ? `bg-gradient-to-r ${gradient} text-white shadow-lg border-2 border-white`
-                            : 'bg-coffee-light/10 text-coffee-dark hover:bg-coffee-light/20 border-2 border-transparent'
-                        }`}
-                      >
-                        <div>{label}</div>
-                        <div className="text-xs opacity-80">{desc}</div>
-                      </button>
-                    ))}
-                  </div>
-
-                  <button
-                    onClick={() => setGameMode('vs-cpu')}
-                    className="w-full py-3 px-6 bg-gradient-to-r from-vivid-pink to-vivid-green text-white font-serif rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 hover:from-vivid-pink/90 hover:to-vivid-green/90 mb-3"
-                  >
-                    🎮 対戦スタート
+                <div className="flex flex-col gap-3">
+                  <button type="button" onClick={() => setGameMode('vs-cpu')} className="wp-btn wp-btn-sakura w-full py-3 text-lg">
+                    たいせん する！
                   </button>
-
-                  <button
-                    onClick={() => setGameMode(null)}
-                    className="w-full py-2 px-4 bg-gradient-to-r from-coffee-light to-coffee-mid text-white rounded-xl font-serif shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200 hover:from-coffee-light/90 hover:to-coffee-mid/90"
-                  >
-                    ← モード選択に戻る
+                  <button type="button" onClick={() => setGameMode(null)} className="wp-btn wp-btn-kinari w-full py-2 text-sm">
+                    もどる
                   </button>
                 </div>
               </div>
             </div>
           ) : (
-            <div className="transition-all duration-500 animate-fade-in-up">
+            <div ref={playAreaRef} className="scroll-mt-20 transition-all duration-500 animate-fade-in-up">
               {gameMode === 'playing-single' ? (
                 <PuyoPuyoGame />
               ) : gameMode === 'vs-cpu' ? (
@@ -602,6 +457,7 @@ export const GameSection: React.FC = () => {
                   key={`vs-cpu-${selectedDifficulty}-${selectedCharacterId}`}
                   initialDifficulty={selectedDifficulty}
                   characterId={selectedCharacterId}
+                  onChangeOpponent={() => setGameMode('difficulty-select')}
                 />
               ) : gameMode === 'frog-maze' ? (
                 <div className="w-full">
@@ -611,12 +467,18 @@ export const GameSection: React.FC = () => {
                 <CatchTheBananaGame />
               ) : null}
               
-              <button
-                onClick={() => setGameMode(null)}
-                className="mt-6 py-2 px-4 bg-gradient-to-r from-coffee-light to-coffee-mid text-white rounded-xl font-serif shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200 hover:from-coffee-light/90 hover:to-coffee-mid/90"
-              >
-                ← モード選択に戻る
-              </button>
+              {isPuyo ? (
+                <button type="button" onClick={() => setGameMode(null)} className="wp-btn wp-btn-kinari mt-6 px-6 py-2 text-sm">
+                  ← ゲームえらびに もどる
+                </button>
+              ) : (
+                <button
+                  onClick={() => setGameMode(null)}
+                  className="mt-6 py-2 px-4 bg-gradient-to-r from-coffee-light to-coffee-mid text-white rounded-xl font-serif shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200 hover:from-coffee-light/90 hover:to-coffee-mid/90"
+                >
+                  ← モード選択に戻る
+                </button>
+              )}
             </div>
           )}
         </AnimatedSection>

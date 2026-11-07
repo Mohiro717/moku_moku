@@ -1,23 +1,15 @@
 import React, { useMemo, useRef } from 'react';
 import { Puyo, BRIDGE_COLORS, dropDuration } from './Puyo';
+import './wapop.css';
 import type { PuyoCell, PuyoColor, PuyoPair, Position, GameResult } from '../../types/game';
 
-// Constants for styling
+// Constants for styling（和ポップの見た目は wapop.css）
 const GAME_GRID_STYLES = {
-  container: 'relative bg-ivory border-4 border-coffee-dark rounded-2xl p-4 shadow-lg',
+  container: 'wp-board relative p-3 sm:p-4',
   grid: 'relative grid gap-1 transition-opacity duration-300',
   cell: 'relative rounded-lg',
   pausedOpacity: 'opacity-30',
-  gameOverLine: 'absolute top-4 left-4 right-4 grid gap-1 pointer-events-none',
-  gameOverIndicator: 'h-1 bg-red-400 rounded-full opacity-50'
-} as const;
-
-const OVERLAY_STYLES = {
-  base: 'absolute inset-0 rounded-2xl flex items-center justify-center',
-  pause: 'bg-coffee-dark/70',
-  win: 'bg-gradient-to-br from-yellow-400/80 to-green-400/80 animate-pulse',
-  lose: 'bg-gray-800/80',
-  fallback: 'bg-coffee-dark/50'
+  gameOverLine: 'absolute top-3 sm:top-4 left-3 sm:left-4 right-3 sm:right-4 pointer-events-none'
 } as const;
 
 interface GameGridProps {
@@ -29,6 +21,10 @@ interface GameGridProps {
   gameResult?: GameResult;
   /** 連鎖中の段（0始まり。puyo hooks の currentChainStep） */
   chainStep?: number;
+  /** まだ始まっていないときに盤面へ重ねる中身（はじめるボタンなど） */
+  startPrompt?: React.ReactNode;
+  /** 一時停止・勝ち負けの幕の下に出すボタン */
+  actions?: React.ReactNode;
 }
 
 // ========================================
@@ -106,53 +102,47 @@ const useLandingTracker = (grid: PuyoCell[][], pairCells: Position[] | null): Ce
 };
 
 // Overlay Components
-const PauseOverlay: React.FC = () => (
-  <div className={`${OVERLAY_STYLES.base} ${OVERLAY_STYLES.pause}`}>
-    <div className="text-center text-white">
-      <h3 className="text-4xl font-serif tracking-wider animate-pulse">PAUSE</h3>
-    </div>
+const Veil: React.FC<{ dark?: boolean; children: React.ReactNode }> = ({ dark = false, children }) => (
+  <div className={`absolute inset-0 z-30 rounded-[1rem] flex flex-col items-center justify-center gap-4 p-4 overflow-hidden ${dark ? 'wp-veil-dark' : 'wp-veil'}`}>
+    {children}
   </div>
 );
 
-const WinOverlay: React.FC = () => (
-  <div className={`${OVERLAY_STYLES.base} ${OVERLAY_STYLES.win}`}>
-    <div className="text-center">
-      <h3 className="text-4xl font-serif text-white drop-shadow-lg mb-2">🎉 WIN! 🎉</h3>
-      <div className="text-lg font-serif text-white drop-shadow">Victory!</div>
-    </div>
-  </div>
-);
-
-const LoseOverlay: React.FC = () => (
-  <div className={`${OVERLAY_STYLES.base} ${OVERLAY_STYLES.lose}`}>
-    <div className="text-center">
-      <h3 className="text-3xl font-serif text-gray-300 mb-2">💀 LOSE 💀</h3>
-      <div className="text-md font-serif text-gray-400">Defeated...</div>
-    </div>
-  </div>
-);
-
-const GameOverOverlay: React.FC = () => (
-  <div className={`${OVERLAY_STYLES.base} ${OVERLAY_STYLES.fallback}`}>
-    <div className="text-center text-white">
-      <h3 className="text-2xl font-serif mb-2">Game Over!</h3>
-    </div>
-  </div>
-);
-
-// Game Over Line Component
-interface GameOverLineProps {
-  columnCount: number;
-}
-
-const GameOverLine: React.FC<GameOverLineProps> = ({ columnCount }) => (
-  <div 
-    className={GAME_GRID_STYLES.gameOverLine}
-    style={{ gridTemplateColumns: `repeat(${columnCount}, 1fr)` }}
-  >
-    {Array.from({ length: columnCount }, (_, index) => (
-      <div key={index} className={GAME_GRID_STYLES.gameOverIndicator}></div>
+const Petals: React.FC = () => (
+  <>
+    {Array.from({ length: 10 }, (_, i) => (
+      <span
+        key={i}
+        className="wp-petal"
+        style={{ left: `${(i * 37) % 100}%`, animationDelay: `${(i * 0.29).toFixed(2)}s`, animationDuration: `${2.4 + (i % 4) * 0.35}s` }}
+      />
     ))}
+  </>
+);
+
+const OVERLAY_TEXT: Record<'pause' | 'win' | 'lose' | 'over', { stamp: string; sub: string }> = {
+  pause: { stamp: 'ひとやすみ', sub: 'おちゃでも どうぞ' },
+  win: { stamp: 'かち！', sub: 'おみごと！' },
+  lose: { stamp: 'まけ…', sub: 'もういっかい やってみよ' },
+  over: { stamp: 'おしまい', sub: 'おつかれさま' }
+};
+
+const ResultOverlay: React.FC<{ kind: keyof typeof OVERLAY_TEXT; actions?: React.ReactNode }> = ({ kind, actions }) => {
+  const { stamp, sub } = OVERLAY_TEXT[kind];
+  return (
+    <Veil dark={kind === 'lose'}>
+      {kind === 'win' && <Petals />}
+      <div className="wp-hanko wp-hanko-in px-4 py-2 text-3xl sm:px-5 sm:text-4xl whitespace-nowrap">{stamp}</div>
+      <div className={`font-serif text-sm ${kind === 'lose' ? 'text-white' : 'text-coffee-dark'}`}>{sub}</div>
+      {actions && <div className="relative flex flex-col items-stretch gap-2 w-full max-w-[13rem]">{actions}</div>}
+    </Veil>
+  );
+};
+
+// Game Over Line Component：上端の危険ライン（朱の破線）
+const GameOverLine: React.FC = () => (
+  <div className={GAME_GRID_STYLES.gameOverLine}>
+    <div className="wp-deadline" />
   </div>
 );
 
@@ -163,7 +153,9 @@ export const GameGrid: React.FC<GameGridProps> = ({
   isGameOver,
   isPaused = false,
   gameResult = null,
-  chainStep = 0
+  chainStep = 0,
+  startPrompt,
+  actions
 }) => {
   // Memoize falling positions calculation
   const fallingPositions = useMemo(() => {
@@ -209,10 +201,11 @@ export const GameGrid: React.FC<GameGridProps> = ({
 
   // Render overlay based on current state
   const renderOverlay = () => {
-    if (isPaused) return <PauseOverlay />;
-    if (gameResult === 'win') return <WinOverlay />;
-    if (gameResult === 'lose') return <LoseOverlay />;
-    if (isGameOver && !gameResult) return <GameOverOverlay />;
+    if (isPaused) return <ResultOverlay kind="pause" actions={actions} />;
+    if (gameResult === 'win') return <ResultOverlay kind="win" actions={actions} />;
+    if (gameResult === 'lose') return <ResultOverlay kind="lose" actions={actions} />;
+    if (isGameOver && !gameResult) return <ResultOverlay kind="over" actions={actions} />;
+    if (startPrompt) return <Veil>{startPrompt}</Veil>;
     return null;
   };
 
@@ -287,14 +280,14 @@ export const GameGrid: React.FC<GameGridProps> = ({
             style={{ left: `${chainPopup.left}%`, top: `${chainPopup.top}%` }}
           >
             <svg width="170" height="100" viewBox="-85 -50 170 100" className="overflow-visible" aria-label={`${chainNumber}連鎖`}>
-              <g className="chain-rays" fill="#ffe27a" opacity="0.8">
+              <g className="chain-rays" fill="#f6b93b" opacity="0.75">
                 {Array.from({ length: 12 }, (_, i) => (
                   <path key={i} d="M0 0 L-4 -70 L4 -70 Z" transform={`rotate(${i * 30})`} />
                 ))}
               </g>
               <g className="chain-text" fontSize="32" fontWeight="900" textAnchor="middle">
                 <text x="0" y="11" fill="#fff" stroke="#fff" strokeWidth="8" strokeLinejoin="round">{chainNumber}連鎖!</text>
-                <text x="0" y="11" fill="#ff4f9a" stroke="#c2185b" strokeWidth="1.2">{chainNumber}連鎖!</text>
+                <text x="0" y="11" fill="#e8553d" stroke="#3b2f2f" strokeWidth="1.4">{chainNumber}連鎖!</text>
               </g>
             </svg>
           </div>
@@ -302,7 +295,7 @@ export const GameGrid: React.FC<GameGridProps> = ({
       </div>
 
       {/* Game Over Line Indicator */}
-      <GameOverLine columnCount={columnCount} />
+      <GameOverLine />
 
       {/* Dynamic overlay */}
       {renderOverlay()}

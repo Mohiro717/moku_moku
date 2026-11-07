@@ -67,7 +67,7 @@ const ensureDefs = () => {
 /** 落ちる距離に応じた落下時間（ms）。遠いほど少し長いが、連鎖のテンポを崩さないよう上限あり */
 export const dropDuration = (rows: number): number => (rows > 0 ? Math.min(GAME_TIMINGS.drop, 100 + rows * 20) : 0);
 
-const SIZE = 'w-8 h-8 sm:w-10 sm:h-10';
+const SIZE = 'puyo-cell';
 
 /** ぷよの顔 SVG（おじゃまは怒り顔）。予告アイコンでも使う */
 export const PuyoFace: React.FC<{ ojama: boolean; squint?: boolean; blinkDelay?: string }> = ({ ojama, squint = false, blinkDelay }) => {
