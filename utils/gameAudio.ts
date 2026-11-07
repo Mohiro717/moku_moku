@@ -313,13 +313,19 @@ export function playSe(name: SeName, step = 1, volume = 1) {
       break;
     }
     case 'pop': {
-      const base = semitone(294, YO_SCALE[Math.min(step - 1, YO_SCALE.length - 1)]);
+      // 段ごとに高く・大きく。毎回、腹に響く一撃を重ねる
+      const loud = Math.min(1, 0.55 + step * 0.08);
+      const base = semitone(294, YO_SCALE[Math.min(step, YO_SCALE.length - 1)]);
       const d = out(step % 2 ? -0.25 : 0.25, 0.3);
-      pluck(base, 0, 0.7 * v, d);
-      pluck(base * 1.5, 0.06, 0.45 * v, d);
-      if (step >= 3) pluck(base * 2, 0.12, 0.4 * v, d);
-      if (step >= 4) tone({ from: 120, to: 60, length: 0.3, gain: 0.5 * v, attack: 0.003, dest: out(0, 0.15) });
-      if (step >= 5) bell(base * 4, 0.15, 0.1 * v, d);
+      hiss({ length: 0.12, gain: Math.min(0.3, 0.1 + step * 0.03) * v, from: 800, to: 7000, q: 2, attack: 0.08, dest: out(0, 0.1) });
+      pluck(base, 0, 0.7 * loud * v, d);
+      pluck(base * 1.5, 0.03, 0.5 * loud * v, d);
+      if (step >= 3) pluck(base * 2, 0.06, 0.45 * loud * v, d);
+      if (step >= 5) bell(base * 4, 0.08, 0.12 * v, d);
+      const hit = out(0, 0.1);
+      tone({ from: 70, to: 32, length: 0.6, gain: Math.min(0.9, 0.35 + step * 0.08) * v, attack: 0.003, dest: hit });
+      hiss({ length: 0.12, gain: Math.min(0.5, 0.2 + step * 0.05) * v, from: 3000, to: 200, q: 0.5, attack: 0.003, dest: hit });
+      taiko(0.02, Math.min(0.9, 0.3 + step * 0.06) * v, hit, 150);
       break;
     }
     case 'ojama': {

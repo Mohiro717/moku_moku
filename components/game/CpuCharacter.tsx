@@ -73,12 +73,14 @@ CpuCharacterPanel.displayName = 'CpuCharacterPanel';
 export const CpuCutinOverlay: React.FC<{ cutin: CpuCutin | null; name: string }> = ({ cutin, name }) => {
   if (!cutin) return null;
   return (
-    <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center overflow-hidden rounded-2xl">
+    <div key={cutin.id} className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center overflow-hidden rounded-2xl">
+      {/* 暗転と流れる線の上に、斜めに切り込んで入る */}
+      <div className="cutin-dim absolute inset-0" />
+      <div className="cutin-lines absolute inset-0" />
       <img
-        key={cutin.id}
         src={cutin.src}
         alt={`${name}の必殺カットイン`}
-        className="w-[125%] max-w-none"
+        className="cutin-slash relative w-[125%] max-w-none"
       />
     </div>
   );

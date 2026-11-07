@@ -1,5 +1,6 @@
 import React, { useLayoutEffect, useRef, useState } from 'react';
 import { AttackBeamLayer, useAttackBeams } from './AttackBeams';
+import { useChainFx, type PopRecord } from './ChainFx';
 import { GameGrid } from './GameGrid';
 import { ErrorBoundary } from '../ErrorBoundary';
 import { GameErrorFallback } from './GameErrorFallback';
@@ -79,11 +80,17 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
     const cpuBoardRef = useRef<HTMLDivElement>(null);
     const playerNoticeRef = useRef<HTMLDivElement>(null);
     const cpuNoticeRef = useRef<HTMLDivElement>(null);
+    // 連鎖の演出：消えたぷよの位置を覚え、攻撃の光の出発点にする
+    const playerPops = useRef<PopRecord | null>(null);
+    const cpuPops = useRef<PopRecord | null>(null);
+    useChainFx(gameState?.player, playerBoardRef, playerPops);
+    useChainFx(gameState?.cpu, cpuBoardRef, cpuPops);
     const { beams, hits } = useAttackBeams({
       pending: { player: gameState?.pendingOjamaPlayer ?? 0, cpu: gameState?.pendingOjamaCpu ?? 0 },
       chaining: { player: !!gameState?.player.isChaining, cpu: !!gameState?.cpu.isChaining },
       boards: { player: playerBoardRef, cpu: cpuBoardRef },
-      notices: { player: playerNoticeRef, cpu: cpuNoticeRef }
+      notices: { player: playerNoticeRef, cpu: cpuNoticeRef },
+      pops: { player: playerPops, cpu: cpuPops }
     });
 
     const character = characterById(characterId);
