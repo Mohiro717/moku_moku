@@ -293,7 +293,7 @@ const YO_SCALE = [0, 2, 5, 7, 9, 12, 14, 17, 19, 21, 24];
 
 /**
  * 効果音を鳴らす。
- * pop の step は連鎖の段（1始まり）。段が上がるほど琴が上がり、音も厚くなる。
+ * pop の step は連鎖の段（1始まり）。段が上がるほど鈴が上がり、音も厚くなる。
  * volume は 0〜1（相手側の音を小さくするのに使う）
  */
 export function playSe(name: SeName, step = 1, volume = 1) {
@@ -313,19 +313,23 @@ export function playSe(name: SeName, step = 1, volume = 1) {
       break;
     }
     case 'pop': {
-      // 段ごとに高く・大きく。毎回、腹に響く一撃を重ねる
-      const loud = Math.min(1, 0.55 + step * 0.08);
-      const base = semitone(294, YO_SCALE[Math.min(step, YO_SCALE.length - 1)]);
-      const d = out(step % 2 ? -0.25 : 0.25, 0.3);
-      hiss({ length: 0.12, gain: Math.min(0.3, 0.1 + step * 0.03) * v, from: 800, to: 7000, q: 2, attack: 0.08, dest: out(0, 0.1) });
-      pluck(base, 0, 0.7 * loud * v, d);
-      pluck(base * 1.5, 0.03, 0.5 * loud * v, d);
-      if (step >= 3) pluck(base * 2, 0.06, 0.45 * loud * v, d);
-      if (step >= 5) bell(base * 4, 0.08, 0.12 * v, d);
+      // 鈴の和音がパッと開き、高い鈴の粒が左右に散る。段ごとに高く、和音と粒が増える。
+      // 5段目からは上にもう一段和音を重ねる。毎回、腹に響く一撃を重ねる
+      const base = semitone(294, YO_SCALE[Math.min(step, YO_SCALE.length - 1)]) * 2;
+      const d = out(step % 2 ? -0.3 : 0.3, 0.45);
+      hiss({ length: 0.18, gain: Math.min(0.32, 0.12 + step * 0.04) * v, from: 3000, to: 12000, q: 0.8, filter: 'highpass', attack: 0.004, dest: out(0, 0.25) });
+      [1, 1.25, 1.5, 2].slice(0, Math.min(4, 1 + step)).forEach((r, i) => bell(base * r, i * 0.025, 0.2 * v, d, 1.1));
+      if (step >= 5) [3, 4].forEach((r, i) => bell(base * r, 0.12 + i * 0.03, 0.12 * v, d, 1.4));
+      const grains = 3 + step * 3;
+      for (let i = 0; i < grains; i++) {
+        const f = base * (3 + Math.random() * 5);
+        bell(f, 0.04 + Math.random() * (0.18 + step * 0.04), 0.05 * v, out(Math.random() * 1.6 - 0.8, 0.5), 0.35);
+      }
       const hit = out(0, 0.1);
-      tone({ from: 70, to: 32, length: 0.6, gain: Math.min(0.9, 0.35 + step * 0.08) * v, attack: 0.003, dest: hit });
-      hiss({ length: 0.12, gain: Math.min(0.5, 0.2 + step * 0.05) * v, from: 3000, to: 200, q: 0.5, attack: 0.003, dest: hit });
-      taiko(0.02, Math.min(0.9, 0.3 + step * 0.06) * v, hit, 150);
+      const w = 0.85 * v;
+      tone({ from: 70, to: 32, length: 0.6, gain: Math.min(0.9, 0.35 + step * 0.08) * w, attack: 0.003, dest: hit });
+      hiss({ length: 0.12, gain: Math.min(0.5, 0.2 + step * 0.05) * w, from: 3000, to: 200, q: 0.5, attack: 0.003, dest: hit });
+      taiko(0.02, Math.min(0.9, 0.3 + step * 0.06) * w, hit, 150);
       break;
     }
     case 'ojama': {
