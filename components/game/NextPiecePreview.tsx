@@ -10,8 +10,7 @@ export const NextPiecePreview: React.FC<NextPiecePreviewProps> = memo(({ nextPai
   if (!nextPair) return null;
 
   return (
-    <div className="bg-coffee-light/20 rounded-lg p-3">
-      <div className="text-coffee-dark/60 text-xs mb-2 text-center font-serif">NEXT</div>
+    <div className="bg-[#fbf5e9] border-2 border-dashed border-coffee-dark/30 rounded-xl p-2">
       <div className="flex flex-col items-center space-y-1">
         <Puyo color={nextPair.sub} />
         <Puyo color={nextPair.main} />

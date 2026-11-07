@@ -3,6 +3,21 @@
 
 :root {
   --puyo-gap: 4px;
+  /* ぷよ1つの大きさ。縦が短い画面では盤面が1画面に収まるよう少し小さくする */
+  --puyo-size: 32px;
+}
+@media (min-width: 640px) {
+  :root { --puyo-size: 40px; }
+}
+@media (min-width: 640px) and (max-height: 940px) {
+  :root { --puyo-size: 36px; }
+}
+@media (min-width: 640px) and (max-height: 780px) {
+  :root { --puyo-size: 32px; }
+}
+.puyo-cell {
+  width: var(--puyo-size);
+  height: var(--puyo-size);
 }
 
 /* 上から落ちてくる（--fall-rows マス分）。重力っぽく後半ほど速い */
