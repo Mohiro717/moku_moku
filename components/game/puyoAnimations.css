@@ -15,6 +15,43 @@
 @media (min-width: 640px) and (max-height: 780px) {
   :root { --puyo-size: 32px; }
 }
+/* CPU対戦の並び（本家型）。盤面のすぐ横に「つぎ・とくてん」を置く。
+   lg 未満: 自分の盤面を大きく、右に自分のつぎ・とくてんと相手の小さな盤面
+   lg 以上: 自分の盤面 | 自分のつぎ・とくてん | 相手のつぎ・とくてん | 相手の盤面
+   1行目の札の行は左右で同じ高さになるので、盤面の上端がそろう */
+.puyo-vs-grid {
+  display: grid;
+  justify-content: center;
+  align-items: start;
+  gap: 0.75rem;
+  grid-template-columns: auto auto;
+  grid-template-areas:
+    "p-field p-side"
+    "p-field c-field"
+    "c-head  c-head";
+}
+/* スマホでは自分の盤面を大きめに保ちつつ、横に相手の小さな盤面を並べて1画面に収める */
+@media (max-width: 639px) {
+  .puyo-vs { --puyo-size: 26px; }
+}
+/* PC の 1280×860 など：見出しの下に盤面ととくてんがスクロールなしで収まる大きさ */
+@media (min-width: 640px) and (min-height: 781px) and (max-height: 880px) {
+  .puyo-vs { --puyo-size: 34px; }
+}
+@media (max-width: 1023px) {
+  .puyo-vs-cpu-field { zoom: 0.4; }
+  .puyo-vs-cutin { grid-area: 1 / 1 / -1 / -1; }
+}
+@media (min-width: 1024px) {
+  .puyo-vs-grid {
+    gap: 0.75rem 1rem;
+    grid-template-columns: auto auto 1.5rem auto auto;
+    grid-template-areas:
+      "p-head  p-head . c-head c-head"
+      "p-field p-side . c-side c-field";
+  }
+  .puyo-vs-cutin { grid-area: c-field; }
+}
 .puyo-cell {
   width: var(--puyo-size);
   height: var(--puyo-size);

@@ -11,7 +11,7 @@ const UNITS: Array<{ size: number; kind: Kind }> = [
   { size: 1, kind: 'small' }
 ];
 const MAX_ICONS = 6;
-const PX: Record<Kind, number> = { rock: 30, big: 23, small: 15 };
+const PX: Record<Kind, number> = { rock: 34, big: 28, small: 20 };
 
 const toIcons = (count: number): Kind[] => {
   const icons: Kind[] = [];
@@ -67,7 +67,7 @@ export const OjamaNotice: React.FC<OjamaNoticeProps> = memo(({ count, ready = fa
   }, [hit]);
 
   return (
-    <div className="h-8 mb-1.5 flex items-end justify-center" aria-label={`おじゃま予告 ${count}個`}>
+    <div className="h-10 mb-1.5 flex items-end justify-center" aria-label={`おじゃま予告 ${count}個`}>
       <div ref={row} className="flex items-end gap-1 min-h-[1px]">
         {count > 0 && (
           <>
@@ -80,7 +80,7 @@ export const OjamaNotice: React.FC<OjamaNoticeProps> = memo(({ count, ready = fa
                 <OjamaIcon kind={kind} />
               </span>
             ))}
-            <span className="ml-1 text-xs font-serif text-coffee-dark">×{count}</span>
+            <span className="ml-1 text-base font-bold font-serif text-coffee-dark">×{count}</span>
           </>
         )}
       </div>

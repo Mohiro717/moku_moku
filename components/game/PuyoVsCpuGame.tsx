@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { AttackBeamLayer, useAttackBeams } from './AttackBeams';
 import { useChainFx, type PopRecord } from './ChainFx';
 import { GameGrid } from './GameGrid';
@@ -12,10 +12,10 @@ import { useCpuCharacterReactions } from '../../hooks/game/useCpuCharacterReacti
 import { useVsGameSound } from '../../hooks/game/useVsGameSound';
 import { isMuted, setMuted, unlockAudio } from '../../utils/gameAudio';
 import './wapop.css';
-import { CpuCharacterPanel, CpuCutinOverlay, KitanCredit, PlayerPanel } from './CpuCharacter';
+import { CpuCharacterPanel, CpuCutinOverlay, KitanCredit } from './CpuCharacter';
 import { FANWORKS_URL, characterById } from '../../constants/cpuCharacters';
 import { countOjama, isPinch, topRow } from '../../utils/boardStatus';
-import type { GameDifficulty, GameResult } from '../../types/game';
+import type { GameDifficulty, GameResult, PuyoPair } from '../../types/game';
 
 // 強さの呼び名（和ポップ）。相手えらびの画面でも使う
 export const DIFFICULTY_LABELS: Record<GameDifficulty, string> = {
@@ -39,23 +39,18 @@ const getGameResult = (isGameOver: boolean, winner: string | null, player: 'play
   return 'lose';
 };
 
-/** れんさ欄の1マス。勝っている側を桜色にし、数ははんこで押す */
-const ChainBox: React.FC<{ label: string; count: number; lead: boolean }> = ({ label, count, lead }) => (
-  <div className={`rounded-xl border-2 border-coffee-dark py-2 text-center ${lead ? 'bg-[#fde7ee]' : 'bg-white'}`}>
-    <div className="text-[11px] font-serif text-coffee-dark/70 truncate px-1">{label}</div>
-    {count > 0 ? (
-      <span key={count} className="wp-hanko wp-hanko-in mt-1 px-2 py-0.5 text-sm">{count}れんさ</span>
-    ) : (
-      <div className="mt-1 text-sm font-serif text-coffee-dark/30">—</div>
-    )}
-  </div>
-);
-
-/** 盤面の下の枠に乗せる、とくてんの札 */
-const ScorePill: React.FC<{ score: number; accent?: boolean }> = ({ score, accent = false }) => (
-  <div className="absolute bottom-0 left-1/2 -translate-x-1/2 z-10 wp-tag !px-3 !py-1.5 whitespace-nowrap" style={{ background: '#fffdf7' }}>
-    <span className="text-[10px] text-coffee-dark/60 mr-1.5">とくてん</span>
-    <span className={`text-base ${accent ? 'text-[#e5598a]' : 'text-coffee-dark'}`}>{score.toLocaleString()}</span>
+/** 盤面のすぐ横に置く「つぎ」と「とくてん」（本家と同じく、目線を盤面から外さずに読める位置） */
+const SideInfo: React.FC<{ nextPair: PuyoPair | null; score: number; accent?: boolean; className?: string }> = ({ nextPair, score, accent = false, className = '' }) => (
+  // 上の余白はおじゃま予告の高さ（OjamaNotice の h-10 + mb-1.5）。盤面の上端にそろえる
+  <div className={`mt-[2.875rem] w-[5.5rem] flex flex-col items-stretch gap-2 ${className}`}>
+    <div className="wp-card p-2 text-center">
+      <div className="text-xs font-serif text-coffee-dark mb-1">つぎ</div>
+      <NextPiecePreview nextPair={nextPair} />
+    </div>
+    <div className="wp-card px-2 py-1.5 text-center">
+      <div className="text-[10px] font-serif text-coffee-dark/60">とくてん</div>
+      <div className={`font-serif text-sm sm:text-base tabular-nums ${accent ? 'text-[#e5598a]' : 'text-coffee-dark'}`}>{score.toLocaleString()}</div>
+    </div>
   </div>
 );
 
@@ -109,16 +104,6 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
 
     useVsGameSound({ gameState, character, lineKind, lineIndex, lineTick, cutin, pinch: cpuPinch || playerPinch });
 
-    // 左右の盤面の上端をそろえる：相手の札（台詞で高さが変わる）の高さを自分の札にも使う
-    const cpuPanelRef = useRef<HTMLDivElement>(null);
-    const [panelHeight, setPanelHeight] = useState<number>();
-    useLayoutEffect(() => {
-      const el = cpuPanelRef.current;
-      if (!el) return;
-      const observer = new ResizeObserver(() => setPanelHeight(el.offsetHeight));
-      observer.observe(el);
-      return () => observer.disconnect();
-    }, [!!gameState]);
     const [muted, setMutedState] = useState(isMuted);
     const toggleMuted = () => {
       unlockAudio();
@@ -164,14 +149,18 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
   };
 
   const playing = gameState.isPlaying && !gameState.isPaused && !gameState.isGameOver;
+  // 試合の途中（ひとやすみ中も含む）だけ、見出しに「ひとやすみ・やりなおす」を出す
+  const inMatch = gameState.isPlaying && !gameState.isGameOver;
 
   // 自分の盤面に重ねるボタン：はじまる前・ひとやすみ・勝ち負けのとき、目線の先で押せるように
   const startPrompt = !gameState.isPlaying && !gameState.isGameOver ? (
     <div className="wp-pop-in flex flex-col items-center gap-3">
-      <div className="font-serif text-coffee-dark text-sm">VS {character.name}</div>
       <button type="button" onClick={handleStart} className="wp-btn wp-btn-sakura px-8 py-3 text-xl">はじめる</button>
-      <div className="text-[11px] text-coffee-dark/70 font-serif text-center leading-relaxed">
+      <div className="hidden sm:block text-[11px] text-coffee-dark/70 font-serif text-center leading-relaxed">
         ←→ うごかす　Z / X まわす<br />↓ はやく　Space おとす
+      </div>
+      <div className="sm:hidden text-[11px] text-coffee-dark/70 font-serif text-center leading-relaxed">
+        なぞって うごかす<br />タップ まわす　下にはじく おとす
       </div>
     </div>
   ) : undefined;
@@ -189,29 +178,47 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
 
   return (
     <ErrorBoundary fallback={GameErrorFallback}>
-      <div className="wp-seigaiha max-w-7xl mx-auto px-3 py-4 sm:p-5 rounded-3xl border-[3px] border-coffee-dark shadow-[0_6px_0_#3b2f2f]">
-        {/* 見出し：タイトルと、いまの相手・強さ */}
+      <div className="wp-seigaiha puyo-vs max-w-7xl mx-auto px-3 py-3 sm:px-5 sm:py-4 rounded-3xl border-[3px] border-coffee-dark shadow-[0_6px_0_#3b2f2f]">
+        {/* 見出し：タイトル・つよさ・試合中のボタン */}
         <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-          <h3 className="font-serif text-xl sm:text-2xl text-coffee-dark flex items-center gap-2">
+          <h3 className="font-serif text-lg sm:text-2xl text-coffee-dark flex items-center gap-2">
             <span className="inline-block w-3 h-3 rounded-full bg-[#f79ab7] border-2 border-coffee-dark" />
             もくもくぷよ
-            <span className="text-xs text-coffee-dark/60">CPUたいせん</span>
           </h3>
-          <div className="flex items-center gap-2">
-            <span className="wp-tag">VS {character.name}</span>
-            <span className="wp-tag" style={{ background: '#fff4d6' }}>つよさ：{DIFFICULTY_LABELS[gameState.difficulty]}</span>
+          <div className="flex items-center gap-2 ml-auto">
+            <span className="wp-tag !hidden sm:!inline-block" style={{ background: '#fff4d6' }}>つよさ：{DIFFICULTY_LABELS[gameState.difficulty]}</span>
+            {inMatch && (
+              <>
+                <button type="button" onClick={handlePause} className="wp-btn wp-btn-kinari whitespace-nowrap px-3 py-1 text-xs sm:text-sm">
+                  {gameState.isPaused ? 'つづける' : 'ひとやすみ'}
+                </button>
+                <button type="button" onClick={handleRestart} className="wp-btn wp-btn-yamabuki whitespace-nowrap px-3 py-1 text-xs sm:text-sm">
+                  やりなおす
+                </button>
+              </>
+            )}
+            <button
+              type="button"
+              onClick={toggleMuted}
+              aria-pressed={!muted}
+              aria-label={muted ? 'おとを出す' : 'おとを消す'}
+              className="wp-btn wp-btn-kinari whitespace-nowrap px-3 py-1 text-xs sm:text-sm"
+            >
+              {muted ? '🔇 おと' : '🔊 おと'}
+            </button>
           </div>
         </div>
 
-        {/* Main Game Layout
-            xl 以上: 自分 | 情報 | CPU の3列
-            md〜xl: 情報を上に横長で置き、その下に2つの盤面を横並び
-            md 未満: 縦に積む */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-5 items-start">
+        {/* 盤面まわり。並びは puyoAnimations.css の .puyo-vs-grid（本家型）：
+            lg 以上: 自分の盤面 | 自分のつぎ・とくてん | 相手のつぎ・とくてん | 相手の盤面
+            lg 未満: 自分の盤面を大きく、右に自分のつぎ・とくてんと相手の小さな盤面 */}
+        <div className="puyo-vs-grid relative">
+          <div className="[grid-area:p-head] self-stretch hidden lg:flex items-end font-serif text-lg text-coffee-dark pl-1">あなた</div>
+          <div className="[grid-area:c-head]">
+            <CpuCharacterPanel character={character} line={line} />
+          </div>
 
-          {/* Player Field - Left Side */}
-          <div className="md:col-span-1 xl:col-span-2 order-2 xl:order-1">
-            <PlayerPanel minHeight={panelHeight} />
+          <div className="[grid-area:p-field]">
             <div ref={playerNoticeRef}>
               <OjamaNotice
                 count={gameState.pendingOjamaPlayer}
@@ -219,9 +226,7 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
                 hit={hits.player}
               />
             </div>
-
-            {/* Player Game Grid */}
-            <div ref={playerBoardRef} className="relative flex justify-center pb-4">
+            <div ref={playerBoardRef} className="relative">
               <TouchControls
                 onMove={(direction) => handlePlayerMove(direction)}
                 onRotateClockwise={handlePlayerRotateClockwise}
@@ -241,72 +246,12 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
                   actions={resultActions}
                 />
               </TouchControls>
-              <ScorePill score={gameState.player.score} accent />
             </div>
           </div>
+          <SideInfo className="[grid-area:p-side]" nextPair={gameState.player.nextPair} score={gameState.player.score} accent />
 
-          {/* Central Info Area */}
-          <div className="md:col-span-2 xl:col-span-1 order-1 xl:order-2">
-            <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-1 gap-3">
-
-              {/* つぎのぷよ（自分と相手） */}
-              <div className="wp-card p-3 col-span-1">
-                <div className="text-center text-sm font-serif text-coffee-dark mb-2">つぎ</div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="text-center">
-                    <div className="text-[11px] text-coffee-dark/70 mb-1 font-serif">あなた</div>
-                    <NextPiecePreview nextPair={gameState.player.nextPair} />
-                  </div>
-                  <div className="text-center">
-                    <div className="text-[11px] text-coffee-dark/70 mb-1 font-serif truncate">{character.name}</div>
-                    <NextPiecePreview nextPair={gameState.cpu.nextPair} />
-                  </div>
-                </div>
-              </div>
-
-              {/* れんさ */}
-              <div className="wp-card p-3 col-span-1">
-                <div className="text-center text-sm font-serif text-coffee-dark mb-2">れんさ</div>
-                <div className="grid grid-cols-2 gap-2">
-                  <ChainBox label="あなた" count={gameState.player.chainCount} lead={gameState.player.chainCount > gameState.cpu.chainCount} />
-                  <ChainBox label={character.name} count={gameState.cpu.chainCount} lead={gameState.cpu.chainCount > gameState.player.chainCount} />
-                </div>
-              </div>
-
-              {/* Game Controls */}
-              <div className="col-span-2 xl:col-span-1 flex flex-col gap-2.5 pt-1">
-                <button
-                  type="button"
-                  onClick={gameState.isPlaying ? handlePause : handleStart}
-                  className={`wp-btn ${playing ? 'wp-btn-kinari' : 'wp-btn-sakura'} w-full py-2.5 text-base`}
-                  disabled={gameState.isGameOver}
-                >
-                  {gameState.isGameOver ? 'しょうぶあり' :
-                   gameState.isPlaying ? (gameState.isPaused ? 'つづける' : 'ひとやすみ') : 'はじめる'}
-                </button>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <button type="button" onClick={handleRestart} className="wp-btn wp-btn-yamabuki py-2 text-sm">
-                    やりなおす
-                  </button>
-                  <button
-                    type="button"
-                    onClick={toggleMuted}
-                    aria-pressed={!muted}
-                    aria-label={muted ? 'おとを出す' : 'おとを消す'}
-                    className="wp-btn wp-btn-kinari py-2 text-sm"
-                  >
-                    {muted ? '🔇 おと' : '🔊 おと'}
-                  </button>
-                </div>
-              </div>
-
-            </div>
-          </div>
-
-          {/* CPU Field - Right Side */}
-          <div className="relative md:col-span-1 xl:col-span-2 order-3">
-            <CpuCharacterPanel ref={cpuPanelRef} character={character} line={line} />
+          <SideInfo className="[grid-area:c-side] hidden lg:flex" nextPair={gameState.cpu.nextPair} score={gameState.cpu.score} />
+          <div className="[grid-area:c-field] puyo-vs-cpu-field">
             <div ref={cpuNoticeRef}>
               <OjamaNotice
                 count={gameState.pendingOjamaCpu}
@@ -314,27 +259,27 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
                 hit={hits.cpu}
               />
             </div>
-
-            {/* CPU Game Grid */}
-            <div ref={cpuBoardRef} className="relative flex justify-center pb-4">
-                <GameGrid
-                  grid={gameState.cpu.grid}
-                  currentPair={gameState.cpu.currentPair}
-                  getPairPositions={getCpuPairPositions}
-                  isGameOver={gameState.cpu.isGameOver}
-                  isPaused={gameState.isPaused}
-                  gameResult={getGameResult(gameState.isGameOver, gameState.winner, 'cpu')}
-                  chainStep={gameState.cpu.currentChainStep}
-                />
-              <ScorePill score={gameState.cpu.score} />
+            <div ref={cpuBoardRef} className="relative">
+              <GameGrid
+                grid={gameState.cpu.grid}
+                currentPair={gameState.cpu.currentPair}
+                getPairPositions={getCpuPairPositions}
+                isGameOver={gameState.cpu.isGameOver}
+                isPaused={gameState.isPaused}
+                gameResult={getGameResult(gameState.isGameOver, gameState.winner, 'cpu')}
+                chainStep={gameState.cpu.currentChainStep}
+              />
             </div>
+          </div>
+          {/* 必殺カットイン：lg 以上は相手の盤面に、スマホでは盤面まわり全体に重ねる */}
+          <div className="puyo-vs-cutin pointer-events-none absolute inset-0">
             <CpuCutinOverlay cutin={cutin} name={character.name} />
           </div>
         </div>
 
         <AttackBeamLayer beams={beams} />
 
-        <div className="mt-4 text-center">
+        <div className="mt-3 text-center">
           <KitanCredit url={FANWORKS_URL} />
         </div>
       </div>
