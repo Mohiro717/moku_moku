@@ -2,43 +2,31 @@ import React from 'react';
 import type { CpuCharacter } from '../../constants/cpuCharacters';
 import type { CpuCutin } from '../../hooks/game/useCpuCharacterReactions';
 
-// 月蝕綺譚のトンマナ「宵闇に金」に寄せた色。対戦相手の札の中だけで使う
-const YOIYAMI = '#131320';
-const KINDEI = '#D9A94C';
-const GEPPAKU = '#E8E4D8';
-const BUBBLE = '#181626';
-const SUBLABEL = '#9D93B5';
-
 interface PanelProps {
   character: CpuCharacter;
   line: string;
 }
 
-// 相手の台詞＝絵巻（左右に木の軸、wapop.css の .wp-emaki）。中は月蝕綺譚の宵闇に金
-const PANEL_CLASS = 'wp-emaki flex items-center gap-3 p-3';
-const PANEL_STYLE: React.CSSProperties = { backgroundColor: YOIYAMI };
+// 相手の台詞＝絵巻（左右に木の軸、和紙の地。wapop.css の .wp-emaki）
+const PANEL_CLASS = 'wp-emaki flex items-center gap-3 px-3 py-2';
 
 /** CPU 盤面の上に置く、相手キャラの顔・名前・台詞 */
 export const CpuCharacterPanel = React.forwardRef<HTMLDivElement, PanelProps>(({ character, line }, ref) => (
-  <div ref={ref} className={PANEL_CLASS} style={PANEL_STYLE}>
+  <div ref={ref} className={PANEL_CLASS}>
     <img
       src={character.icon}
       alt={character.name}
       width={64}
       height={64}
-      className="w-16 h-16 shrink-0 rounded-full object-cover"
-      style={{ boxShadow: `0 0 0 2px ${KINDEI}` }}
+      className="w-16 h-16 shrink-0 rounded-full object-cover border-[3px] border-coffee-dark"
+      style={{ boxShadow: '0 0 0 3px var(--wp-sakura)' }}
     />
     <div className="min-w-0 flex-1 text-left">
       <div className="flex items-baseline gap-2">
-        <span className="font-serif text-lg" style={{ color: KINDEI }}>{character.name}</span>
-        <span className="text-xs" style={{ color: SUBLABEL }}>{character.tagline}</span>
+        <span className="font-serif text-lg text-coffee-dark">{character.name}</span>
+        <span className="text-xs text-coffee-dark/60">{character.tagline}</span>
       </div>
-      <p
-        key={line}
-        className="mt-1 rounded-lg px-3 py-2 text-sm leading-snug font-serif animate-fade-in-up"
-        style={{ backgroundColor: BUBBLE, color: GEPPAKU }}
-      >
+      <p key={line} className="mt-1 text-sm leading-snug font-serif text-coffee-dark animate-fade-in-up">
         「{line}」
       </p>
     </div>

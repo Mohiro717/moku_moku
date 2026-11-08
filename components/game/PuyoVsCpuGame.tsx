@@ -208,7 +208,8 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
             lg 未満: 自分の盤面を大きく、右に自分のつぎ・とくてんと相手の小さな盤面 */}
         <div className="puyo-vs-grid relative">
           <div className="[grid-area:p-head] self-stretch hidden lg:flex items-end font-serif text-lg text-coffee-dark pl-1">あなた</div>
-          <div className="[grid-area:c-head]">
+          {/* 台詞の長さで列が広がらないように（広がると相手の盤面が伸び、つぎ・とくてんが盤面から離れる） */}
+          <div className="[grid-area:c-head] [contain:inline-size]">
             <CpuCharacterPanel character={character} line={line} />
           </div>
 

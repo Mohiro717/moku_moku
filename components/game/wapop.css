@@ -195,13 +195,16 @@
     linear-gradient(180deg, #f0cf98, #d9a05c);
 }
 
-/* 相手の台詞＝絵巻：左右に軸、軸の端に金の飾り。中は月蝕綺譚の宵闇のまま */
+/* 相手の台詞＝絵巻：左右に木の軸、中は和紙 */
 .wp-emaki {
   position: relative;
   margin: 0 1.1rem;
-  border-top: 2px solid #D9A94C;
-  border-bottom: 2px solid #D9A94C;
-  background: linear-gradient(180deg, #1d1a2c, #131320);
+  border-top: 3px solid var(--wp-sumi);
+  border-bottom: 3px solid var(--wp-sumi);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0), rgba(180, 140, 80, 0.10)),
+    var(--wp-washi);
+  box-shadow: 0 5px 0 rgba(59, 47, 47, 0.25);
 }
 .wp-emaki::before,
 .wp-emaki::after {
