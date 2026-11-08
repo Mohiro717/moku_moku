@@ -5,6 +5,7 @@ import { GameControllerIcon } from './icons/GameControllerIcon';
 import { PuyoPuyoGame } from './game/PuyoPuyoGame';
 import { PuyoVsCpuGame, DIFFICULTY_LABELS } from './game/PuyoVsCpuGame';
 import { PuyoTitle } from './game/PuyoTitle';
+import { NubatamaTitleScreen } from './game/NubatamaTitleScreen';
 import './game/wapop.css';
 import { FrogPrincessMaze } from './frog-maze/FrogPrincessMaze';
 import { CatchTheBananaGameRefactored as CatchTheBananaGame } from './banana-game/CatchTheBananaGameRefactored';
@@ -12,16 +13,16 @@ import { SITE_CONFIG } from '../constants';
 import type { GameDifficulty } from '../types/game';
 import { CPU_CHARACTERS, DEFAULT_CHARACTER_ID, characterById } from '../constants/cpuCharacters';
 
-type GameMode = 'single' | 'vs-cpu' | 'difficulty-select' | 'frog-maze' | 'frog-detail' | 'playing-single' | 'banana-game' | null;
+type GameMode = 'single' | 'nubatama-title' | 'vs-cpu' | 'difficulty-select' | 'frog-maze' | 'frog-detail' | 'playing-single' | 'banana-game' | null;
 
 export const GameSection: React.FC = () => {
   const [gameMode, setGameMode] = useState<GameMode>(null);
   const [selectedDifficulty, setSelectedDifficulty] = useState<GameDifficulty>('normal');
   const [selectedCharacterId, setSelectedCharacterId] = useState(DEFAULT_CHARACTER_ID);
   const selectedCharacter = characterById(selectedCharacterId);
-  const isPuyo = gameMode === 'playing-single' || gameMode === 'vs-cpu';
+  const isPuyo = gameMode === 'nubatama-title' || gameMode === 'playing-single' || gameMode === 'vs-cpu';
 
-  // ぷよを始めたら、盤面がヘッダーに隠れないよう遊ぶ場所までスクロールする
+  // タイトルやぷよを開いたら、ヘッダーに隠れないよう、その場所までスクロールする
   const playAreaRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (isPuyo) playAreaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -48,14 +49,9 @@ export const GameSection: React.FC = () => {
                   <p className="sm:hidden text-xs text-coffee-dark/70 pt-1">スワイプで うごかす・タップで まわす</p>
                 </div>
 
-                <div className="flex flex-col gap-3">
-                  <button type="button" onClick={() => setGameMode('difficulty-select')} className="wp-btn wp-btn-sakura w-full py-3 text-base">
-                    CPUと たいせん
-                  </button>
-                  <button type="button" onClick={() => setGameMode('playing-single')} className="wp-btn wp-btn-kinari w-full py-3 text-base">
-                    ひとりで あそぶ
-                  </button>
-                </div>
+                <button type="button" onClick={() => setGameMode('nubatama-title')} className="wp-btn wp-btn-sakura w-full py-3 text-base">
+                  あそぶ
+                </button>
               </div>
 
               {/* Frog Maze Card */}
@@ -381,6 +377,14 @@ export const GameSection: React.FC = () => {
                   </div>
                 </div>
               </div>
+            </div>
+          ) : gameMode === 'nubatama-title' ? (
+            <div ref={playAreaRef} className="scroll-mt-20">
+              <NubatamaTitleScreen
+                onVsCpu={() => setGameMode('difficulty-select')}
+                onSingle={() => setGameMode('playing-single')}
+                onBack={() => setGameMode(null)}
+              />
             </div>
           ) : gameMode === 'difficulty-select' ? (
             <div className="transition-all duration-500 animate-fade-in-up">
