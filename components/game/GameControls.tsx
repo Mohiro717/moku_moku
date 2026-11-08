@@ -5,19 +5,20 @@ import './wapop.css';
 
 interface GameControlsProps {
   gameState: GameState;
-  onStart: () => void;
   onPause: () => void;
   onRestart: () => void;
 }
 
-/** ひとりであそぶ：盤面の横の札（つぎ・とくてん・れんさ・ボタン） */
+/** ひとりであそぶ：盤面の横の札（つぎ・とくてん・れんさ・ボタン）
+ *  はじめる・もういちど・つづける は盤面に重ねて出すので、ここには置かない（2つ並んでいた）。
+ *  ここは対戦の画面と同じ木の板で、ひとやすみ・やりなおす だけ */
 export const GameControls: React.FC<GameControlsProps> = ({
   gameState,
-  onStart,
   onPause,
   onRestart
 }) => {
-  const playing = gameState.isPlaying && !gameState.isPaused;
+  // ひとやすみは試合の途中（ひとやすみ中も含む）だけ押せる
+  const inMatch = gameState.isPlaying && !gameState.isGameOver;
   return (
     <div className="grid grid-cols-2 lg:grid-cols-1 gap-3">
       <div className="wp-card p-3 text-center">
@@ -42,15 +43,11 @@ export const GameControls: React.FC<GameControlsProps> = ({
         </div>
       </div>
 
-      <div className="col-span-2 lg:col-span-1 flex flex-col gap-2.5 pt-1">
-        <button
-          type="button"
-          onClick={gameState.isPlaying ? onPause : onStart}
-          className={`wp-btn ${playing ? 'wp-btn-kinari' : 'wp-btn-sakura'} w-full py-2.5 text-base`}
-        >
-          {!gameState.isPlaying ? (gameState.isGameOver ? 'もういちど' : 'はじめる') : gameState.isPaused ? 'つづける' : 'ひとやすみ'}
+      <div className="col-span-2 lg:col-span-1 flex lg:flex-col justify-center items-center gap-2 pt-1">
+        <button type="button" onClick={onPause} disabled={!inMatch} className="wp-plank wp-wood whitespace-nowrap w-[6.5rem] py-1.5 text-xs sm:text-sm">
+          {gameState.isPaused ? 'つづける' : 'ひとやすみ'}
         </button>
-        <button type="button" onClick={onRestart} className="wp-btn wp-btn-yamabuki w-full py-2 text-sm">
+        <button type="button" onClick={onRestart} className="wp-plank wp-wood wp-plank-light whitespace-nowrap w-[6.5rem] py-1.5 text-xs sm:text-sm">
           やりなおす
         </button>
       </div>

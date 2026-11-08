@@ -24,8 +24,12 @@ export const PuyoPuyoGame: React.FC = () => {
   const startPrompt = !gameState.isPlaying && !gameState.isGameOver ? (
     <div className="wp-pop-in flex flex-col items-center gap-3">
       <button type="button" onClick={startGame} className="wp-btn wp-btn-sakura px-8 py-3 text-xl">はじめる</button>
-      <div className="text-[11px] text-coffee-dark/70 font-serif text-center leading-relaxed">
+      {/* スマホではキーボードの説明でなく指の説明を出す（対戦の画面と同じ文） */}
+      <div className="hidden sm:block text-[11px] text-coffee-dark/70 font-serif text-center leading-relaxed">
         ←→ うごかす　Z / X まわす<br />↓ はやく　Space おとす
+      </div>
+      <div className="sm:hidden text-[11px] text-coffee-dark/70 font-serif text-center leading-relaxed">
+        なぞって うごかす<br />タップ まわす　下にはじく おとす
       </div>
     </div>
   ) : undefined;
@@ -39,20 +43,20 @@ export const PuyoPuyoGame: React.FC = () => {
   return (
     <ErrorBoundary fallback={GameErrorFallback}>
       <div className="wp-seigaiha max-w-3xl mx-auto px-3 py-4 sm:p-5 rounded-3xl border-[3px] border-coffee-dark shadow-[0_6px_0_#3b2f2f]">
-        <div className="flex items-center justify-between gap-2 mb-5">
-          <h3 className="font-serif text-xl sm:text-2xl text-coffee-dark flex items-center gap-2">
+        {/* 見出し：語の途中で折り返さないよう、各語を nowrap にして、入らなければタグごと次の行へ */}
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-5">
+          <h3 className="font-serif text-lg sm:text-2xl text-coffee-dark flex items-center gap-2 whitespace-nowrap">
             <span className="inline-block w-3 h-3 rounded-full bg-[#f79ab7] border-2 border-coffee-dark" />
             ぬばたま落とし
             <span className="text-xs text-coffee-dark/60">ひとりで</span>
           </h3>
-          <span className="wp-tag">のんびり れんさ</span>
+          <span className="wp-tag whitespace-nowrap ml-auto">のんびり れんさ</span>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
           <div className="lg:col-span-1 order-2 lg:order-1">
             <GameControls
               gameState={gameState}
-              onStart={startGame}
               onPause={pauseGame}
               onRestart={restartGame}
             />
