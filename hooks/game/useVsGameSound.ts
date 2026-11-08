@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import type { GameState, PuyoPair, VsGameState } from '../../types/game';
 import { chainVoiceOf, type CpuCharacter, type CpuLineKind } from '../../constants/cpuCharacters';
 import type { CpuCutin } from './useCpuCharacterReactions';
-import { countOjama } from '../../utils/boardStatus';
+import { countOjama, isPinch } from '../../utils/boardStatus';
 import {
   pauseBgm,
   playBgm,
@@ -187,4 +187,69 @@ const useSideLineVoice = ({ lineKind, lineIndex, lineTick, voiceSrc }: SideVoice
     }
     playVoice(src, timing);
   }, [lineTick]);
+};
+
+/**
+ * ひとりであそぶの BGM・効果音・ボイス。選んだキャラが、あるじどのの味方として横で言う
+ * （BGM はそのキャラのテーマ曲。相手がいないので、言うのは はじめ・大連鎖・ピンチ・おしまい）
+ */
+export const useSoloGameSound = ({ gameState, ally }: { gameState: GameState; ally: SideVoice }) => {
+  const { isPlaying, isPaused, isGameOver } = gameState;
+  const pinch = isPinch(gameState.grid);
+
+  useEffect(() => {
+    preloadVoices(ally.voices);
+  }, [ally.character]);
+
+  const wasPlaying = useRef(false);
+  useEffect(() => {
+    if (isPlaying && !wasPlaying.current && !isGameOver) {
+      playSe('start');
+      playBgm(ally.character.bgm);
+      playVoice(ally.voiceSrc('intro', ally.lineIndex));
+    }
+    if (!isPlaying && wasPlaying.current && !isGameOver) {
+      // やりなおす
+      stopBgm();
+      stopVoice();
+    }
+    wasPlaying.current = isPlaying;
+  }, [isPlaying, isGameOver]);
+
+  useEffect(() => {
+    if (!isPlaying || isGameOver) return;
+    if (isPaused) pauseBgm();
+    else resumeBgm();
+  }, [isPaused]);
+
+  useEffect(() => {
+    if (isPlaying && !isGameOver) setBgmPinch(pinch);
+  }, [pinch, isPlaying, isGameOver]);
+
+  useEffect(() => {
+    if (!isGameOver) return;
+    stopBgm();
+    playSe('lose');
+  }, [isGameOver]);
+
+  useEffect(() => () => {
+    stopBgm();
+    stopVoice();
+  }, []);
+
+  useSideLineVoice(ally);
+  useEffect(() => {
+    if (ally.cutin) playSe('cutin');
+  }, [ally.cutin?.id]);
+
+  const pair = gameState.currentPair;
+  const prevPair = useRef<PuyoPair | null>(null);
+  useEffect(() => {
+    if (isPlaying && !isPaused) pairSound(prevPair.current, pair);
+    prevPair.current = pair;
+  }, [pair?.x, pair?.y, pair?.rotation, !!pair]);
+
+  useBoardSound(gameState, 1, step => {
+    if (ally.character.chain.length > 0) playChainVoice(chainVoiceOf(ally.character, step), 'player');
+  });
 };

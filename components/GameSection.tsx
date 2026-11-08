@@ -14,7 +14,7 @@ import type { GameDifficulty } from '../types/game';
 import { DEFAULT_OPPONENT_CHARACTER_ID, DEFAULT_PLAYER_CHARACTER_ID, characterById } from '../constants/cpuCharacters';
 import { CharacterPicker } from './game/CharacterPicker';
 
-type GameMode = 'single' | 'nubatama-title' | 'vs-cpu' | 'player-select' | 'difficulty-select' | 'frog-maze' | 'frog-detail' | 'playing-single' | 'banana-game' | null;
+type GameMode = 'single' | 'nubatama-title' | 'vs-cpu' | 'player-select' | 'solo-select' | 'difficulty-select' | 'frog-maze' | 'frog-detail' | 'playing-single' | 'banana-game' | null;
 
 // 固定ヘッダー（Header.tsx の h-20 = 80px）＋ すき間 8px
 const HEADER_OFFSET = 88;
@@ -29,7 +29,7 @@ export const GameSection: React.FC = () => {
   const [playerCharacterId, setPlayerCharacterId] = useState(DEFAULT_PLAYER_CHARACTER_ID);
   const playerCharacter = characterById(playerCharacterId);
   const isPuyo =
-    gameMode === 'nubatama-title' || gameMode === 'player-select' || gameMode === 'difficulty-select' || gameMode === 'playing-single' || gameMode === 'vs-cpu';
+    gameMode === 'nubatama-title' || gameMode === 'player-select' || gameMode === 'solo-select' || gameMode === 'difficulty-select' || gameMode === 'playing-single' || gameMode === 'vs-cpu';
 
   // タイトルやぷよを開いたら、ヘッダーに隠れないよう、その場所までスクロールする。
   // 2026-11-09 まで scrollIntoView + scroll-mt-20 で、PC では上端 0 に止まりヘッダーの下に隠れていた。原因は2つ:
@@ -398,16 +398,21 @@ export const GameSection: React.FC = () => {
             <div ref={playAreaRef}>
               <NubatamaTitleScreen
                 onVsCpu={() => setGameMode('player-select')}
-                onSingle={() => setGameMode('playing-single')}
+                onSingle={() => setGameMode('solo-select')}
                 onBack={() => setGameMode(null)}
               />
             </div>
-          ) : gameMode === 'player-select' ? (
+          ) : gameMode === 'player-select' || gameMode === 'solo-select' ? (
+            // 自分のキャラえらび。CPU 対戦は 1/2（つぎに相手えらび）、ひとりであそぶは これだけで はじまる
             <div ref={playAreaRef} className="transition-all duration-500 animate-fade-in-up">
               <div className="wp-seigaiha rounded-3xl border-[3px] border-coffee-dark shadow-[0_6px_0_#3b2f2f] p-5 sm:p-7 max-w-2xl mx-auto">
-                <p className="text-xs font-serif text-coffee-dark/60 mb-1">1 / 2</p>
+                {gameMode === 'player-select' && <p className="text-xs font-serif text-coffee-dark/60 mb-1">1 / 2</p>}
                 <h3 className="text-2xl font-serif text-coffee-dark mb-1">じぶんを えらぶ</h3>
-                <p className="text-xs font-serif text-coffee-dark/70 mb-4">いっしょに たたかう 御霊を ひとり よぶ（だれを えらんでも つよさは おなじ）</p>
+                <p className="text-xs font-serif text-coffee-dark/70 mb-4">
+                  {gameMode === 'player-select'
+                    ? 'いっしょに たたかう 御霊を ひとり よぶ（だれを えらんでも つよさは おなじ）'
+                    : 'いっしょに あそぶ 御霊を ひとり よぶ（よこで しゃべって、れんさで かけごえ）'}
+                </p>
 
                 <CharacterPicker selectedId={playerCharacterId} onSelect={setPlayerCharacterId} tone="sakura" />
 
@@ -417,8 +422,12 @@ export const GameSection: React.FC = () => {
                 </p>
 
                 <div className="flex flex-col gap-3">
-                  <button type="button" onClick={() => setGameMode('difficulty-select')} className="wp-btn wp-btn-sakura w-full py-3 text-lg">
-                    つぎへ
+                  <button
+                    type="button"
+                    onClick={() => setGameMode(gameMode === 'player-select' ? 'difficulty-select' : 'playing-single')}
+                    className="wp-btn wp-btn-sakura w-full py-3 text-lg"
+                  >
+                    {gameMode === 'player-select' ? 'つぎへ' : 'あそぶ！'}
                   </button>
                   <button type="button" onClick={() => setGameMode('nubatama-title')} className="wp-btn wp-btn-kinari w-full py-2 text-sm">
                     もどる
@@ -477,7 +486,7 @@ export const GameSection: React.FC = () => {
           ) : (
             <div ref={playAreaRef} className="transition-all duration-500 animate-fade-in-up">
               {gameMode === 'playing-single' ? (
-                <PuyoPuyoGame />
+                <PuyoPuyoGame playerCharacterId={playerCharacterId} onChangeCharacter={() => setGameMode('solo-select')} />
               ) : gameMode === 'vs-cpu' ? (
                 <PuyoVsCpuGame
                   key={`vs-cpu-${selectedDifficulty}-${playerCharacterId}-${selectedCharacterId}`}

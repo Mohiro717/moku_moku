@@ -35,6 +35,11 @@ export interface CpuCutin {
 
 /** おじゃまを食らった声は、ほかの台詞からこれだけ空いていれば言う */
 const DAMAGED_GAP_MS = 1500;
+/**
+ * おじゃまを食らった声は、降ってきたおじゃまを送った向かいの連鎖がこれ以上のときだけ言う。
+ * 1連鎖・2連鎖の少しのおじゃまで毎回言うとくどい（2026-11-09 オーナー）
+ */
+export const DAMAGED_MIN_CHAIN = 3;
 /** ピンチの台詞を続けて言わない間隔 */
 const PINCH_GAP_MS = 8000;
 
@@ -95,6 +100,12 @@ export const useCharacterReactions = ({ character, lines, isGameOver, won, self,
     say('attack');
   }, [selfRounds, character]);
 
+  // 前におじゃまが降ってから、向かいがした一番長い連鎖（いま降ってきたおじゃまの出どころ）
+  const opponentBestChain = useRef(0);
+  useEffect(() => {
+    if (opponentRounds > opponentBestChain.current) opponentBestChain.current = opponentRounds;
+  }, [opponentRounds]);
+
   // 向かいの大連鎖を受けたとき
   useEffect(() => {
     if (opponentRounds === 0) {
@@ -106,12 +117,15 @@ export const useCharacterReactions = ({ character, lines, isGameOver, won, self,
     say('attacked');
   }, [opponentRounds]);
 
-  // おじゃまが降ってきた瞬間
+  // おじゃまが降ってきた瞬間（大きな連鎖から来たものだけ。小さな連鎖のおじゃまは黙って受ける）
   const prevOjama = useRef(selfOjama);
   useEffect(() => {
     const landed = selfOjama > prevOjama.current;
     prevOjama.current = selfOjama;
-    if (landed && !isGameOver && Date.now() - lastSaidAt.current > DAMAGED_GAP_MS) say('damaged');
+    if (!landed) return;
+    const bigChain = opponentBestChain.current >= DAMAGED_MIN_CHAIN;
+    opponentBestChain.current = 0;
+    if (bigChain && !isGameOver && Date.now() - lastSaidAt.current > DAMAGED_GAP_MS) say('damaged');
   }, [selfOjama]);
 
   // 上まで積み上がって、こちらより危ないとき（下がってからまた積み上がれば、また言う。ただし続けて何度も言わない）
@@ -129,6 +143,7 @@ export const useCharacterReactions = ({ character, lines, isGameOver, won, self,
     } else {
       setLineKind('intro');
       setCutin(null);
+      opponentBestChain.current = 0;
     }
   }, [isGameOver, won]);
 

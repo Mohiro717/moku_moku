@@ -23,6 +23,7 @@ const createInitialGameState = (): GameState => ({
   grid: createEmptyGrid(),
   currentPair: null,
   nextPair: createRandomPair(),
+  nextNextPair: createRandomPair(),
   score: 0,
   chainCount: 0,
   isGameOver: false,
@@ -470,7 +471,8 @@ export const usePuyoGameWithoutInput = (ojamaLink?: OjamaLink) => {
             }
             
             const newPair = prev.nextPair || createRandomPair();
-            const nextPair = createRandomPair();
+            const nextPair = prev.nextNextPair || createRandomPair();
+            const nextNextPair = createRandomPair();
             
             console.log('[CPU GAME] Spawning new pair:', {
               current: newPair,
@@ -481,7 +483,8 @@ export const usePuyoGameWithoutInput = (ojamaLink?: OjamaLink) => {
               return { 
                 ...prev, 
                 currentPair: newPair,
-                nextPair
+                nextPair,
+                nextNextPair
               };
             } else {
               console.log('[CPU GAME] Cannot place new pair - game over');
@@ -510,7 +513,8 @@ export const usePuyoGameWithoutInput = (ojamaLink?: OjamaLink) => {
           ...newState,
           isPlaying: true,
           currentPair: createRandomPair(),
-          nextPair: createRandomPair()
+          nextPair: createRandomPair(),
+          nextNextPair: createRandomPair()
         };
       }
       return {
@@ -520,6 +524,7 @@ export const usePuyoGameWithoutInput = (ojamaLink?: OjamaLink) => {
         isGameOver: false,
         currentPair: createRandomPair(),
         nextPair: createRandomPair(),
+        nextNextPair: createRandomPair(),
         chainAnimationStep: 'idle',
         currentChainStep: 0
       };
