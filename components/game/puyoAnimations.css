@@ -42,16 +42,31 @@
   .puyo-vs-cpu-field { zoom: 0.34; }
   .puyo-vs-cutin { grid-area: 1 / 1 / -1 / -1; }
 }
+/* lg 以上は本家（ぷよぷよeスポーツ公式の対戦画面の写真で確認）の並び：
+   盤面の上の内側の角に「つぎ」、とくてんは盤面の枠の下端、名前の帯は盤面のすぐ下、
+   まんなかの中段は空ける（ボタンは下端）、相手の顔は名前の帯のアイコンだけ。
+   台詞（本家には無い）は相手の盤面の上のほうに短いふきだし（.puyo-vs-bubble） */
 @media (min-width: 1024px) {
   .puyo-vs-grid {
-    gap: 0.75rem 1rem;
-    grid-template-columns: auto auto 1.5rem auto auto;
+    gap: 0.75rem 0;
+    grid-template-columns: auto 13rem auto;
     grid-template-areas:
-      "p-head  p-head . c-head c-head"
-      "p-field p-side . c-side c-field";
+      "p-field center c-field"
+      "p-foot  .      c-foot";
   }
   .puyo-vs-cutin { grid-area: c-field; }
 }
+/* 相手の台詞のふきだし：ぽんと出て、3.5秒ほどで消える */
+.puyo-vs-bubble {
+  animation: puyo-vs-bubble 3.8s ease-out both;
+}
+@keyframes puyo-vs-bubble {
+  0%   { opacity: 0; transform: translateY(6px) scale(0.96); }
+  8%   { opacity: 1; transform: translateY(0) scale(1); }
+  85%  { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-4px) scale(1); }
+}
+
 .puyo-cell {
   width: var(--puyo-size);
   height: var(--puyo-size);

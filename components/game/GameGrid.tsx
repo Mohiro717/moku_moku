@@ -25,6 +25,8 @@ interface GameGridProps {
   startPrompt?: React.ReactNode;
   /** 一時停止・勝ち負けの幕の下に出すボタン */
   actions?: React.ReactNode;
+  /** 盤面の枠の中、マスの下に出すもの（対戦画面のとくてん） */
+  footer?: React.ReactNode;
 }
 
 // ========================================
@@ -155,7 +157,8 @@ export const GameGrid: React.FC<GameGridProps> = ({
   gameResult = null,
   chainStep = 0,
   startPrompt,
-  actions
+  actions,
+  footer
 }) => {
   // Memoize falling positions calculation
   const fallingPositions = useMemo(() => {
@@ -293,6 +296,8 @@ export const GameGrid: React.FC<GameGridProps> = ({
           </div>
         )}
       </div>
+
+      {footer}
 
       {/* Game Over Line Indicator */}
       <GameOverLine />
