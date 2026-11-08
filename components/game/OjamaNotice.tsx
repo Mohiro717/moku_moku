@@ -1,9 +1,9 @@
 import React, { memo, useEffect, useRef } from 'react';
-import { Nubatama } from './Puyo';
+import { Nubatama, NubatamaStack } from './Puyo';
 import './puyoAnimations.css';
 
 // 降る予定のおじゃまの予告。大きい単位から順に並べ、最大 MAX_ICONS 個まで出す。
-//   岩 = 30個（5段） / 大 = 6個（1段） / 小 = 1個
+//   岩 = 30個（5段、絵は月見積み＝ぬばたま3段） / 大 = 6個（1段） / 小 = 1個
 type Kind = 'rock' | 'big' | 'small';
 const UNITS: Array<{ size: number; kind: Kind }> = [
   { size: 30, kind: 'rock' },
@@ -11,7 +11,7 @@ const UNITS: Array<{ size: number; kind: Kind }> = [
   { size: 1, kind: 'small' }
 ];
 const MAX_ICONS = 6;
-const PX: Record<Kind, number> = { rock: 34, big: 28, small: 20 };
+const PX: Record<Kind, number> = { rock: 38, big: 28, small: 20 };
 
 const toIcons = (count: number): Kind[] => {
   const icons: Kind[] = [];
@@ -28,11 +28,7 @@ const toIcons = (count: number): Kind[] => {
 const OjamaIcon: React.FC<{ kind: Kind }> = ({ kind }) => (
   <svg className="ojama-in overflow-visible" width={PX[kind]} height={PX[kind]} viewBox="0 0 40 40">
     {kind === 'rock' ? (
-      <>
-        <path d="M4 30 L8 12 L18 5 L31 8 L37 22 L33 35 L12 37 Z" fill="#6b5b4f" stroke="#3b2f2f" strokeWidth="1.5" strokeLinejoin="round" />
-        <path d="M9 14 L15 19 L12 26 M26 9 L23 17 L30 22" stroke="#3b2f2f" strokeWidth="1.6" fill="none" strokeLinecap="round" />
-        <ellipse cx="14" cy="11" rx="5" ry="2.4" fill="#fff" opacity=".3" transform="rotate(-25 14 11)" />
-      </>
+      <NubatamaStack />
     ) : (
       <Nubatama />
     )}

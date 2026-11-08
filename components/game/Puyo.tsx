@@ -105,6 +105,32 @@ export const Nubatama: React.FC<{ variant?: number; blinkDelay?: string }> = ({ 
   );
 };
 
+/**
+ * 月見積み：ぬばたまが月見団子のように3段に積み重なったもの（正典の変種「積むほど強い」）。
+ * おじゃま予告の 30個 の印に使う。下から描いて、上の段が下の段に少し乗る。
+ */
+const STACK_LAYERS = [
+  { cy: 31, rx: 15, ry: 8.5 },
+  { cy: 20.5, rx: 13.5, ry: 7.6 },
+  { cy: 10.6, rx: 12, ry: 7 }
+];
+export const NubatamaStack: React.FC = () => (
+  <g>
+    <ellipse cx="20" cy="21" rx="16" ry="19" fill="#1b1b2e" opacity=".45" filter="url(#nb-haze)" />
+    <path d="M16.8 4.6 C16.2 2.2 18.6 0.5 20 2.3 C20.8 0.3 23.6 0.6 23.2 2.9 C24.6 2.8 25 4.3 23.8 5 Z" fill="#141326" />
+    <circle cx="26.2" cy="1.6" r=".8" fill="#141326" />
+    {STACK_LAYERS.map((l, i) => (
+      <g key={i}>
+        <ellipse cx="20" cy={l.cy} rx={l.rx} ry={l.ry} fill="url(#puyo-g-ojama)" stroke="#0d0c19" strokeWidth=".7" />
+        <g className="nubatama-eye" style={{ animationDelay: `${-i * 1.7}s` }}>
+          <circle cx="15.4" cy={l.cy + 1} r="1.7" fill={CRACK_RED} />
+          <circle cx="24.6" cy={l.cy + 1} r="1.7" fill={CRACK_RED} />
+        </g>
+      </g>
+    ))}
+  </g>
+);
+
 /** ぷよの顔 SVG */
 export const PuyoFace: React.FC<{ squint?: boolean; blinkDelay?: string }> = ({ squint = false, blinkDelay }) => {
   return (
