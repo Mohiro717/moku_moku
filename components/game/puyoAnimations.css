@@ -39,7 +39,7 @@
   .puyo-vs { --puyo-size: 34px; }
 }
 @media (max-width: 1023px) {
-  .puyo-vs-cpu-field { zoom: 0.4; }
+  .puyo-vs-cpu-field { zoom: 0.34; }
   .puyo-vs-cutin { grid-area: 1 / 1 / -1 / -1; }
 }
 @media (min-width: 1024px) {

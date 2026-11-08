@@ -39,8 +39,8 @@ const getGameResult = (isGameOver: boolean, winner: string | null, player: 'play
   return 'lose';
 };
 
-/** 盤面のすぐ横に置く「つぎ」と「とくてん」（本家と同じく、目線を盤面から外さずに読める位置） */
-const SideInfo: React.FC<{ nextPair: PuyoPair | null; score: number; accent?: boolean; className?: string }> = ({ nextPair, score, accent = false, className = '' }) => (
+/** 盤面のすぐ横に置く「つぎ」と「とくてん」（本家と同じく、目線を盤面から外さずに読める位置）。children はその下に足す */
+const SideInfo: React.FC<{ nextPair: PuyoPair | null; score: number; accent?: boolean; className?: string; children?: React.ReactNode }> = ({ nextPair, score, accent = false, className = '', children }) => (
   // 上の余白はおじゃま予告の高さ（OjamaNotice の h-10 + mb-1.5）。盤面の上端にそろえる
   <div className={`mt-[2.875rem] w-[5.5rem] flex flex-col items-stretch gap-2 ${className}`}>
     <div className="wp-card p-2 text-center">
@@ -51,6 +51,7 @@ const SideInfo: React.FC<{ nextPair: PuyoPair | null; score: number; accent?: bo
       <div className="text-[10px] font-serif text-coffee-dark/60">とくてん</div>
       <div className={`font-serif text-sm sm:text-base tabular-nums ${accent ? 'text-[#e5598a]' : 'text-coffee-dark'}`}>{score.toLocaleString()}</div>
     </div>
+    {children}
   </div>
 );
 
@@ -149,7 +150,7 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
   };
 
   const playing = gameState.isPlaying && !gameState.isPaused && !gameState.isGameOver;
-  // 試合の途中（ひとやすみ中も含む）だけ、見出しに「ひとやすみ・やりなおす」を出す
+  // ひとやすみは試合の途中（ひとやすみ中も含む）だけ押せる
   const inMatch = gameState.isPlaying && !gameState.isGameOver;
 
   // 自分の盤面に重ねるボタン：はじまる前・ひとやすみ・勝ち負けのとき、目線の先で押せるように
@@ -179,7 +180,7 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
   return (
     <ErrorBoundary fallback={GameErrorFallback}>
       <div className="wp-seigaiha puyo-vs max-w-7xl mx-auto px-3 py-3 sm:px-5 sm:py-4 rounded-3xl border-[3px] border-coffee-dark shadow-[0_6px_0_#3b2f2f]">
-        {/* 見出し：タイトル・つよさ・試合中のボタン */}
+        {/* 見出し：タイトル・つよさ・おと */}
         <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
           <h3 className="font-serif text-lg sm:text-2xl text-coffee-dark flex items-center gap-2">
             <span className="inline-block w-3 h-3 rounded-full bg-[#f79ab7] border-2 border-coffee-dark" />
@@ -187,16 +188,6 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
           </h3>
           <div className="flex items-center gap-2 ml-auto">
             <span className="wp-tag !hidden sm:!inline-block" style={{ background: '#fff4d6' }}>つよさ：{DIFFICULTY_LABELS[gameState.difficulty]}</span>
-            {inMatch && (
-              <>
-                <button type="button" onClick={handlePause} className="wp-btn wp-btn-kinari whitespace-nowrap px-3 py-1 text-xs sm:text-sm">
-                  {gameState.isPaused ? 'つづける' : 'ひとやすみ'}
-                </button>
-                <button type="button" onClick={handleRestart} className="wp-btn wp-btn-yamabuki whitespace-nowrap px-3 py-1 text-xs sm:text-sm">
-                  やりなおす
-                </button>
-              </>
-            )}
             <button
               type="button"
               onClick={toggleMuted}
@@ -248,7 +239,15 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
               </TouchControls>
             </div>
           </div>
-          <SideInfo className="[grid-area:p-side]" nextPair={gameState.player.nextPair} score={gameState.player.score} accent />
+          <SideInfo className="[grid-area:p-side]" nextPair={gameState.player.nextPair} score={gameState.player.score} accent>
+            {/* ひとやすみ・やりなおすは、いつでも盤面のすぐ横で押せるように常に出す */}
+            <button type="button" onClick={handlePause} disabled={!inMatch} className="wp-btn wp-btn-kinari whitespace-nowrap py-1.5 text-xs sm:text-sm">
+              {gameState.isPaused ? 'つづける' : 'ひとやすみ'}
+            </button>
+            <button type="button" onClick={handleRestart} className="wp-btn wp-btn-yamabuki whitespace-nowrap py-1.5 text-xs sm:text-sm">
+              やりなおす
+            </button>
+          </SideInfo>
 
           <SideInfo className="[grid-area:c-side] hidden lg:flex" nextPair={gameState.cpu.nextPair} score={gameState.cpu.score} />
           <div className="[grid-area:c-field] puyo-vs-cpu-field">
