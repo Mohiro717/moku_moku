@@ -16,6 +16,9 @@ import { CharacterPicker } from './game/CharacterPicker';
 
 type GameMode = 'single' | 'nubatama-title' | 'vs-cpu' | 'player-select' | 'difficulty-select' | 'frog-maze' | 'frog-detail' | 'playing-single' | 'banana-game' | null;
 
+// 固定ヘッダー（Header.tsx の h-20 = 80px）＋ すき間 8px
+const HEADER_OFFSET = 88;
+
 export const GameSection: React.FC = () => {
   const [gameMode, setGameMode] = useState<GameMode>(null);
   const [selectedDifficulty, setSelectedDifficulty] = useState<GameDifficulty>('normal');
@@ -28,10 +31,17 @@ export const GameSection: React.FC = () => {
   const isPuyo =
     gameMode === 'nubatama-title' || gameMode === 'player-select' || gameMode === 'difficulty-select' || gameMode === 'playing-single' || gameMode === 'vs-cpu';
 
-  // タイトルやぷよを開いたら、ヘッダーに隠れないよう、その場所までスクロールする
+  // タイトルやぷよを開いたら、ヘッダーに隠れないよう、その場所までスクロールする。
+  // 2026-11-09 まで scrollIntoView + scroll-mt-20 で、PC では上端 0 に止まりヘッダーの下に隠れていた。原因は2つ:
+  // ・CDN 版 Tailwind はクラスが DOM に出てから CSS を作るので、出た直後のスクロールに scroll-mt-20 が間に合わない
+  // ・animate-fade-in-up の途中（下にずれた位置）で測るので、動きが終わると上にずれる
+  // offsetTop はどちらの影響も受けないので、それで位置を出して、ヘッダーぶん引く
   const playAreaRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    if (isPuyo) playAreaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (!isPuyo) return;
+    let y = 0;
+    for (let el: HTMLElement | null = playAreaRef.current; el; el = el.offsetParent as HTMLElement | null) y += el.offsetTop;
+    if (playAreaRef.current) window.scrollTo({ top: Math.max(0, y - HEADER_OFFSET), behavior: 'smooth' });
   }, [gameMode]);
 
   return (
@@ -385,7 +395,7 @@ export const GameSection: React.FC = () => {
               </div>
             </div>
           ) : gameMode === 'nubatama-title' ? (
-            <div ref={playAreaRef} className="scroll-mt-20">
+            <div ref={playAreaRef}>
               <NubatamaTitleScreen
                 onVsCpu={() => setGameMode('player-select')}
                 onSingle={() => setGameMode('playing-single')}
@@ -393,7 +403,7 @@ export const GameSection: React.FC = () => {
               />
             </div>
           ) : gameMode === 'player-select' ? (
-            <div ref={playAreaRef} className="scroll-mt-20 transition-all duration-500 animate-fade-in-up">
+            <div ref={playAreaRef} className="transition-all duration-500 animate-fade-in-up">
               <div className="wp-seigaiha rounded-3xl border-[3px] border-coffee-dark shadow-[0_6px_0_#3b2f2f] p-5 sm:p-7 max-w-2xl mx-auto">
                 <p className="text-xs font-serif text-coffee-dark/60 mb-1">1 / 2</p>
                 <h3 className="text-2xl font-serif text-coffee-dark mb-1">じぶんを えらぶ</h3>
@@ -417,7 +427,7 @@ export const GameSection: React.FC = () => {
               </div>
             </div>
           ) : gameMode === 'difficulty-select' ? (
-            <div ref={playAreaRef} className="scroll-mt-20 transition-all duration-500 animate-fade-in-up">
+            <div ref={playAreaRef} className="transition-all duration-500 animate-fade-in-up">
               <div className="wp-seigaiha rounded-3xl border-[3px] border-coffee-dark shadow-[0_6px_0_#3b2f2f] p-5 sm:p-7 max-w-2xl mx-auto">
                 <p className="text-xs font-serif text-coffee-dark/60 mb-1">2 / 2</p>
                 <h3 className="text-2xl font-serif text-coffee-dark mb-1">あいてを えらぶ</h3>
@@ -465,7 +475,7 @@ export const GameSection: React.FC = () => {
               </div>
             </div>
           ) : (
-            <div ref={playAreaRef} className="scroll-mt-20 transition-all duration-500 animate-fade-in-up">
+            <div ref={playAreaRef} className="transition-all duration-500 animate-fade-in-up">
               {gameMode === 'playing-single' ? (
                 <PuyoPuyoGame />
               ) : gameMode === 'vs-cpu' ? (
