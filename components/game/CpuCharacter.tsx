@@ -14,8 +14,8 @@ interface PanelProps {
   line: string;
 }
 
-// 相手の札：墨の太線とずらした影（和ポップ）に、月蝕綺譚の宵闇に金
-const PANEL_CLASS = 'flex items-center gap-3 rounded-2xl p-3 border-[3px] border-coffee-dark shadow-[0_4px_0_#3b2f2f]';
+// 相手の台詞＝絵巻（左右に木の軸、wapop.css の .wp-emaki）。中は月蝕綺譚の宵闇に金
+const PANEL_CLASS = 'wp-emaki flex items-center gap-3 p-3';
 const PANEL_STYLE: React.CSSProperties = { backgroundColor: YOIYAMI };
 
 /** CPU 盤面の上に置く、相手キャラの顔・名前・台詞 */

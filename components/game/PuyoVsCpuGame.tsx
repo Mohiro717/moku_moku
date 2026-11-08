@@ -43,13 +43,16 @@ const getGameResult = (isGameOver: boolean, winner: string | null, player: 'play
 const SideInfo: React.FC<{ nextPair: PuyoPair | null; score: number; accent?: boolean; className?: string; children?: React.ReactNode }> = ({ nextPair, score, accent = false, className = '', children }) => (
   // 上の余白はおじゃま予告の高さ（OjamaNotice の h-10 + mb-1.5）。盤面の上端にそろえる
   <div className={`mt-[2.875rem] w-[5.5rem] flex flex-col items-stretch gap-2 ${className}`}>
-    <div className="wp-card p-2 text-center">
-      <div className="text-xs font-serif text-coffee-dark mb-1">つぎ</div>
-      <NextPiecePreview nextPair={nextPair} />
+    {/* つぎ＝木札、とくてん＝小判（和ポップの地のまま、目が行く部品だけ道具にする） */}
+    <div className="wp-kifuda-wrap">
+      <div className="wp-wood wp-kifuda">
+        <div className="text-xs font-serif mb-1">つぎ</div>
+        <NextPiecePreview nextPair={nextPair} />
+      </div>
     </div>
-    <div className="wp-card px-2 py-1.5 text-center">
-      <div className="text-[10px] font-serif text-coffee-dark/60">とくてん</div>
-      <div className={`font-serif text-sm sm:text-base tabular-nums ${accent ? 'text-[#e5598a]' : 'text-coffee-dark'}`}>{score.toLocaleString()}</div>
+    <div className="wp-koban">
+      <div className="text-[10px] font-serif opacity-80">とくてん</div>
+      <div className={`font-serif text-sm sm:text-base tabular-nums leading-tight ${accent ? 'text-[#b8324f]' : ''}`}>{score.toLocaleString()}</div>
     </div>
     {children}
   </div>
@@ -241,10 +244,10 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
           </div>
           <SideInfo className="[grid-area:p-side]" nextPair={gameState.player.nextPair} score={gameState.player.score} accent>
             {/* ひとやすみ・やりなおすは、いつでも盤面のすぐ横で押せるように常に出す */}
-            <button type="button" onClick={handlePause} disabled={!inMatch} className="wp-btn wp-btn-kinari whitespace-nowrap py-1.5 text-xs sm:text-sm">
+            <button type="button" onClick={handlePause} disabled={!inMatch} className="wp-plank wp-wood whitespace-nowrap py-1.5 text-xs sm:text-sm">
               {gameState.isPaused ? 'つづける' : 'ひとやすみ'}
             </button>
-            <button type="button" onClick={handleRestart} className="wp-btn wp-btn-yamabuki whitespace-nowrap py-1.5 text-xs sm:text-sm">
+            <button type="button" onClick={handleRestart} className="wp-plank wp-wood wp-plank-light whitespace-nowrap py-1.5 text-xs sm:text-sm">
               やりなおす
             </button>
           </SideInfo>

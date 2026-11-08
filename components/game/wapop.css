@@ -124,6 +124,108 @@
   to   { opacity: 1; transform: scale(1); }
 }
 
+/* ---- 対戦画面の道具（案3「控えめ」）：地・盤面・見出しは和ポップのまま、目が行く4つの部品だけ道具にする ---- */
+
+/* 木目（木札・木の板で共通） */
+.wp-wood {
+  background:
+    repeating-linear-gradient(91deg, rgba(90, 50, 20, 0.10) 0 2px, transparent 2px 7px, rgba(90, 50, 20, 0.06) 7px 8px, transparent 8px 15px),
+    linear-gradient(180deg, #d9a86c, #b98149);
+  border: 3px solid #5a3a22;
+  box-shadow: 0 4px 0 #5a3a22, inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  color: #3a2414;
+}
+
+/* つぎ＝木札：上の角を落とし、紐の穴 */
+.wp-kifuda {
+  position: relative;
+  padding: 1.15rem 0.4rem 0.45rem;
+  text-align: center;
+  border-radius: 0.3rem 0.3rem 0.45rem 0.45rem;
+  clip-path: polygon(14% 0, 86% 0, 100% 12%, 100% 100%, 0 100%, 0 12%);
+}
+.wp-kifuda::before {
+  content: "";
+  position: absolute;
+  top: 0.35rem;
+  left: 50%;
+  width: 0.5rem;
+  height: 0.5rem;
+  margin-left: -0.25rem;
+  border-radius: 50%;
+  background: #3a2414;
+}
+/* clip-path で下の影が切れるので、影は外側の包みで出す */
+.wp-kifuda-wrap { filter: drop-shadow(0 4px 0 #5a3a22); }
+.wp-kifuda-wrap > .wp-kifuda { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35); }
+
+/* とくてん＝小判 */
+.wp-koban {
+  position: relative;
+  border-radius: 50%;
+  text-align: center;
+  padding: 0.55rem 0.25rem 0.6rem;
+  background:
+    repeating-linear-gradient(0deg, rgba(120, 80, 0, 0.16) 0 1px, transparent 1px 5px),
+    radial-gradient(ellipse at 38% 30%, #fff6c4 0%, #f4d35e 38%, #d4a72c 75%, #b8871b 100%);
+  border: 3px solid #7a5a12;
+  box-shadow: 0 4px 0 #7a5a12, inset 0 0 0 3px rgba(255, 240, 180, 0.55);
+  color: #5a3d06;
+}
+
+/* ボタン＝木の板。押すと沈む（.wp-btn と同じ手ざわり） */
+.wp-plank {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Mochiy Pop One', sans-serif;
+  border-radius: 0.35rem;
+  transition: transform 80ms ease-out, box-shadow 80ms ease-out, filter 120ms;
+  cursor: pointer;
+  user-select: none;
+}
+.wp-plank:hover { filter: brightness(1.06); transform: translateY(-1px); box-shadow: 0 5px 0 #5a3a22, inset 0 1px 0 rgba(255, 255, 255, 0.35); }
+.wp-plank:active { transform: translateY(3px); box-shadow: 0 1px 0 #5a3a22, inset 0 1px 0 rgba(255, 255, 255, 0.35); }
+.wp-plank:disabled { opacity: 0.5; cursor: default; transform: none; box-shadow: 0 4px 0 #5a3a22; }
+.wp-plank:focus-visible { outline: 3px dashed var(--wp-sakura-deep); outline-offset: 3px; }
+/* 主のボタン（やりなおす）は明るい白木 */
+.wp-plank-light {
+  background:
+    repeating-linear-gradient(91deg, rgba(90, 50, 20, 0.10) 0 2px, transparent 2px 7px),
+    linear-gradient(180deg, #f0cf98, #d9a05c);
+}
+
+/* 相手の台詞＝絵巻：左右に軸、軸の端に金の飾り。中は月蝕綺譚の宵闇のまま */
+.wp-emaki {
+  position: relative;
+  margin: 0 1.1rem;
+  border-top: 2px solid #D9A94C;
+  border-bottom: 2px solid #D9A94C;
+  background: linear-gradient(180deg, #1d1a2c, #131320);
+}
+.wp-emaki::before,
+.wp-emaki::after {
+  content: "";
+  position: absolute;
+  top: -0.5rem;
+  bottom: -0.5rem;
+  width: 1rem;
+  border-radius: 0.45rem;
+  background: linear-gradient(90deg, #5a3418, #9a6236 45%, #5a3418);
+  border: 2px solid #2e1a0c;
+}
+.wp-emaki::before { left: -1rem; }
+.wp-emaki::after { right: -1rem; }
+/* スマホ：軸を細くして台詞の幅を空け、1画面に収める */
+@media (max-width: 639px) {
+  .wp-emaki { margin: 0 0.7rem; padding: 0.5rem 0.6rem !important; }
+  .wp-emaki::before, .wp-emaki::after { width: 0.7rem; top: -0.4rem; bottom: -0.4rem; }
+  .wp-emaki::before { left: -0.7rem; }
+  .wp-emaki::after { right: -0.7rem; }
+  .wp-kifuda { padding-top: 0.95rem; }
+  .wp-kifuda::before { top: 0.3rem; width: 0.4rem; height: 0.4rem; margin-left: -0.2rem; }
+}
+
 /* 上端の危険ライン：朱の破線 */
 .wp-deadline {
   height: 0;
