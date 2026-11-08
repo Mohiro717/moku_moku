@@ -11,16 +11,22 @@ import { FrogPrincessMaze } from './frog-maze/FrogPrincessMaze';
 import { CatchTheBananaGameRefactored as CatchTheBananaGame } from './banana-game/CatchTheBananaGameRefactored';
 import { SITE_CONFIG } from '../constants';
 import type { GameDifficulty } from '../types/game';
-import { CPU_CHARACTERS, DEFAULT_CHARACTER_ID, characterById } from '../constants/cpuCharacters';
+import { DEFAULT_OPPONENT_CHARACTER_ID, DEFAULT_PLAYER_CHARACTER_ID, characterById } from '../constants/cpuCharacters';
+import { CharacterPicker } from './game/CharacterPicker';
 
-type GameMode = 'single' | 'nubatama-title' | 'vs-cpu' | 'difficulty-select' | 'frog-maze' | 'frog-detail' | 'playing-single' | 'banana-game' | null;
+type GameMode = 'single' | 'nubatama-title' | 'vs-cpu' | 'player-select' | 'difficulty-select' | 'frog-maze' | 'frog-detail' | 'playing-single' | 'banana-game' | null;
 
 export const GameSection: React.FC = () => {
   const [gameMode, setGameMode] = useState<GameMode>(null);
   const [selectedDifficulty, setSelectedDifficulty] = useState<GameDifficulty>('normal');
-  const [selectedCharacterId, setSelectedCharacterId] = useState(DEFAULT_CHARACTER_ID);
+  // 相手のキャラ
+  const [selectedCharacterId, setSelectedCharacterId] = useState(DEFAULT_OPPONENT_CHARACTER_ID);
   const selectedCharacter = characterById(selectedCharacterId);
-  const isPuyo = gameMode === 'nubatama-title' || gameMode === 'playing-single' || gameMode === 'vs-cpu';
+  // 自分のキャラ（あるじどのの味方。CPU 対戦の最初に選ぶ）
+  const [playerCharacterId, setPlayerCharacterId] = useState(DEFAULT_PLAYER_CHARACTER_ID);
+  const playerCharacter = characterById(playerCharacterId);
+  const isPuyo =
+    gameMode === 'nubatama-title' || gameMode === 'player-select' || gameMode === 'difficulty-select' || gameMode === 'playing-single' || gameMode === 'vs-cpu';
 
   // タイトルやぷよを開いたら、ヘッダーに隠れないよう、その場所までスクロールする
   const playAreaRef = useRef<HTMLDivElement>(null);
@@ -381,49 +387,55 @@ export const GameSection: React.FC = () => {
           ) : gameMode === 'nubatama-title' ? (
             <div ref={playAreaRef} className="scroll-mt-20">
               <NubatamaTitleScreen
-                onVsCpu={() => setGameMode('difficulty-select')}
+                onVsCpu={() => setGameMode('player-select')}
                 onSingle={() => setGameMode('playing-single')}
                 onBack={() => setGameMode(null)}
               />
             </div>
-          ) : gameMode === 'difficulty-select' ? (
-            <div className="transition-all duration-500 animate-fade-in-up">
+          ) : gameMode === 'player-select' ? (
+            <div ref={playAreaRef} className="scroll-mt-20 transition-all duration-500 animate-fade-in-up">
               <div className="wp-seigaiha rounded-3xl border-[3px] border-coffee-dark shadow-[0_6px_0_#3b2f2f] p-5 sm:p-7 max-w-2xl mx-auto">
+                <p className="text-xs font-serif text-coffee-dark/60 mb-1">1 / 2</p>
+                <h3 className="text-2xl font-serif text-coffee-dark mb-1">じぶんを えらぶ</h3>
+                <p className="text-xs font-serif text-coffee-dark/70 mb-4">いっしょに たたかう 御霊を ひとり よぶ（だれを えらんでも つよさは おなじ）</p>
+
+                <CharacterPicker selectedId={playerCharacterId} onSelect={setPlayerCharacterId} tone="sakura" />
+
+                <p className="text-coffee-dark mb-5 font-serif">
+                  <span className="wp-tag mr-2" style={{ background: 'var(--wp-sakura)', color: '#fff' }}>じぶん：{playerCharacter.name}</span>
+                  <span className="text-xs text-coffee-dark/70">{playerCharacter.tagline}</span>
+                </p>
+
+                <div className="flex flex-col gap-3">
+                  <button type="button" onClick={() => setGameMode('difficulty-select')} className="wp-btn wp-btn-sakura w-full py-3 text-lg">
+                    つぎへ
+                  </button>
+                  <button type="button" onClick={() => setGameMode('nubatama-title')} className="wp-btn wp-btn-kinari w-full py-2 text-sm">
+                    もどる
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : gameMode === 'difficulty-select' ? (
+            <div ref={playAreaRef} className="scroll-mt-20 transition-all duration-500 animate-fade-in-up">
+              <div className="wp-seigaiha rounded-3xl border-[3px] border-coffee-dark shadow-[0_6px_0_#3b2f2f] p-5 sm:p-7 max-w-2xl mx-auto">
+                <p className="text-xs font-serif text-coffee-dark/60 mb-1">2 / 2</p>
                 <h3 className="text-2xl font-serif text-coffee-dark mb-1">あいてを えらぶ</h3>
                 <p className="text-xs font-serif text-coffee-dark/70 mb-4">れんさで おじゃまを おくって、あいての上まで うめたら かち</p>
 
-                {/* 相手：顔を並べて選ぶ */}
-                <div className="wp-card p-3 mb-4">
-                  <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
-                    {CPU_CHARACTERS.map(c => {
-                      const selected = selectedCharacterId === c.id;
-                      return (
-                        <button
-                          key={c.id}
-                          type="button"
-                          onClick={() => setSelectedCharacterId(c.id)}
-                          aria-pressed={selected}
-                          className={`flex flex-col items-center rounded-xl p-1 transition-transform duration-150 ${selected ? '-translate-y-1' : 'hover:-translate-y-0.5'}`}
-                        >
-                          <img
-                            src={c.icon}
-                            alt={c.name}
-                            width={56}
-                            height={56}
-                            loading="lazy"
-                            className={`w-14 h-14 rounded-full object-cover bg-[#131320] border-[3px] ${
-                              selected ? 'border-[#e5598a] shadow-[0_3px_0_#3b2f2f]' : 'border-coffee-dark/20'
-                            }`}
-                          />
-                          <span className={`mt-1 text-xs font-serif whitespace-nowrap px-1.5 rounded-full ${selected ? 'bg-[#f79ab7] text-white' : 'text-coffee-dark'}`}>{c.name}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
+                {/* 相手：顔を並べて選ぶ。自分と同じキャラも選べる（同キャラ戦） */}
+                <CharacterPicker
+                  selectedId={selectedCharacterId}
+                  onSelect={setSelectedCharacterId}
+                  tone="yamabuki"
+                  markId={playerCharacterId}
+                  markLabel="じぶん"
+                />
 
-                <p className="text-coffee-dark mb-5 font-serif">
-                  <span className="wp-tag mr-2">VS {selectedCharacter.name}</span>
+                <p className="text-coffee-dark mb-5 font-serif flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
+                  <span className="wp-tag" style={{ background: 'var(--wp-sakura)', color: '#fff' }}>{playerCharacter.name}</span>
+                  <span>VS</span>
+                  <span className="wp-tag" style={{ background: 'var(--wp-yamabuki)' }}>{selectedCharacter.name}</span>
                   <span className="text-xs text-coffee-dark/70">{selectedCharacter.tagline}</span>
                 </p>
 
@@ -446,8 +458,8 @@ export const GameSection: React.FC = () => {
                   <button type="button" onClick={() => setGameMode('vs-cpu')} className="wp-btn wp-btn-sakura w-full py-3 text-lg">
                     たいせん する！
                   </button>
-                  <button type="button" onClick={() => setGameMode(null)} className="wp-btn wp-btn-kinari w-full py-2 text-sm">
-                    もどる
+                  <button type="button" onClick={() => setGameMode('player-select')} className="wp-btn wp-btn-kinari w-full py-2 text-sm">
+                    もどる（じぶんを えらびなおす）
                   </button>
                 </div>
               </div>
@@ -458,9 +470,10 @@ export const GameSection: React.FC = () => {
                 <PuyoPuyoGame />
               ) : gameMode === 'vs-cpu' ? (
                 <PuyoVsCpuGame
-                  key={`vs-cpu-${selectedDifficulty}-${selectedCharacterId}`}
+                  key={`vs-cpu-${selectedDifficulty}-${playerCharacterId}-${selectedCharacterId}`}
                   initialDifficulty={selectedDifficulty}
                   characterId={selectedCharacterId}
+                  playerCharacterId={playerCharacterId}
                   onChangeOpponent={() => setGameMode('difficulty-select')}
                 />
               ) : gameMode === 'frog-maze' ? (

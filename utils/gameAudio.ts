@@ -129,28 +129,89 @@ export function setBgmPinch(on: boolean) {
 
 // --- ボイス ---
 
-/** 台詞を言う。前のボイスは止める */
-export function playVoice(src: string) {
+/**
+ * 台詞の言い方。声の出口は1つなので、自分の側と相手の側の台詞が重なったときの順番を決める。
+ * - now: 前のボイスを止めて、すぐ言う（技を出した側・勝った側）
+ * - after: いま言っている台詞が終わってから言う（受けた側・負けた側）。待ちは1本だけで、古くなったら言わない
+ * - ifIdle: 何も言っていないときだけ言う（おじゃまを食らった短い声）
+ */
+export type VoiceTiming = 'now' | 'after' | 'ifIdle';
+
+/** 待っている台詞が、これより古くなったら言わない（前の台詞は長いもので6秒ほど） */
+const VOICE_QUEUE_STALE_MS = 9000;
+/** after の台詞は、同じ瞬間に now の台詞が来るのを少しだけ待ってから言う */
+const VOICE_AFTER_GRACE_MS = 80;
+
+/** いま鳴っている掛け声がどちらの側か（自分の側の掛け声を優先する） */
+let chainSide: 'player' | 'cpu' | null = null;
+let queued: { src: string; at: number } | null = null;
+let graceTimer: ReturnType<typeof setTimeout> | null = null;
+
+const voiceBusy = () => !!voice && !voice.paused && !voice.ended;
+
+function startVoice(src: string, isLine: boolean) {
   if (!voice) return;
   voice.pause();
   voice.src = src;
-  voiceIsLine = true;
+  voiceIsLine = isLine;
   duck(true);
   void voice.play().catch(() => duck(false));
 }
 
-/** 連鎖の掛け声。台詞を言っている途中なら言わない */
-export function playChainVoice(src: string) {
+/** 待っている台詞があれば言う */
+function playQueued() {
+  if (!queued) return;
+  const next = queued;
+  queued = null;
+  if (Date.now() - next.at < VOICE_QUEUE_STALE_MS) startVoice(next.src, true);
+}
+
+if (voice) {
+  // 言い終わったら、または読み込めなかったら、待っている台詞へ
+  const next = () => {
+    chainSide = null;
+    playQueued();
+  };
+  voice.addEventListener('ended', next);
+  voice.addEventListener('error', next);
+}
+
+/** 台詞を言う */
+export function playVoice(src: string, timing: VoiceTiming = 'now') {
   if (!voice) return;
-  if (voiceIsLine && !voice.paused && !voice.ended) return;
-  voice.pause();
-  voice.src = src;
-  voiceIsLine = false;
-  duck(true);
-  void voice.play().catch(() => duck(false));
+  if (timing === 'ifIdle') {
+    if (!voiceBusy() && !queued) startVoice(src, true);
+    return;
+  }
+  if (timing === 'after') {
+    queued = { src, at: Date.now() };
+    // 掛け声は台詞より軽いので、台詞を待たせない。台詞を言っている途中なら、終わってから
+    if (voiceBusy() && voiceIsLine) return;
+    if (graceTimer) clearTimeout(graceTimer);
+    graceTimer = setTimeout(() => {
+      graceTimer = null;
+      if (!(voiceBusy() && voiceIsLine)) playQueued();
+    }, VOICE_AFTER_GRACE_MS);
+    return;
+  }
+  chainSide = null;
+  startVoice(src, true);
+}
+
+/** 連鎖の掛け声。台詞を言っている途中なら言わない。自分の側の掛け声は相手の掛け声で遮らない */
+export function playChainVoice(src: string, side: 'player' | 'cpu' = 'cpu') {
+  if (!voice) return;
+  if (voiceIsLine && voiceBusy()) return;
+  if (side === 'cpu' && chainSide === 'player' && voiceBusy()) return;
+  chainSide = side;
+  startVoice(src, false);
 }
 
 export function stopVoice() {
+  queued = null;
+  if (graceTimer) clearTimeout(graceTimer);
+  graceTimer = null;
+  chainSide = null;
   voice?.pause();
 }
 

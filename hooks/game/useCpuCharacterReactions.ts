@@ -13,14 +13,19 @@ interface SideState {
 
 interface Params {
   character: CpuCharacter;
+  /** このキャラが言う台詞（CPU 側は character.lines、自分の側は味方用の台詞） */
+  lines: Record<CpuLineKind, string[]>;
   isGameOver: boolean;
-  winner: string | null;
-  player: SideState;
-  cpu: SideState;
-  /** CPU の盤面にあるおじゃまの数（増えたら「食らった」声） */
-  cpuOjama: number;
-  /** CPU の盤面が上まで積み上がり、しかもプレイヤーより高いか（ピンチの台詞用） */
-  cpuPinch: boolean;
+  /** このキャラの側が勝ったか */
+  won: boolean;
+  /** このキャラの側の盤面 */
+  self: SideState;
+  /** 向かいの盤面 */
+  opponent: SideState;
+  /** このキャラの側の盤面にあるおじゃまの数（増えたら「食らった」声） */
+  selfOjama: number;
+  /** このキャラの側の盤面が上まで積み上がり、しかも向かいより高いか（ピンチの台詞用） */
+  selfPinch: boolean;
 }
 
 export interface CpuCutin {
@@ -36,10 +41,10 @@ const PINCH_GAP_MS = 8000;
 // currentChainStep は「消えた回数 - 1」
 const roundsOf = (side: SideState) => (side.isChaining ? side.currentChainStep + 1 : 0);
 
-/** 対戦の流れに合わせて、CPU キャラの台詞とカットインを決める */
-export const useCpuCharacterReactions = ({ character, isGameOver, winner, player, cpu, cpuOjama, cpuPinch }: Params) => {
+/** 対戦の流れに合わせて、片方の側のキャラの台詞とカットインを決める（CPU 側と自分の側で1つずつ使う） */
+export const useCharacterReactions = ({ character, lines, isGameOver, won, self, opponent, selfOjama, selfPinch }: Params) => {
   const [lineKind, setLineKind] = useState<CpuLineKind>('intro');
-  const [lineIndex, setLineIndex] = useState(() => Math.floor(Math.random() * Math.max(1, character.lines.intro.length)));
+  const [lineIndex, setLineIndex] = useState(() => Math.floor(Math.random() * Math.max(1, lines.intro.length)));
   // 同じ台詞をもう一度言ったときも分かるように、言うたびに数える（ボイスの合図）
   const [lineTick, setLineTick] = useState(0);
   const lastIndex = useRef<Partial<Record<CpuLineKind, number>>>({});
@@ -47,7 +52,7 @@ export const useCpuCharacterReactions = ({ character, isGameOver, winner, player
 
   /** 場面の台詞を、前回と違う1本から選んで言う */
   const say = (kind: CpuLineKind) => {
-    const count = character.lines[kind].length;
+    const count = lines[kind].length;
     if (count === 0) return;
     let n = Math.floor(Math.random() * count);
     if (count > 1 && n === lastIndex.current[kind]) n = (n + 1) % count;
@@ -60,27 +65,27 @@ export const useCpuCharacterReactions = ({ character, isGameOver, winner, player
 
   const [cutin, setCutin] = useState<CpuCutin | null>(null);
   const cutinCount = useRef(0);
-  const cpuFired = useRef(false);
-  const playerFired = useRef(false);
+  const selfFired = useRef(false);
+  const opponentFired = useRef(false);
 
-  // カットインは1本1〜3MB。出す瞬間に読み込みが間に合うよう、相手が決まった時点で先読みする
+  // カットインは1本1〜3MB。出す瞬間に読み込みが間に合うよう、キャラが決まった時点で先読みする
   useEffect(() => {
     character.cutins.forEach(src => {
       new Image().src = src;
     });
   }, [character]);
 
-  const cpuRounds = roundsOf(cpu);
-  const playerRounds = roundsOf(player);
+  const selfRounds = roundsOf(self);
+  const opponentRounds = roundsOf(opponent);
 
-  // CPU の大連鎖: 1連鎖につき1回だけカットイン
+  // こちらの大連鎖: 1連鎖につき1回だけカットイン
   useEffect(() => {
-    if (cpuRounds === 0) {
-      cpuFired.current = false;
+    if (selfRounds === 0) {
+      selfFired.current = false;
       return;
     }
-    if (cpuFired.current || cpuRounds < CUTIN_MIN_CHAIN || character.cutins.length === 0) return;
-    cpuFired.current = true;
+    if (selfFired.current || selfRounds < CUTIN_MIN_CHAIN || character.cutins.length === 0) return;
+    selfFired.current = true;
     const n = cutinCount.current++;
     const len = character.cutins.length;
     // 同じ URL の動く webp は頭から再生し直されないことがあるので、2周目からは URL を変える
@@ -88,44 +93,44 @@ export const useCpuCharacterReactions = ({ character, isGameOver, winner, player
     const src = character.cutins[n % len] + (lap > 0 ? `?lap=${lap}` : '');
     setCutin({ src, id: n });
     say('attack');
-  }, [cpuRounds, character]);
+  }, [selfRounds, character]);
 
-  // プレイヤーの大連鎖を受けたとき
+  // 向かいの大連鎖を受けたとき
   useEffect(() => {
-    if (playerRounds === 0) {
-      playerFired.current = false;
+    if (opponentRounds === 0) {
+      opponentFired.current = false;
       return;
     }
-    if (playerFired.current || playerRounds < CUTIN_MIN_CHAIN) return;
-    playerFired.current = true;
+    if (opponentFired.current || opponentRounds < CUTIN_MIN_CHAIN) return;
+    opponentFired.current = true;
     say('attacked');
-  }, [playerRounds]);
+  }, [opponentRounds]);
 
   // おじゃまが降ってきた瞬間
-  const prevOjama = useRef(cpuOjama);
+  const prevOjama = useRef(selfOjama);
   useEffect(() => {
-    const landed = cpuOjama > prevOjama.current;
-    prevOjama.current = cpuOjama;
+    const landed = selfOjama > prevOjama.current;
+    prevOjama.current = selfOjama;
     if (landed && !isGameOver && Date.now() - lastSaidAt.current > DAMAGED_GAP_MS) say('damaged');
-  }, [cpuOjama]);
+  }, [selfOjama]);
 
   // 上まで積み上がって、こちらより危ないとき（下がってからまた積み上がれば、また言う。ただし続けて何度も言わない）
   const lastPinchAt = useRef(0);
   useEffect(() => {
-    if (!cpuPinch || isGameOver || Date.now() - lastPinchAt.current < PINCH_GAP_MS) return;
+    if (!selfPinch || isGameOver || Date.now() - lastPinchAt.current < PINCH_GAP_MS) return;
     lastPinchAt.current = Date.now();
     say('pinch');
-  }, [cpuPinch]);
+  }, [selfPinch]);
 
   // 勝敗。RESTART で isGameOver が戻ったら最初の台詞へ
   useEffect(() => {
     if (isGameOver) {
-      say(winner === 'cpu' ? 'win' : 'lose');
+      say(won ? 'win' : 'lose');
     } else {
       setLineKind('intro');
       setCutin(null);
     }
-  }, [isGameOver, winner]);
+  }, [isGameOver, won]);
 
   useEffect(() => {
     if (!cutin) return;
@@ -133,7 +138,7 @@ export const useCpuCharacterReactions = ({ character, isGameOver, winner, player
     return () => clearTimeout(timer);
   }, [cutin]);
 
-  const options = character.lines[lineKind];
+  const options = lines[lineKind];
   const index = Math.min(lineIndex, Math.max(0, options.length - 1));
   return { line: options[index] ?? '', lineKind, lineIndex: index, lineTick, cutin };
 };

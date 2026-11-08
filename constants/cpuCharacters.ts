@@ -1,4 +1,5 @@
 import { CPU_CHARACTER_DATA } from './cpuCharacterData';
+import { ALLY_LINE_DATA } from './allyLineData';
 
 // CPU 対戦の相手キャラ。『月蝕綺譚 -Luna Occulta-』の二次創作ガイドラインに沿って使う（非公式）。
 // 絵とカットインは公式の素材蔵から直接読む（素材そのものは同梱しない）。
@@ -35,7 +36,9 @@ export const CUTIN_DURATION_MS = 2400;
 export const LINE_KINDS: CpuLineKind[] = ['intro', 'attack', 'attacked', 'damaged', 'pinch', 'win', 'lose'];
 
 export const CPU_CHARACTERS: CpuCharacter[] = CPU_CHARACTER_DATA;
-export const DEFAULT_CHARACTER_ID = 'sakuya';
+/** 自分のキャラのはじめの選択（タイトルで声を出す咲耶）。相手のはじめの選択は於兎にして、最初から同キャラ戦にならないようにする */
+export const DEFAULT_PLAYER_CHARACTER_ID = 'sakuya';
+export const DEFAULT_OPPONENT_CHARACTER_ID = 'oto';
 
 export const characterById = (id: string) =>
   CPU_CHARACTERS.find(c => c.id === id) ?? CPU_CHARACTERS[0];
@@ -52,5 +55,22 @@ export const chainVoiceOf = (character: CpuCharacter, step: number) =>
 
 export const allVoicesOf = (character: CpuCharacter) => [
   ...LINE_KINDS.flatMap(kind => character.lines[kind].map((_, n) => voiceOf(character, kind, n))),
+  ...character.chain.map((_, i) => chainVoiceOf(character, i + 1))
+];
+
+// --- プレイヤーが選んだキャラ（あるじどのの味方） ---
+// 台詞だけ味方用（allyLineData.ts）。掛け声・カットイン・アイコンは CPU 側と同じものを使う。
+
+const EMPTY_LINES: Record<CpuLineKind, string[]> = { intro: [], attack: [], attacked: [], damaged: [], pinch: [], win: [], lose: [] };
+
+/** 味方として言う台詞 */
+export const allyLinesOf = (character: CpuCharacter) => ALLY_LINE_DATA[character.id] ?? EMPTY_LINES;
+
+/** n は allyLinesOf(character)[kind] の何本目か（0始まり） */
+export const allyVoiceOf = (character: CpuCharacter, kind: CpuLineKind, n: number) =>
+  `${VOICE_DIR}/${character.id}_ally_${kind}_${n + 1}.mp3`;
+
+export const allAllyVoicesOf = (character: CpuCharacter) => [
+  ...LINE_KINDS.flatMap(kind => allyLinesOf(character)[kind].map((_, n) => allyVoiceOf(character, kind, n))),
   ...character.chain.map((_, i) => chainVoiceOf(character, i + 1))
 ];

@@ -34,8 +34,24 @@ export const CpuCharacterPanel = React.forwardRef<HTMLDivElement, PanelProps>(({
 ));
 CpuCharacterPanel.displayName = 'CpuCharacterPanel';
 
-/** CPU の大連鎖で盤面に重ねる必殺カットイン */
-export const CpuCutinOverlay: React.FC<{ cutin: CpuCutin | null; name: string }> = ({ cutin, name }) => {
+/** スマホ・タブレット用：自分の側（あるじどのの味方）の顔と台詞。相手の絵巻より小さく、桜色の地 */
+export const AllyCharacterPanel: React.FC<PanelProps> = ({ character, line }) => (
+  <div className="flex items-center gap-2 px-2 py-1 rounded-2xl border-[3px] border-coffee-dark bg-[#fde7ee] shadow-[0_3px_0_#3b2f2f]">
+    <img
+      src={character.icon}
+      alt={character.name}
+      width={40}
+      height={40}
+      className="w-10 h-10 shrink-0 rounded-full object-cover border-[3px] border-coffee-dark bg-[#131320]"
+    />
+    <p key={line} className="min-w-0 flex-1 text-left text-xs leading-snug font-serif text-coffee-dark animate-fade-in-up">
+      <span className="mr-1 text-coffee-dark/70">{character.name}</span>「{line}」
+    </p>
+  </div>
+);
+
+/** 大連鎖で盤面に重ねる必殺カットイン。side を渡すと、どちらの側のカットインか札を出す（同キャラ戦で見分けるため） */
+export const CpuCutinOverlay: React.FC<{ cutin: CpuCutin | null; name: string; side?: 'player' | 'cpu' }> = ({ cutin, name, side }) => {
   if (!cutin) return null;
   return (
     <div key={cutin.id} className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center overflow-hidden rounded-2xl">
@@ -47,6 +63,14 @@ export const CpuCutinOverlay: React.FC<{ cutin: CpuCutin | null; name: string }>
         alt={`${name}の必殺カットイン`}
         className="cutin-slash relative w-[125%] max-w-none"
       />
+      {side && (
+        <span
+          className={`cutin-dim wp-tag absolute top-2 ${side === 'player' ? 'left-2' : 'right-2'}`}
+          style={{ background: side === 'player' ? 'var(--wp-sakura)' : 'var(--wp-washi)', color: side === 'player' ? '#fff' : undefined }}
+        >
+          {side === 'player' ? 'じぶん' : 'あいて'}
+        </span>
+      )}
     </div>
   );
 };
@@ -54,7 +78,7 @@ export const CpuCutinOverlay: React.FC<{ cutin: CpuCutin | null; name: string }>
 /** 二次創作であることの表示（掟: 公式と誤認させない） */
 export const KitanCredit: React.FC<{ url: string }> = ({ url }) => (
   <p className="mt-2 text-[11px] text-coffee-dark/60">
-    CPU のキャラクター：
+    キャラクター：
     <a href={url} target="_blank" rel="noopener noreferrer" className="underline">
       『月蝕綺譚 -Luna Occulta-』
     </a>

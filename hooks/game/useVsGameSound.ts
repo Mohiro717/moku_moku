@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import type { GameState, PuyoPair, VsGameState } from '../../types/game';
-import { allVoicesOf, chainVoiceOf, voiceOf, type CpuCharacter, type CpuLineKind } from '../../constants/cpuCharacters';
+import { chainVoiceOf, type CpuCharacter, type CpuLineKind } from '../../constants/cpuCharacters';
 import type { CpuCutin } from './useCpuCharacterReactions';
 import { countOjama } from '../../utils/boardStatus';
 import {
@@ -13,19 +13,46 @@ import {
   resumeBgm,
   setBgmPinch,
   stopBgm,
-  stopVoice
+  stopVoice,
+  type VoiceTiming
 } from '../../utils/gameAudio';
 
-interface Params {
-  gameState: VsGameState | null;
+/** 片方の側のキャラが、いま何を言ったか（useCharacterReactions の戻り値） */
+export interface SideVoice {
   character: CpuCharacter;
   lineKind: CpuLineKind;
   lineIndex: number;
   lineTick: number;
   cutin: CpuCutin | null;
+  /** 台詞のボイスの場所（CPU 側は voiceOf、自分の側は allyVoiceOf） */
+  voiceSrc: (kind: CpuLineKind, n: number) => string;
+  /** 先読みするボイス */
+  voices: string[];
+}
+
+interface Params {
+  gameState: VsGameState | null;
+  /** 相手（CPU）の側 */
+  cpu: SideVoice;
+  /** 自分の側（プレイヤーが選んだキャラ） */
+  ally: SideVoice;
   /** どちらかの盤面が上まで積み上がっているか（BGM を速くする） */
   pinch: boolean;
 }
+
+/**
+ * 声の出口は1つ。両方の側が同時に言うときは、技を出した側・勝った側が先に言い、
+ * 受けた側・負けた側はそのあとに言う。おじゃまを食らった短い声は、何も言っていないときだけ
+ */
+const LINE_TIMING: Record<CpuLineKind, VoiceTiming> = {
+  intro: 'now',
+  attack: 'now',
+  win: 'now',
+  attacked: 'after',
+  lose: 'after',
+  pinch: 'after',
+  damaged: 'ifIdle'
+};
 
 /** 相手側の音は小さめに */
 const CPU_VOLUME = 0.45;
@@ -68,23 +95,29 @@ const useBoardSound = (side: GameState | undefined, volume: number, onChainStep?
 };
 
 /** 対戦の BGM・効果音・ボイス */
-export const useVsGameSound = ({ gameState, character, lineKind, lineIndex, lineTick, cutin, pinch }: Params) => {
+export const useVsGameSound = ({ gameState, cpu, ally, pinch }: Params) => {
   const isPlaying = !!gameState?.isPlaying;
   const isPaused = !!gameState?.isPaused;
   const isGameOver = !!gameState?.isGameOver;
   const winner = gameState?.winner ?? null;
+  const character = cpu.character;
 
   useEffect(() => {
-    preloadVoices(allVoicesOf(character));
-  }, [character]);
+    preloadVoices(cpu.voices);
+  }, [cpu.character]);
+  useEffect(() => {
+    preloadVoices(ally.voices);
+  }, [ally.character]);
 
   // 始まり・ポーズ・終わり
   const wasPlaying = useRef(false);
   useEffect(() => {
     if (isPlaying && !wasPlaying.current && !isGameOver) {
       playSe('start');
+      // BGM は相手のテーマ曲。はじめの台詞は自分の側が先に言い、相手が返す
       playBgm(character.bgm);
-      if (character.lines.intro.length > 0) playVoice(voiceOf(character, 'intro', lineIndex));
+      playVoice(ally.voiceSrc('intro', ally.lineIndex));
+      if (character.lines.intro.length > 0) playVoice(cpu.voiceSrc('intro', cpu.lineIndex), 'after');
     }
     if (!isPlaying && wasPlaying.current && !isGameOver) {
       // RESTART
@@ -116,20 +149,15 @@ export const useVsGameSound = ({ gameState, character, lineKind, lineIndex, line
     stopVoice();
   }, []);
 
-  // 台詞を言うたびにボイス（intro は START のときに鳴らす）
-  useEffect(() => {
-    if (lineTick === 0 || lineKind === 'intro') return;
-    const src = voiceOf(character, lineKind, lineIndex);
-    if (lineKind === 'win' || lineKind === 'lose') {
-      const timer = setTimeout(() => playVoice(src), RESULT_VOICE_DELAY_MS);
-      return () => clearTimeout(timer);
-    }
-    playVoice(src);
-  }, [lineTick]);
+  useSideLineVoice(cpu);
+  useSideLineVoice(ally);
 
   useEffect(() => {
-    if (cutin) playSe('cutin');
-  }, [cutin?.id]);
+    if (cpu.cutin) playSe('cutin');
+  }, [cpu.cutin?.id]);
+  useEffect(() => {
+    if (ally.cutin) playSe('cutin');
+  }, [ally.cutin?.id]);
 
   // 自分のぷよの操作音
   const playerPair = gameState?.player.currentPair ?? null;
@@ -139,8 +167,24 @@ export const useVsGameSound = ({ gameState, character, lineKind, lineIndex, line
     prevPair.current = playerPair;
   }, [playerPair?.x, playerPair?.y, playerPair?.rotation, !!playerPair]);
 
-  useBoardSound(gameState?.player, 1);
-  useBoardSound(gameState?.cpu, CPU_VOLUME, step => {
-    if (character.chain.length > 0) playChainVoice(chainVoiceOf(character, step));
+  useBoardSound(gameState?.player, 1, step => {
+    if (ally.character.chain.length > 0) playChainVoice(chainVoiceOf(ally.character, step), 'player');
   });
+  useBoardSound(gameState?.cpu, CPU_VOLUME, step => {
+    if (character.chain.length > 0) playChainVoice(chainVoiceOf(character, step), 'cpu');
+  });
+};
+
+/** 片方の側が台詞を言うたびにボイス（intro は START のときに鳴らす） */
+const useSideLineVoice = ({ lineKind, lineIndex, lineTick, voiceSrc }: SideVoice) => {
+  useEffect(() => {
+    if (lineTick === 0 || lineKind === 'intro') return;
+    const src = voiceSrc(lineKind, lineIndex);
+    const timing = LINE_TIMING[lineKind];
+    if (lineKind === 'win' || lineKind === 'lose') {
+      const timer = setTimeout(() => playVoice(src, timing), RESULT_VOICE_DELAY_MS);
+      return () => clearTimeout(timer);
+    }
+    playVoice(src, timing);
+  }, [lineTick]);
 };

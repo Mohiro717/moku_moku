@@ -55,6 +55,8 @@
       "p-foot  .      c-foot";
   }
   .puyo-vs-cutin { grid-area: c-field; }
+  /* 自分の側のカットインは自分の盤面に */
+  .puyo-vs-cutin.puyo-vs-cutin-player { grid-area: p-field; }
 }
 /* 相手の台詞のふきだし：ぽんと出て、3.5秒ほどで消える */
 .puyo-vs-bubble {
