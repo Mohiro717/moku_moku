@@ -28,7 +28,8 @@ const BURST_COLORS: Record<string, string> = {
   blue: '#6aa9fb',
   green: '#55dc86',
   yellow: '#fbd23a',
-  ojama: '#8a919c'
+  // ぬばたまは祓うと暗紫の花弁になる
+  ojama: '#6b4a9a'
 };
 
 // ========================================
@@ -40,7 +41,8 @@ const GRADIENTS: Record<string, [string, string, string]> = {
   blue: ['#d6e9ff', '#6aa9fb', '#2f6fd6'],
   green: ['#d4fbe0', '#55dc86', '#1f9d50'],
   yellow: ['#fff6c8', '#fbd23a', '#d49b06'],
-  ojama: ['#d9dde3', '#8a919c', '#4b525c']
+  // おじゃま＝ぬばたま（月蝕綺譚の澱）。宵闇藍の墨のしずく。ツヤは出さない
+  ojama: ['#3d3862', '#1f1d34', '#0d0c19']
 };
 
 const DEFS_ID = 'puyo-svg-defs';
@@ -59,7 +61,8 @@ const ensureDefs = () => {
         <stop offset="0" stop-color="${light}"/><stop offset="${name === 'ojama' ? '.4' : '.35'}" stop-color="${mid}"/><stop offset="1" stop-color="${dark}"/>
       </radialGradient>`).join('')}
     <path id="puyo-body" d="M20 3 C31 3 37 11 37 21 C37 31 30 37 20 37 C10 37 3 31 3 21 C3 11 9 3 20 3 Z"/>
-    <path id="puyo-star" d="M0 -7 L2 -2 L7 0 L2 2 L0 7 L-2 2 L-7 0 L-2 -2 Z"/>
+    <filter id="nb-haze" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="1.8"/></filter>
+    <path id="puyo-star"d="M0 -7 L2 -2 L7 0 L2 2 L0 7 L-2 2 L-7 0 L-2 -2 Z"/>
   </defs>`;
   document.body.appendChild(svg);
 };
@@ -69,17 +72,41 @@ export const dropDuration = (rows: number): number => (rows > 0 ? Math.min(GAME_
 
 const SIZE = 'puyo-cell';
 
-/** ぷよの顔 SVG（おじゃまは怒り顔）。予告アイコンでも使う */
-export const PuyoFace: React.FC<{ ojama: boolean; squint?: boolean; blinkDelay?: string }> = ({ ojama, squint = false, blinkDelay }) => {
-  if (ojama) {
-    return (
-      <g>
-        <path d="M11 15 L17 18 M29 15 L23 18" stroke="#2b2b2b" strokeWidth="2.4" strokeLinecap="round" />
-        <circle cx="14.5" cy="21" r="2.6" fill="#2b2b2b" />
-        <circle cx="25.5" cy="21" r="2.6" fill="#2b2b2b" />
+/** 胸の紅いひび。正典「個体ごとに位置が違う」に合わせ、3本から選んで左右も振る */
+const NUBATAMA_CRACKS = [
+  'M25 9 L23.6 13.5 L25.6 16.4 L23.4 21.5',
+  'M28.5 13 L25.8 16.2 L27 19 L24.2 24',
+  'M22 8.5 L23.5 12.8 L21.4 15.6 L22.8 19.5'
+];
+const CRACK_RED = '#d6303e';
+
+/**
+ * おじゃま＝ぬばたま（月蝕綺譚の澱）。宵闇藍の丸い墨のしずく、紅い点の眼ふたつ、胸に紅いひび一本。
+ * ふちは夜気へにじむ（点々の墨と頭の墨の巻き）。ツヤの白・口・虹彩のある目は描かない（正典の禁止）。
+ * variant は 0〜1 の乱数。ひびの形と左右をこれで決める。
+ */
+export const Nubatama: React.FC<{ variant?: number; blinkDelay?: string }> = ({ variant = 0, blinkDelay }) => {
+  const crack = NUBATAMA_CRACKS[Math.floor(variant * NUBATAMA_CRACKS.length) % NUBATAMA_CRACKS.length];
+  const flip = variant * 10 % 1 >= 0.5;
+  return (
+    <g transform={flip ? 'translate(40 0) scale(-1 1)' : undefined}>
+      {/* にじみ：体のまわりのぼかした墨と、頭の墨の巻き */}
+      <use href="#puyo-body" fill="#1b1b2e" opacity=".5" filter="url(#nb-haze)" transform="translate(20 22) scale(1.1) translate(-20 -22)" />
+      <path d="M16.6 5.2 C15.9 2.6 18.4 0.8 20 2.7 C20.7 0.6 23.7 0.8 23.3 3.2 C24.8 3 25.2 4.7 23.9 5.5 Z" fill="#141326" />
+      <circle cx="26.6" cy="1.9" r=".9" fill="#141326" />
+      <circle cx="12.8" cy="3.6" r=".7" fill="#141326" opacity=".8" />
+      <use href="#puyo-body" fill="url(#puyo-g-ojama)" />
+      <path d={crack} stroke={CRACK_RED} strokeWidth=".9" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity=".9" />
+      <g className="nubatama-eye" style={blinkDelay ? { animationDelay: blinkDelay } : undefined}>
+        <circle cx="14.6" cy="23" r="2.1" fill={CRACK_RED} />
+        <circle cx="25.4" cy="23" r="2.1" fill={CRACK_RED} />
       </g>
-    );
-  }
+    </g>
+  );
+};
+
+/** ぷよの顔 SVG */
+export const PuyoFace: React.FC<{ squint?: boolean; blinkDelay?: string }> = ({ squint = false, blinkDelay }) => {
   return (
     <g className={squint ? 'puyo-eye-squint' : undefined}>
       <g className="puyo-eye" style={blinkDelay ? { animationDelay: blinkDelay } : undefined}>
@@ -143,9 +170,15 @@ export const Puyo: React.FC<PuyoProps> = memo(({
       <div className={`w-full h-full ${landed ? 'puyo-drop' : ''}`} style={dropStyle}>
         <div className={`w-full h-full ${landed ? 'puyo-squash' : ''}`} style={dropStyle}>
           <svg className={`puyo-svg w-full h-full overflow-visible ${stateClass}`} style={bodyStyle} viewBox="0 0 40 40">
-            <use href="#puyo-body" fill={`url(#puyo-g-${color})`} />
-            <ellipse cx="13" cy="10" rx="6" ry="3.4" fill="#fff" opacity=".65" transform="rotate(-25 13 10)" />
-            <PuyoFace ojama={color === 'ojama'} squint={landed} blinkDelay={`${(-phase * 3.6).toFixed(2)}s`} />
+            {color === 'ojama' ? (
+              <Nubatama variant={phase} blinkDelay={`${(-phase * 6).toFixed(2)}s`} />
+            ) : (
+              <>
+                <use href="#puyo-body" fill={`url(#puyo-g-${color})`} />
+                <ellipse cx="13" cy="10" rx="6" ry="3.4" fill="#fff" opacity=".65" transform="rotate(-25 13 10)" />
+                <PuyoFace squint={landed} blinkDelay={`${(-phase * 3.6).toFixed(2)}s`} />
+              </>
+            )}
           </svg>
         </div>
       </div>

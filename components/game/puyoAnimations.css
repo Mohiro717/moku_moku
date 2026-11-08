@@ -113,6 +113,16 @@
   transform-origin: center;
   animation: puyo-eye-blink 3.6s infinite;
 }
+/* ぬばたまのまばたきは、ぷよよりゆっくり（正典「まばたきはゆっくり」） */
+.nubatama-eye {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: nubatama-eye-blink 6s infinite;
+}
+@keyframes nubatama-eye-blink {
+  0%, 88%, 100% { transform: scaleY(1); }
+  92%, 94%      { transform: scaleY(0.12); }
+}
 @keyframes puyo-eye-blink {
   0%, 92%, 100% { transform: scaleY(1); }
   95%           { transform: scaleY(0.1); }
@@ -258,7 +268,7 @@
   .puyo-star, .puyo-bridge, .chain-rays, .chain-text, .attack-beam, .ojama-in {
     animation-duration: 1ms; animation-delay: 0ms;
   }
-  .puyo-eye, .puyo-idle, .ojama-ready { animation: none; }
+  .puyo-eye, .nubatama-eye, .puyo-idle, .ojama-ready { animation: none; }
   .puyo-active { transition: none; }
 }
 

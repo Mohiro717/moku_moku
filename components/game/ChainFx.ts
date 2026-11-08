@@ -14,7 +14,7 @@ export const PUYO_HEX: Record<string, string> = {
   blue: '#6aa9fb',
   green: '#55dc86',
   yellow: '#fbd23a',
-  ojama: '#8a919c'
+  ojama: '#6b4a9a' // ぬばたまは祓うと暗紫の花弁
 };
 
 export interface PopPoint {

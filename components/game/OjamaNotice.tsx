@@ -1,5 +1,5 @@
 import React, { memo, useEffect, useRef } from 'react';
-import { PuyoFace } from './Puyo';
+import { Nubatama } from './Puyo';
 import './puyoAnimations.css';
 
 // 降る予定のおじゃまの予告。大きい単位から順に並べ、最大 MAX_ICONS 個まで出す。
@@ -34,11 +34,7 @@ const OjamaIcon: React.FC<{ kind: Kind }> = ({ kind }) => (
         <ellipse cx="14" cy="11" rx="5" ry="2.4" fill="#fff" opacity=".3" transform="rotate(-25 14 11)" />
       </>
     ) : (
-      <>
-        <use href="#puyo-body" fill="url(#puyo-g-ojama)" />
-        <ellipse cx="13" cy="10" rx="5" ry="2.6" fill="#fff" opacity=".45" transform="rotate(-25 13 10)" />
-        <PuyoFace ojama />
-      </>
+      <Nubatama />
     )}
   </svg>
 );
