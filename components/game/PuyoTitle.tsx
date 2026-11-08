@@ -10,7 +10,7 @@ export const PuyoTitle: React.FC = () => (
         <Puyo key={color} color={color} idle />
       ))}
     </div>
-    <h3 className="font-serif text-3xl text-coffee-dark leading-none">もくもくぷよ</h3>
-    <div className="mt-2 text-xs tracking-[0.3em] text-coffee-dark/60 font-serif">MOKU MOKU PUYO</div>
+    <h3 className="font-serif text-3xl text-coffee-dark leading-none">ぬばたま落とし</h3>
+    <div className="mt-2 text-xs tracking-[0.3em] text-coffee-dark/60 font-serif">NUBATAMA OTOSHI</div>
   </div>
 );

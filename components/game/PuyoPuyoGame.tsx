@@ -42,7 +42,7 @@ export const PuyoPuyoGame: React.FC = () => {
         <div className="flex items-center justify-between gap-2 mb-5">
           <h3 className="font-serif text-xl sm:text-2xl text-coffee-dark flex items-center gap-2">
             <span className="inline-block w-3 h-3 rounded-full bg-[#f79ab7] border-2 border-coffee-dark" />
-            もくもくぷよ
+            ぬばたま落とし
             <span className="text-xs text-coffee-dark/60">ひとりで</span>
           </h3>
           <span className="wp-tag">のんびり れんさ</span>

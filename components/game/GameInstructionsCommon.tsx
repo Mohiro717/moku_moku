@@ -26,9 +26,9 @@ export const GameInstructionsCommon: React.FC<GameInstructionsCommonProps> = mem
         {showOjamaExplanation && (
           <div className="mt-2 pt-2 border-t border-coffee-light/30">
             <div className="font-serif">対戦ルール：</div>
-            <div>・2連鎖以上でおじゃまぷよを送信</div>
+            <div>・2連鎖以上でおじゃまを送信</div>
             <div>・4個以上同時消去でも送信</div>
-            <div className="text-purple-600">・グレーのおじゃまぷよは隣接消去</div>
+            <div className="text-purple-600">・グレーのおじゃまは隣接消去</div>
             <div className="text-orange-600">・相手をゲームオーバーにさせると勝利！</div>
           </div>
         )}

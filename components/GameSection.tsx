@@ -37,7 +37,7 @@ export const GameSection: React.FC = () => {
           
           {!gameMode ? (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
-              {/* Moku Moku Puyo Card（和ポップ） */}
+              {/* ぬばたま落とし Card（和ポップ） */}
               <div className="wp-seigaiha rounded-3xl border-[3px] border-coffee-dark shadow-[0_6px_0_#3b2f2f] p-7 animate-fade-in-up">
                 <PuyoTitle />
 
@@ -217,7 +217,7 @@ export const GameSection: React.FC = () => {
                 {/* Content */}
                 <div className="text-center">
                   <h3 className="text-2xl font-serif text-coffee-dark mb-6 font-serif">
-                    Moku Moku Puyo
+                    ぬばたま落とし
                   </h3>
 
                   {/* Game Instructions */}
@@ -386,7 +386,7 @@ export const GameSection: React.FC = () => {
             <div className="transition-all duration-500 animate-fade-in-up">
               <div className="wp-seigaiha rounded-3xl border-[3px] border-coffee-dark shadow-[0_6px_0_#3b2f2f] p-5 sm:p-7 max-w-2xl mx-auto">
                 <h3 className="text-2xl font-serif text-coffee-dark mb-1">あいてを えらぶ</h3>
-                <p className="text-xs font-serif text-coffee-dark/70 mb-4">れんさで おじゃまぷよを おくって、あいての上まで うめたら かち</p>
+                <p className="text-xs font-serif text-coffee-dark/70 mb-4">れんさで おじゃまを おくって、あいての上まで うめたら かち</p>
 
                 {/* 相手：顔を並べて選ぶ */}
                 <div className="wp-card p-3 mb-4">

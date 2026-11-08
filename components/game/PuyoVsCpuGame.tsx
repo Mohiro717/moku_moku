@@ -227,7 +227,7 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
         <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
           <h3 className="font-serif text-lg sm:text-2xl text-coffee-dark flex items-center gap-2">
             <span className="inline-block w-3 h-3 rounded-full bg-[#f79ab7] border-2 border-coffee-dark" />
-            もくもくぷよ
+            ぬばたま落とし
           </h3>
           <div className="flex items-center gap-2 ml-auto">
             <span className="wp-tag !hidden sm:!inline-block" style={{ background: '#fff4d6' }}>つよさ：{DIFFICULTY_LABELS[gameState.difficulty]}</span>
