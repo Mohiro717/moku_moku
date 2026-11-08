@@ -22,6 +22,8 @@ export interface GameState {
   grid: PuyoCell[][];
   currentPair: PuyoPair | null;
   nextPair: PuyoPair | null;
+  /** 次の次（使っていない古いフックは持たないので省略可） */
+  nextNextPair?: PuyoPair | null;
   score: number;
   chainCount: number;
   isGameOver: boolean;

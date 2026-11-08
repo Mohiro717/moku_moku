@@ -50,11 +50,11 @@ const getGameResult = (isGameOver: boolean, winner: string | null, player: 'play
 };
 
 // つぎ＝木札、とくてん＝小判（和ポップの地のまま、目が行く部品だけ道具にする）
-const NextTag: React.FC<{ nextPair: PuyoPair | null; className?: string }> = ({ nextPair, className = '' }) => (
+const NextTag: React.FC<{ nextPair: PuyoPair | null; nextNextPair?: PuyoPair | null; className?: string }> = ({ nextPair, nextNextPair, className = '' }) => (
   <div className={`wp-kifuda-wrap ${className}`}>
     <div className="wp-wood wp-kifuda">
       <div className="text-xs font-serif mb-1">つぎ</div>
-      <NextPiecePreview nextPair={nextPair} />
+      <NextPiecePreview nextPair={nextPair} nextNextPair={nextNextPair} />
     </div>
   </div>
 );
@@ -101,9 +101,9 @@ const NameBand: React.FC<{ name: string; icon?: string; accent?: boolean; iconSi
 const BOARD_TOP = 'mt-[2.875rem]';
 
 /** スマホ・タブレット用：盤面のすぐ横に「つぎ」と「とくてん」を縦に積む。children はその下に足す */
-const SideInfo: React.FC<{ nextPair: PuyoPair | null; score: number; accent?: boolean; className?: string; children?: React.ReactNode }> = ({ nextPair, score, accent = false, className = '', children }) => (
+const SideInfo: React.FC<{ nextPair: PuyoPair | null; nextNextPair?: PuyoPair | null; score: number; accent?: boolean; className?: string; children?: React.ReactNode }> = ({ nextPair, nextNextPair, score, accent = false, className = '', children }) => (
   <div className={`${BOARD_TOP} w-[5.5rem] flex flex-col items-stretch gap-2 ${className}`}>
-    <NextTag nextPair={nextPair} />
+    <NextTag nextPair={nextPair} nextNextPair={nextNextPair} />
     <ScoreKoban score={score} accent={accent} />
     {children}
   </div>
@@ -299,8 +299,8 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
           {/* lg 以上のまんなかの列：上の両端に各自の「つぎ」（盤面の上の内側の角）、中段は空け、下端にボタン */}
           <div className={`[grid-area:center] ${BOARD_TOP} hidden lg:flex flex-col self-stretch px-3`}>
             <div className="flex justify-between">
-              <NextTag nextPair={gameState.player.nextPair} className="w-[5rem]" />
-              <NextTag nextPair={gameState.cpu.nextPair} className="w-[5rem]" />
+              <NextTag nextPair={gameState.player.nextPair} nextNextPair={gameState.player.nextNextPair} className="w-[5rem]" />
+              <NextTag nextPair={gameState.cpu.nextPair} nextNextPair={gameState.cpu.nextNextPair} className="w-[5rem]" />
             </div>
             {/* 自分の側の台詞：自分の盤面を隠さないよう、空いている中段にふきだしで出す */}
             <div className="relative mt-6">
@@ -345,7 +345,7 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
               </TouchControls>
             </div>
           </div>
-          <SideInfo className="[grid-area:p-side] lg:hidden" nextPair={gameState.player.nextPair} score={gameState.player.score} accent>
+          <SideInfo className="[grid-area:p-side] lg:hidden" nextPair={gameState.player.nextPair} nextNextPair={gameState.player.nextNextPair} score={gameState.player.score} accent>
             {controlButtons}
           </SideInfo>
           {/* lg 以上：名前の帯は盤面のすぐ下。アイコンは外側の端（本家と同じ位置） */}

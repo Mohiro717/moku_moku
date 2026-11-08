@@ -23,7 +23,7 @@ export const GameControls: React.FC<GameControlsProps> = ({
       <div className="wp-card p-3 text-center">
         <div className="text-sm font-serif text-coffee-dark mb-2">つぎ</div>
         <div className="inline-block">
-          <NextPiecePreview nextPair={gameState.nextPair} />
+          <NextPiecePreview nextPair={gameState.nextPair} nextNextPair={gameState.nextNextPair} />
         </div>
       </div>
 
