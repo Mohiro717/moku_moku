@@ -343,6 +343,14 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
                   footer={<BoardScore score={gameState.player.score} accent />}
                 />
               </TouchControls>
+              {/* 必殺カットインは揺れる盤面の枠（この div）の中に置く。外に置くと、連鎖の揺れで
+                  盤面だけが動いてカットインが浮いて見え、上のおじゃま予告の列にもはみ出す。
+                  同キャラ戦でも分かるよう、じぶん／あいての札を出す */}
+              <CpuCutinOverlay cutin={allySide.cutin} name={playerCharacter.name} side="player" />
+              {/* lg 未満は相手の盤面が小さいので、相手のカットインも自分の盤面に重ねる */}
+              <div className="lg:hidden pointer-events-none absolute inset-0 z-20">
+                <CpuCutinOverlay cutin={cutin} name={character.name} side="cpu" />
+              </div>
             </div>
           </div>
           <SideInfo className="[grid-area:p-side] lg:hidden" nextPair={gameState.player.nextPair} nextNextPair={gameState.player.nextNextPair} score={gameState.player.score} accent>
@@ -380,15 +388,10 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
                 chainStep={gameState.cpu.currentChainStep}
                 footer={<BoardScore score={gameState.cpu.score} />}
               />
+              <div className="hidden lg:block pointer-events-none absolute inset-0 z-20">
+                <CpuCutinOverlay cutin={cutin} name={character.name} side="cpu" />
+              </div>
             </div>
-          </div>
-          {/* 必殺カットイン：lg 以上はその側の盤面に、スマホでは盤面まわり全体に重ねる。
-              同キャラ戦でも分かるよう、じぶん／あいての札を出す */}
-          <div className="puyo-vs-cutin pointer-events-none absolute inset-0">
-            <CpuCutinOverlay cutin={cutin} name={character.name} side="cpu" />
-          </div>
-          <div className="puyo-vs-cutin puyo-vs-cutin-player pointer-events-none absolute inset-0">
-            <CpuCutinOverlay cutin={allySide.cutin} name={playerCharacter.name} side="player" />
           </div>
         </div>
 

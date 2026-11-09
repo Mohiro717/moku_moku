@@ -50,11 +50,11 @@ export const AllyCharacterPanel: React.FC<PanelProps> = ({ character, line }) =>
   </div>
 );
 
-/** 大連鎖で盤面に重ねる必殺カットイン。side を渡すと、どちらの側のカットインか札を出す（同キャラ戦で見分けるため） */
+/** 大連鎖で盤面に重ねる必殺カットイン。盤面の枠（.wp-board）をぴったり覆うので、角の丸みも枠と同じにする。side を渡すと、どちらの側のカットインか札を出す（同キャラ戦で見分けるため） */
 export const CpuCutinOverlay: React.FC<{ cutin: CpuCutin | null; name: string; side?: 'player' | 'cpu' }> = ({ cutin, name, side }) => {
   if (!cutin) return null;
   return (
-    <div key={cutin.id} className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center overflow-hidden rounded-2xl">
+    <div key={cutin.id} className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center overflow-hidden rounded-[1.25rem]">
       {/* 暗転と流れる線の上に、斜めに切り込んで入る */}
       <div className="cutin-dim absolute inset-0" />
       <div className="cutin-lines absolute inset-0" />

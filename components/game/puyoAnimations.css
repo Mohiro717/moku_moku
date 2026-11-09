@@ -40,7 +40,6 @@
 }
 @media (max-width: 1023px) {
   .puyo-vs-cpu-field { zoom: 0.34; }
-  .puyo-vs-cutin { grid-area: 1 / 1 / -1 / -1; }
 }
 /* lg 以上は本家（ぷよぷよeスポーツ公式の対戦画面の写真で確認）の並び：
    盤面の上の内側の角に「つぎ」、とくてんは盤面の枠の下端、名前の帯は盤面のすぐ下、
@@ -54,9 +53,6 @@
       "p-field center c-field"
       "p-foot  .      c-foot";
   }
-  .puyo-vs-cutin { grid-area: c-field; }
-  /* 自分の側のカットインは自分の盤面に */
-  .puyo-vs-cutin.puyo-vs-cutin-player { grid-area: p-field; }
 }
 /* 相手の台詞のふきだし：ぽんと出て、3.5秒ほどで消える */
 .puyo-vs-bubble {
