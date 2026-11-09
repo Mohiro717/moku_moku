@@ -1,6 +1,7 @@
 // 対戦の音：BGM・効果音・キャラのボイス。
 // 効果音は素材を持たず Web Audio でその場で鳴らす（拍子木・鈴・太鼓・琴の「和の忍」の音色）。
-// BGM とボイスは <audio> で流す。
+// BGM は <audio> で流す。ボイスは mp3 を読み込んで Web Audio で鳴らす
+// （<audio> 1本を差し替えて鳴らす作りは、Android のブラウザで声が出ないことがあった。2026-11-09）。
 // ブラウザは操作なしの再生を止めるので、START を押したときに unlockAudio() を呼ぶ。
 
 export type SeName =
@@ -31,19 +32,14 @@ let reverb: ConvolverNode | null = null;
 let noise: AudioBuffer | null = null;
 let muted = typeof localStorage !== 'undefined' && localStorage.getItem(MUTE_KEY) === '1';
 
+/** ボイスの出口（効果音とは別の音量・残響なし） */
+let voiceOut: GainNode | null = null;
+
 const bgm = typeof Audio !== 'undefined' ? new Audio() : null;
-const voice = typeof Audio !== 'undefined' ? new Audio() : null;
-/** いま鳴っているボイスが台詞か（連鎖の掛け声は台詞を遮らない） */
-let voiceIsLine = false;
 if (bgm) {
   bgm.loop = true;
   bgm.preload = 'auto';
   bgm.volume = BGM_VOLUME;
-}
-if (voice) {
-  voice.volume = VOICE_VOLUME;
-  voice.addEventListener('ended', () => duck(false));
-  voice.addEventListener('pause', () => duck(false));
 }
 
 function duck(on: boolean) {
@@ -56,7 +52,7 @@ export function setMuted(value: boolean) {
   muted = value;
   localStorage.setItem(MUTE_KEY, value ? '1' : '0');
   if (bgm) bgm.muted = value;
-  if (voice) voice.muted = value;
+  if (voiceOut) voiceOut.gain.value = value ? 0 : VOICE_VOLUME;
   if (master) master.gain.value = value ? 0 : SE_VOLUME;
 }
 
@@ -88,10 +84,15 @@ export function unlockAudio() {
     noise = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
     const data = noise.getChannelData(0);
     for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+    voiceOut = ctx.createGain();
+    voiceOut.gain.value = muted ? 0 : VOICE_VOLUME;
+    voiceOut.connect(ctx.destination);
+    // iPhone：Web Audio はマナーモードで消える。ボイスを <audio> で流していたときと同じく鳴らす
+    const session = (navigator as unknown as { audioSession?: { type: string } }).audioSession;
+    if (session) session.type = 'playback';
   }
-  if (ctx.state === 'suspended') void ctx.resume();
+  if (ctx.state !== 'running') void ctx.resume().catch(() => {});
   if (bgm) bgm.muted = muted;
-  if (voice) voice.muted = muted;
 }
 
 // --- BGM ---
@@ -147,15 +148,97 @@ let chainSide: 'player' | 'cpu' | null = null;
 let queued: { src: string; at: number } | null = null;
 let graceTimer: ReturnType<typeof setTimeout> | null = null;
 
-const voiceBusy = () => !!voice && !voice.paused && !voice.ended;
+/** いま言っているボイス。読み込み中も言っている扱い（isLine：台詞か。連鎖の掛け声は台詞を遮らない） */
+interface VoicePlay {
+  isLine: boolean;
+  source: AudioBufferSourceNode | null;
+}
+let current: VoicePlay | null = null;
+
+const voiceBusy = () => current !== null;
+const lineBusy = () => !!current?.isLine;
+
+/** mp3 の中身（先読み）と、Web Audio で鳴らせる形にしたもの */
+const voiceData = new Map<string, Promise<ArrayBuffer | null>>();
+const voiceBuffers = new Map<string, Promise<AudioBuffer | null>>();
+
+function fetchVoice(src: string) {
+  let data = voiceData.get(src);
+  if (!data) {
+    data = fetch(src)
+      .then(res => (res.ok ? res.arrayBuffer() : null))
+      .catch(() => null);
+    voiceData.set(src, data);
+  }
+  return data;
+}
+
+function voiceBuffer(c: AudioContext, src: string) {
+  let buffer = voiceBuffers.get(src);
+  if (!buffer) {
+    buffer = fetchVoice(src).then(
+      data =>
+        data
+          ? new Promise<AudioBuffer | null>(resolve => {
+              // 古い Safari は戻り値の Promise が無いので、コールバックで受ける
+              c.decodeAudioData(data, resolve, () => resolve(null))?.catch(() => resolve(null));
+            })
+          : null
+    );
+    voiceBuffers.set(src, buffer);
+    // 中身は鳴らせる形にしたら要らない（読めなかったときは、次にまた取りに行く）
+    buffer.then(b => {
+      voiceData.delete(src);
+      if (!b) voiceBuffers.delete(src);
+    });
+  }
+  return buffer;
+}
+
+/** いまのボイスを止める（終わったことにはしない＝待っている台詞へ進まない） */
+function haltVoice() {
+  const prev = current;
+  current = null;
+  duck(false);
+  if (prev?.source) {
+    prev.source.onended = null;
+    try {
+      prev.source.stop();
+    } catch {
+      // まだ鳴り始めていない
+    }
+  }
+}
+
+/** 言い終わったら、または読み込めなかったら、待っている台詞へ */
+function voiceEnded(play: VoicePlay) {
+  if (current !== play) return;
+  current = null;
+  duck(false);
+  chainSide = null;
+  playQueued();
+}
 
 function startVoice(src: string, isLine: boolean) {
-  if (!voice) return;
-  voice.pause();
-  voice.src = src;
-  voiceIsLine = isLine;
+  if (!ctx || !voiceOut) return;
+  haltVoice();
+  const play: VoicePlay = { isLine, source: null };
+  current = play;
   duck(true);
-  void voice.play().catch(() => duck(false));
+  if (ctx.state !== 'running') void ctx.resume().catch(() => {});
+  void voiceBuffer(ctx, src).then(buffer => {
+    if (current !== play) return;
+    if (!buffer || !ctx || !voiceOut) {
+      voiceEnded(play);
+      return;
+    }
+    const source = ctx.createBufferSource();
+    source.buffer = buffer;
+    source.connect(voiceOut);
+    source.onended = () => voiceEnded(play);
+    play.source = source;
+    source.start();
+  });
 }
 
 /** 待っている台詞があれば言う */
@@ -166,19 +249,8 @@ function playQueued() {
   if (Date.now() - next.at < VOICE_QUEUE_STALE_MS) startVoice(next.src, true);
 }
 
-if (voice) {
-  // 言い終わったら、または読み込めなかったら、待っている台詞へ
-  const next = () => {
-    chainSide = null;
-    playQueued();
-  };
-  voice.addEventListener('ended', next);
-  voice.addEventListener('error', next);
-}
-
 /** 台詞を言う */
 export function playVoice(src: string, timing: VoiceTiming = 'now') {
-  if (!voice) return;
   if (timing === 'ifIdle') {
     if (!voiceBusy() && !queued) startVoice(src, true);
     return;
@@ -186,11 +258,11 @@ export function playVoice(src: string, timing: VoiceTiming = 'now') {
   if (timing === 'after') {
     queued = { src, at: Date.now() };
     // 掛け声は台詞より軽いので、台詞を待たせない。台詞を言っている途中なら、終わってから
-    if (voiceBusy() && voiceIsLine) return;
+    if (lineBusy()) return;
     if (graceTimer) clearTimeout(graceTimer);
     graceTimer = setTimeout(() => {
       graceTimer = null;
-      if (!(voiceBusy() && voiceIsLine)) playQueued();
+      if (!lineBusy()) playQueued();
     }, VOICE_AFTER_GRACE_MS);
     return;
   }
@@ -200,8 +272,7 @@ export function playVoice(src: string, timing: VoiceTiming = 'now') {
 
 /** 連鎖の掛け声。台詞を言っている途中なら言わない。自分の側の掛け声は相手の掛け声で遮らない */
 export function playChainVoice(src: string, side: 'player' | 'cpu' = 'cpu') {
-  if (!voice) return;
-  if (voiceIsLine && voiceBusy()) return;
+  if (lineBusy()) return;
   if (side === 'cpu' && chainSide === 'player' && voiceBusy()) return;
   chainSide = side;
   startVoice(src, false);
@@ -212,16 +283,12 @@ export function stopVoice() {
   if (graceTimer) clearTimeout(graceTimer);
   graceTimer = null;
   chainSide = null;
-  voice?.pause();
+  haltVoice();
 }
 
-/** 相手が決まった時点で、ボイスを先に読み込んでおく */
+/** 相手が決まった時点で、ボイスを先に読み込んでおく（鳴らせる形にするのは、言うとき） */
 export function preloadVoices(srcs: string[]) {
-  srcs.forEach(src => {
-    const a = new Audio();
-    a.preload = 'auto';
-    a.src = src;
-  });
+  srcs.forEach(fetchVoice);
 }
 
 // --- 効果音の部品 ---
