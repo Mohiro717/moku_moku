@@ -1,26 +1,33 @@
 import React from 'react';
 import type { CpuCharacter } from '../../constants/cpuCharacters';
 import type { CpuCutin } from '../../hooks/game/useCpuCharacterReactions';
+import { MoodIcon, type Mood } from './VsIntro';
 
 interface PanelProps {
   character: CpuCharacter;
   line: string;
+  /** 顔の様子（対戦のときだけ。無ければ止まった顔） */
+  mood?: Mood;
 }
 
 // 相手の台詞＝絵巻（左右に木の軸、和紙の地。wapop.css の .wp-emaki）
 const PANEL_CLASS = 'wp-emaki flex items-center gap-3 px-3 py-2';
 
 /** CPU 盤面の上に置く、相手キャラの顔・名前・台詞 */
-export const CpuCharacterPanel = React.forwardRef<HTMLDivElement, PanelProps>(({ character, line }, ref) => (
+export const CpuCharacterPanel = React.forwardRef<HTMLDivElement, PanelProps>(({ character, line, mood }, ref) => (
   <div ref={ref} className={PANEL_CLASS}>
-    <img
-      src={character.icon}
-      alt={character.name}
-      width={64}
-      height={64}
-      className="w-16 h-16 shrink-0 rounded-full object-cover border-[3px] border-coffee-dark"
-      style={{ boxShadow: '0 0 0 3px var(--wp-sakura)' }}
-    />
+    {mood ? (
+      <MoodIcon src={character.icon} alt={character.name} mood={mood} className="w-16 h-16" />
+    ) : (
+      <img
+        src={character.icon}
+        alt={character.name}
+        width={64}
+        height={64}
+        className="w-16 h-16 shrink-0 rounded-full object-cover border-[3px] border-coffee-dark"
+        style={{ boxShadow: '0 0 0 3px var(--wp-sakura)' }}
+      />
+    )}
     <div className="min-w-0 flex-1 text-left">
       <div className="flex items-baseline gap-2">
         <span className="font-serif text-lg text-coffee-dark">{character.name}</span>
@@ -35,15 +42,19 @@ export const CpuCharacterPanel = React.forwardRef<HTMLDivElement, PanelProps>(({
 CpuCharacterPanel.displayName = 'CpuCharacterPanel';
 
 /** スマホ・タブレット用：自分の側（あるじどのの味方）の顔と台詞。相手の絵巻より小さく、桜色の地 */
-export const AllyCharacterPanel: React.FC<PanelProps> = ({ character, line }) => (
+export const AllyCharacterPanel: React.FC<PanelProps> = ({ character, line, mood }) => (
   <div className="flex items-center gap-2 px-2 py-1 rounded-2xl border-[3px] border-coffee-dark bg-[#fde7ee] shadow-[0_3px_0_#3b2f2f]">
-    <img
-      src={character.icon}
-      alt={character.name}
-      width={40}
-      height={40}
-      className="w-10 h-10 shrink-0 rounded-full object-cover border-[3px] border-coffee-dark bg-[#131320]"
-    />
+    {mood ? (
+      <MoodIcon src={character.icon} alt={character.name} mood={mood} className="w-12 h-12" />
+    ) : (
+      <img
+        src={character.icon}
+        alt={character.name}
+        width={40}
+        height={40}
+        className="w-10 h-10 shrink-0 rounded-full object-cover border-[3px] border-coffee-dark bg-[#131320]"
+      />
+    )}
     <p key={line} className="min-w-0 flex-1 text-left text-xs leading-snug font-serif text-coffee-dark animate-fade-in-up">
       <span className="mr-1 text-coffee-dark/70">{character.name}</span>「{line}」
     </p>

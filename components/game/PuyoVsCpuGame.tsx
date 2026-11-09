@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { AttackBeamLayer, useAttackBeams } from './AttackBeams';
 import { useChainFx, type PopRecord } from './ChainFx';
 import { GameGrid } from './GameGrid';
@@ -10,7 +10,8 @@ import { OjamaNotice } from './OjamaNotice';
 import { useVsCpuGame } from '../../hooks/useVsCpuGame';
 import { useCharacterReactions } from '../../hooks/game/useCpuCharacterReactions';
 import { useVsGameSound } from '../../hooks/game/useVsGameSound';
-import { isMuted, setMuted, unlockAudio } from '../../utils/gameAudio';
+import { isMuted, playSe, playVoice, setMuted, unlockAudio } from '../../utils/gameAudio';
+import { COUNT_MS, GO_MS, MoodIcon, VS_MS, VsIntroOverlay, nextMood, type IntroStep, type Mood } from './VsIntro';
 import './wapop.css';
 import { AllyCharacterPanel, CpuCharacterPanel, CpuCutinOverlay, KitanCredit } from './CpuCharacter';
 import {
@@ -75,19 +76,14 @@ const BoardScore: React.FC<{ score: number; accent?: boolean }> = ({ score, acce
 );
 
 /** lg 以上：盤面のすぐ下の名前の帯。アイコンは外側の端（自分は左端、相手は右端） */
-const NameBand: React.FC<{ name: string; icon?: string; accent?: boolean; iconSide?: 'left' | 'right' }> = ({ name, icon, accent = false, iconSide = 'right' }) => {
+const NameBand: React.FC<{ name: string; icon?: string; accent?: boolean; iconSide?: 'left' | 'right'; mood?: Mood }> = ({ name, icon, accent = false, iconSide = 'right', mood = 'even' }) => {
+  // 顔は帯より大きく、上下にはみ出させる。優勢・劣勢・勝ち・負けで動きが変わる
   const img = icon && (
-    <img
-      src={icon}
-      alt=""
-      width={28}
-      height={28}
-      className={`w-7 h-7 -my-1 ${iconSide === 'left' ? '-ml-2' : '-mr-2'} rounded-full object-cover border-2 border-coffee-dark bg-[#131320]`}
-    />
+    <MoodIcon src={icon} mood={mood} className={`w-16 h-16 -my-5 ${iconSide === 'left' ? '-ml-4' : '-mr-4'}`} />
   );
   return (
     <div
-      className="w-full flex items-center gap-2 px-3 py-1 rounded-full border-[3px] border-coffee-dark font-serif text-sm text-coffee-dark"
+      className="w-full flex items-center gap-2 px-3 py-1 rounded-full border-[3px] border-coffee-dark font-serif text-base text-coffee-dark"
       style={{ background: accent ? '#fbd3df' : '#fff4d6' }}
     >
       {iconSide === 'left' && img}
@@ -180,6 +176,58 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
       pinch: cpuPinch || playerPinch
     });
 
+    // はじまり：「たいせん する！」から VS → 3・2・1 → はじめ！ で自動で始める。
+    // もういちど・やりなおすは VS を飛ばしてカウントから
+    const [intro, setIntro] = useState<IntroStep | null>(null);
+    const [introRun, setIntroRun] = useState(0);
+    const introTimers = useRef<number[]>([]);
+    const startGameRef = useRef(startGame);
+    startGameRef.current = startGame;
+    const runIntro = (withVs: boolean) => {
+      introTimers.current.forEach(clearTimeout);
+      introTimers.current = [];
+      const at = (ms: number, fn: () => void) => introTimers.current.push(window.setTimeout(fn, ms));
+      const t0 = withVs ? VS_MS : 0;
+      setIntro(withVs ? 'vs' : 3);
+      if (withVs) playSe('cutin');
+      setIntroRun(n => n + 1);
+      ([3, 2, 1] as const).forEach((n, i) => at(t0 + i * COUNT_MS, () => {
+        setIntro(n);
+        playSe('move');
+      }));
+      at(t0 + 3 * COUNT_MS, () => {
+        setIntro('go');
+        startGameRef.current();
+      });
+      at(t0 + 3 * COUNT_MS + GO_MS, () => setIntro(null));
+    };
+    useEffect(() => {
+      runIntro(true);
+      return () => introTimers.current.forEach(clearTimeout);
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    // はじめの台詞は VS のあいだに言う。自分の側が先、相手が返す。
+    // やりなおしで声を止める処理（useVsGameSound）のあとに鳴らすため、効果の中で鳴らす
+    useEffect(() => {
+      if (introRun === 0) return;
+      playVoice(allyVoiceOf(playerCharacter, 'intro', allySide.lineIndex));
+      if (character.lines.intro.length > 0) playVoice(voiceOf(character, 'intro', cpuSide.lineIndex), 'after');
+    }, [introRun]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    // 名前の帯の顔：優勢・ふつう・劣勢・勝ち・負け
+    const playerMoodRef = useRef<Mood>('even');
+    const cpuMoodRef = useRef<Mood>('even');
+    let playerMood: Mood = 'even';
+    let cpuMood: Mood = 'even';
+    if (gameState && (gameState.isPlaying || gameState.isGameOver)) {
+      const over = gameState.isGameOver;
+      playerMood = nextMood(playerMoodRef.current, gameState.player, gameState.cpu, gameState.pendingOjamaPlayer, gameState.pendingOjamaCpu,
+        over ? (gameState.winner === 'player' ? 'win' : 'lose') : null);
+      cpuMood = nextMood(cpuMoodRef.current, gameState.cpu, gameState.player, gameState.pendingOjamaCpu, gameState.pendingOjamaPlayer,
+        over ? (gameState.winner === 'cpu' ? 'win' : 'lose') : null);
+    }
+    playerMoodRef.current = playerMood;
+    cpuMoodRef.current = cpuMood;
+
     const [muted, setMutedState] = useState(isMuted);
     const toggleMuted = () => {
       unlockAudio();
@@ -197,7 +245,7 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
 
   const handleStart = () => {
     unlockAudio();
-    startGame();
+    runIntro(false);
   };
 
   const handlePause = () => {
@@ -208,6 +256,7 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
   const handleRestart = () => {
     unlockAudio();
     restartGame();
+    runIntro(false);
   };
 
 
@@ -229,7 +278,8 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
   const inMatch = gameState.isPlaying && !gameState.isGameOver;
 
   // 自分の盤面に重ねるボタン：はじまる前・ひとやすみ・勝ち負けのとき、目線の先で押せるように
-  const startPrompt = !gameState.isPlaying && !gameState.isGameOver ? (
+  // はじまりは自動（VS → カウント）。演出が無いのに止まっているとき（ふだんは無い）だけ出す
+  const startPrompt = !gameState.isPlaying && !gameState.isGameOver && intro === null ? (
     <div className="wp-pop-in flex flex-col items-center gap-3">
       <button type="button" onClick={handleStart} className="wp-btn wp-btn-sakura px-8 py-3 text-xl">はじめる</button>
       <div className="hidden sm:block text-[11px] text-coffee-dark/70 font-serif text-center leading-relaxed">
@@ -292,8 +342,8 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
         <div className="puyo-vs-grid relative">
           {/* 台詞の長さで列が広がらないように（広がると相手の盤面が伸び、つぎ・とくてんが盤面から離れる） */}
           <div className="[grid-area:c-head] [contain:inline-size] lg:hidden flex flex-col gap-2">
-            <AllyCharacterPanel character={playerCharacter} line={allySide.line} />
-            <CpuCharacterPanel character={character} line={line} />
+            <AllyCharacterPanel character={playerCharacter} line={allySide.line} mood={playerMood} />
+            <CpuCharacterPanel character={character} line={line} mood={cpuMood} />
           </div>
 
           {/* lg 以上のまんなかの列：上の両端に各自の「つぎ」（盤面の上の内側の角）、中段は空け、下端にボタン */}
@@ -358,10 +408,10 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
           </SideInfo>
           {/* lg 以上：名前の帯は盤面のすぐ下。アイコンは外側の端（本家と同じ位置） */}
           <div className="[grid-area:p-foot] hidden lg:flex mt-2">
-            <NameBand name={playerCharacter.name} icon={playerCharacter.icon} iconSide="left" accent />
+            <NameBand name={playerCharacter.name} icon={playerCharacter.icon} iconSide="left" accent mood={playerMood} />
           </div>
           <div className="[grid-area:c-foot] hidden lg:flex mt-2">
-            <NameBand name={character.name} icon={character.icon} />
+            <NameBand name={character.name} icon={character.icon} mood={cpuMood} />
           </div>
           <div className="[grid-area:c-field] puyo-vs-cpu-field">
             <div ref={cpuNoticeRef}>
@@ -393,6 +443,8 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
               </div>
             </div>
           </div>
+          {/* はじまりの演出：VS → 3・2・1 → はじめ！ */}
+          <VsIntroOverlay step={intro} player={playerCharacter} cpu={character} />
         </div>
 
         <AttackBeamLayer beams={beams} />

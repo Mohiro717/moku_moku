@@ -13,6 +13,7 @@ import { SITE_CONFIG } from '../constants';
 import type { GameDifficulty } from '../types/game';
 import { DEFAULT_OPPONENT_CHARACTER_ID, DEFAULT_PLAYER_CHARACTER_ID, characterById } from '../constants/cpuCharacters';
 import { CharacterPicker } from './game/CharacterPicker';
+import { unlockAudio } from '../utils/gameAudio';
 
 type GameMode = 'single' | 'nubatama-title' | 'vs-cpu' | 'player-select' | 'solo-select' | 'difficulty-select' | 'frog-maze' | 'frog-detail' | 'playing-single' | 'banana-game' | null;
 
@@ -474,7 +475,7 @@ export const GameSection: React.FC = () => {
                 </div>
 
                 <div className="flex flex-col gap-3">
-                  <button type="button" onClick={() => setGameMode('vs-cpu')} className="wp-btn wp-btn-sakura w-full py-3 text-lg">
+                  <button type="button" onClick={() => { unlockAudio(); setGameMode('vs-cpu'); }} className="wp-btn wp-btn-sakura w-full py-3 text-lg">
                     たいせん する！
                   </button>
                   <button type="button" onClick={() => setGameMode('player-select')} className="wp-btn wp-btn-kinari w-full py-2 text-sm">

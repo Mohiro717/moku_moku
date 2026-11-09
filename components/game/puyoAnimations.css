@@ -304,3 +304,149 @@
   .cutin-slash { animation: cutin-dim 2400ms ease both; }
   .cutin-lines { animation: none; opacity: 0; }
 }
+
+/* ========================================
+   対戦のはじまり（VsIntro.tsx）：VS → 3・2・1 → はじめ！（VS_MS = 2600ms に合わせる）
+   PC は左右に、スマホ（縦長）は上下に斜めに切って並べる
+   ======================================== */
+.vs-splash {
+  background: radial-gradient(ellipse at center, #3a1530, #120914 75%);
+  animation: vs-splash-out 2600ms ease both;
+}
+@keyframes vs-splash-out {
+  0%, 88% { opacity: 1; }
+  100% { opacity: 0; }
+}
+.vs-half { position: absolute; inset: 0; overflow: hidden; }
+.vs-half-a { clip-path: polygon(0 0, 56% 0, 44% 100%, 0 100%); animation: vs-in-left 380ms cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+.vs-half-b { clip-path: polygon(56% 0, 100% 0, 100% 100%, 44% 100%); animation: vs-in-right 380ms cubic-bezier(0.2, 0.9, 0.3, 1) 120ms both; }
+.vs-art { position: absolute; top: 0; height: 100%; width: 56%; object-fit: cover; object-position: center; }
+.vs-half-a .vs-art { left: 0; }
+.vs-half-b .vs-art { right: 0; }
+.vs-art-flip { transform: scaleX(-1); }
+@keyframes vs-in-left { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+@keyframes vs-in-right { from { transform: translateX(100%); } to { transform: translateX(0); } }
+/* 斜めの切れ目に桜色の光 */
+.vs-slash {
+  position: absolute; inset: 0;
+  background: linear-gradient(100deg, transparent calc(50% - 5px), #fff calc(50% - 2px), var(--wp-sakura, #f79ab7) 50%, #fff calc(50% + 2px), transparent calc(50% + 5px));
+  animation: vs-flash 2600ms ease both;
+}
+@keyframes vs-flash {
+  0%, 12% { opacity: 0; }
+  18% { opacity: 1; }
+  88% { opacity: 1; }
+  100% { opacity: 0; }
+}
+.vs-name { position: absolute; display: flex; align-items: center; gap: 0.4rem; animation: vs-name-in 500ms ease 300ms both; }
+.vs-name-a { left: 4%; bottom: 6%; }
+.vs-name-b { right: 4%; top: 6%; flex-direction: row-reverse; }
+.vs-name-text {
+  font-family: 'Mochiy Pop One', sans-serif;
+  font-size: clamp(1.4rem, 4vw, 2.6rem);
+  color: #fff;
+  -webkit-text-stroke: 2px #3b2f2f;
+  paint-order: stroke fill;
+  text-shadow: 0 4px 0 #3b2f2f;
+}
+@keyframes vs-name-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.vs-mark {
+  position: absolute; left: 50%; top: 50%;
+  font-family: 'Mochiy Pop One', sans-serif;
+  font-size: clamp(3rem, 9vw, 6rem);
+  line-height: 1;
+  color: #ffe066;
+  -webkit-text-stroke: 3px #7a1030;
+  paint-order: stroke fill;
+  text-shadow: 0 6px 0 #7a1030, 0 0 24px #ff4f9a;
+  animation: vs-stamp 2600ms ease-out both;
+}
+@keyframes vs-stamp {
+  0%, 14% { opacity: 0; transform: translate(-50%, -50%) scale(3) rotate(-12deg); }
+  22% { opacity: 1; transform: translate(-50%, -50%) scale(0.92) rotate(-6deg); }
+  27% { transform: translate(-50%, -50%) scale(1.05) rotate(-6deg); }
+  88% { opacity: 1; transform: translate(-50%, -50%) scale(1.08) rotate(-6deg); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.3) rotate(-6deg); }
+}
+/* スマホ（盤面まわりが縦長）：上に自分、下に相手 */
+@media (max-width: 1023px) {
+  .vs-half-a { clip-path: polygon(0 0, 100% 0, 100% 44%, 0 56%); animation-name: vs-in-top; }
+  .vs-half-b { clip-path: polygon(0 56%, 100% 44%, 100% 100%, 0 100%); animation-name: vs-in-bottom; }
+  .vs-art { width: 100%; height: 56%; }
+  .vs-half-a .vs-art { top: 0; }
+  .vs-half-b .vs-art { top: auto; bottom: 0; }
+  .vs-slash { background: linear-gradient(-6deg, transparent calc(50% - 5px), #fff calc(50% - 2px), var(--wp-sakura, #f79ab7) 50%, #fff calc(50% + 2px), transparent calc(50% + 5px)); }
+  .vs-name-a { left: 4%; top: 6%; bottom: auto; }
+  .vs-name-b { right: 4%; bottom: 6%; top: auto; }
+}
+@keyframes vs-in-top { from { transform: translateY(-100%); } to { transform: translateY(0); } }
+@keyframes vs-in-bottom { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+/* 3・2・1・はじめ！ */
+.vs-count {
+  font-family: 'Mochiy Pop One', sans-serif;
+  font-size: clamp(5rem, 16vw, 9rem);
+  line-height: 1;
+  color: #fff;
+  -webkit-text-stroke: 4px #3b2f2f;
+  paint-order: stroke fill;
+  text-shadow: 0 8px 0 #3b2f2f, 0 0 30px rgba(247, 154, 183, 0.9);
+  animation: vs-count 700ms cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+.vs-count-go { color: #ffe066; font-size: clamp(3rem, 10vw, 6rem); -webkit-text-stroke-color: #7a1030; text-shadow: 0 8px 0 #7a1030, 0 0 30px #ff4f9a; animation-duration: 650ms; }
+@keyframes vs-count {
+  0% { opacity: 0; transform: scale(2.2); }
+  25% { opacity: 1; transform: scale(1); }
+  80% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.85); }
+}
+
+/* ========================================
+   顔の様子（VsIntro.tsx の MoodIcon）：ふつう・優勢・劣勢・勝ち・負け
+   ======================================== */
+.mood-face { display: block; transition: filter 300ms ease; }
+.mood-even .mood-face { animation: mood-breathe 2.6s ease-in-out infinite; }
+@keyframes mood-breathe { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
+
+.mood-ahead .mood-face { animation: mood-hop 0.9s ease-in-out infinite; box-shadow: 0 0 0 3px #ffe066, 0 0 14px #ffd23f; }
+@keyframes mood-hop {
+  0%, 100% { transform: translateY(0) scale(1); }
+  30% { transform: translateY(-7px) scale(1.04); }
+  55% { transform: translateY(0) scale(1.06, 0.94); }
+}
+
+.mood-behind .mood-face { animation: mood-tremble 0.28s linear infinite; filter: saturate(0.6) brightness(0.92); box-shadow: 0 0 0 3px #8fb8e8; }
+@keyframes mood-tremble {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-1.5px) rotate(-2deg); }
+  75% { transform: translateX(1.5px) rotate(2deg); }
+}
+
+.mood-win .mood-face { animation: mood-cheer 0.7s ease-in-out infinite; box-shadow: 0 0 0 4px #ffe066, 0 0 22px #ff4f9a; }
+@keyframes mood-cheer {
+  0%, 100% { transform: translateY(0) rotate(0); }
+  25% { transform: translateY(-10px) rotate(-8deg); }
+  50% { transform: translateY(0) rotate(0); }
+  75% { transform: translateY(-10px) rotate(8deg); }
+}
+
+.mood-lose .mood-face { animation: mood-droop 900ms ease-out both; filter: grayscale(0.85) brightness(0.85); }
+@keyframes mood-droop {
+  0% { transform: translateY(0) rotate(0); }
+  60% { transform: translateY(5px) rotate(-14deg); }
+  100% { transform: translateY(4px) rotate(-12deg); }
+}
+
+.mood-badge {
+  position: absolute; top: -0.35rem; right: -0.35rem;
+  font-size: 0.95rem; line-height: 1;
+  animation: wp-pop-in 360ms cubic-bezier(0.2, 1.6, 0.4, 1) both;
+}
+.mood-ahead .mood-badge { color: #e5598a; font-weight: 900; -webkit-text-stroke: 1px #fff; }
+.mood-win .mood-badge { color: #ffd23f; font-size: 1.2rem; -webkit-text-stroke: 1px #7a1030; }
+.mood-lose .mood-badge { color: #3b2f2f; font-weight: 900; }
+
+@media (prefers-reduced-motion: reduce) {
+  .vs-half, .vs-name, .vs-mark, .vs-count { animation-duration: 1ms; }
+  .mood-face { animation: none !important; }
+}

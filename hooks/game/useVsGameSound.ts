@@ -114,10 +114,8 @@ export const useVsGameSound = ({ gameState, cpu, ally, pinch }: Params) => {
   useEffect(() => {
     if (isPlaying && !wasPlaying.current && !isGameOver) {
       playSe('start');
-      // BGM は相手のテーマ曲。はじめの台詞は自分の側が先に言い、相手が返す
+      // BGM は相手のテーマ曲。はじめの台詞は、はじまりの演出（PuyoVsCpuGame の VS・カウント）のあいだに言う
       playBgm(character.bgm);
-      playVoice(ally.voiceSrc('intro', ally.lineIndex));
-      if (character.lines.intro.length > 0) playVoice(cpu.voiceSrc('intro', cpu.lineIndex), 'after');
     }
     if (!isPlaying && wasPlaying.current && !isGameOver) {
       // RESTART
