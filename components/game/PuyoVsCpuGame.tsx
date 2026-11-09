@@ -11,7 +11,7 @@ import { useVsCpuGame } from '../../hooks/useVsCpuGame';
 import { useCharacterReactions } from '../../hooks/game/useCpuCharacterReactions';
 import { useVsGameSound } from '../../hooks/game/useVsGameSound';
 import { isMuted, playSe, playVoice, setMuted, unlockAudio } from '../../utils/gameAudio';
-import { COUNT_MS, GO_MS, MoodIcon, VS_MS, VsIntroOverlay, nextMood, type IntroStep, type Mood } from './VsIntro';
+import { COUNT_MS, GO_MS, MoodIcon, VsIntroOverlay, nextMood, type IntroStep, type Mood } from './VsIntro';
 import './wapop.css';
 import { AllyCharacterPanel, CpuCharacterPanel, CpuCutinOverlay, KitanCredit } from './CpuCharacter';
 import {
@@ -176,9 +176,10 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
       pinch: cpuPinch || playerPinch
     });
 
-    // はじまり：「たいせん する！」から VS → 3・2・1 → はじめ！ で自動で始める。
-    // もういちど・やりなおすは VS を飛ばしてカウントから
+    // はじまり：「たいせん する！」で VS の絵と 3・2・1 を同時に出し、はじめ！ で自動で始める。
+    // もういちど・やりなおすは VS の絵なしでカウントだけ
     const [intro, setIntro] = useState<IntroStep | null>(null);
+    const [showVs, setShowVs] = useState(false);
     const [introRun, setIntroRun] = useState(0);
     const introTimers = useRef<number[]>([]);
     const startGameRef = useRef(startGame);
@@ -187,19 +188,20 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
       introTimers.current.forEach(clearTimeout);
       introTimers.current = [];
       const at = (ms: number, fn: () => void) => introTimers.current.push(window.setTimeout(fn, ms));
-      const t0 = withVs ? VS_MS : 0;
-      setIntro(withVs ? 'vs' : 3);
-      if (withVs) playSe('cutin');
+      setShowVs(withVs);
+      setIntro(3);
+      playSe(withVs ? 'cutin' : 'move');
       setIntroRun(n => n + 1);
-      ([3, 2, 1] as const).forEach((n, i) => at(t0 + i * COUNT_MS, () => {
+      ([2, 1] as const).forEach((n, i) => at((i + 1) * COUNT_MS, () => {
         setIntro(n);
         playSe('move');
       }));
-      at(t0 + 3 * COUNT_MS, () => {
+      at(3 * COUNT_MS, () => {
         setIntro('go');
+        setShowVs(false);
         startGameRef.current();
       });
-      at(t0 + 3 * COUNT_MS + GO_MS, () => setIntro(null));
+      at(3 * COUNT_MS + GO_MS, () => setIntro(null));
     };
     useEffect(() => {
       runIntro(true);
@@ -443,8 +445,8 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
               </div>
             </div>
           </div>
-          {/* はじまりの演出：VS → 3・2・1 → はじめ！ */}
-          <VsIntroOverlay step={intro} player={playerCharacter} cpu={character} />
+          {/* はじまりの演出：VS の絵に 3・2・1 を重ね、はじめ！ */}
+          <VsIntroOverlay step={intro} showVs={showVs} player={playerCharacter} cpu={character} />
         </div>
 
         <AttackBeamLayer beams={beams} />

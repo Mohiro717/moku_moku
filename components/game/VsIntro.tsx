@@ -3,15 +3,15 @@ import type { CpuCharacter } from '../../constants/cpuCharacters';
 import type { GameState } from '../../types/game';
 import { topRow } from '../../utils/boardStatus';
 
-/** 対戦のはじまり：'vs'＝2人を大きく並べる、3・2・1＝カウント、'go'＝はじめ！ */
-export type IntroStep = 'vs' | 3 | 2 | 1 | 'go';
+/** 対戦のはじまりのカウント：3・2・1、'go'＝はじめ！（VS の絵は 3〜1 のあいだ重ねて出す） */
+export type IntroStep = 3 | 2 | 1 | 'go';
 
-export const VS_MS = 2600;
+/** 1つの数字を出す長さ。VS の絵は 3 × COUNT_MS（puyoAnimations.css の 2100ms）出す */
 export const COUNT_MS = 700;
 export const GO_MS = 650;
 
 /**
- * 「咲耶 VS 宇迦」：自分のキャラを左（スマホは上）、相手を右（スマホは下）に、
+ * 「咲耶 VS 宇迦」：自分のキャラを左（スマホは上）、相手を右（スマホは下）に、名前の文字は出さず絵だけで
  * 必殺カットインの絵で斜めに切って並べる。相手の絵は左右反転して、向かい合わせにする。
  * カットインは試合中にも頭から流すので、ここでは URL を変えて別に読む（同じ URL だと試合中に頭から再生されないことがある）
  */
@@ -24,32 +24,21 @@ const VsSplash: React.FC<{ player: CpuCharacter; cpu: CpuCharacter }> = ({ playe
       {cpu.cutins[0] && <img src={`${cpu.cutins[0]}?vs=1`} alt="" className="vs-art vs-art-flip" />}
     </div>
     <div className="vs-slash" />
-    <div className="vs-name vs-name-a">
-      <span className="wp-tag" style={{ background: 'var(--wp-sakura)', color: '#fff' }}>じぶん</span>
-      <span className="vs-name-text">{player.name}</span>
-    </div>
-    <div className="vs-name vs-name-b">
-      <span className="wp-tag" style={{ background: 'var(--wp-washi)' }}>あいて</span>
-      <span className="vs-name-text">{cpu.name}</span>
-    </div>
     <div className="vs-mark">VS</div>
   </div>
 );
 
-/** 盤面まわり全体に重ねる、はじまりの演出 */
-export const VsIntroOverlay: React.FC<{ step: IntroStep | null; player: CpuCharacter; cpu: CpuCharacter }> = ({ step, player, cpu }) => {
+/** 盤面まわり全体に重ねる、はじまりの演出。showVs のときは VS の絵の上にカウントを重ねる */
+export const VsIntroOverlay: React.FC<{ step: IntroStep | null; showVs: boolean; player: CpuCharacter; cpu: CpuCharacter }> = ({ step, showVs, player, cpu }) => {
   if (step === null) return null;
   return (
     <div className="pointer-events-none absolute inset-0 z-50 overflow-hidden rounded-2xl" aria-live="polite">
-      {step === 'vs' ? (
-        <VsSplash player={player} cpu={cpu} />
-      ) : (
-        <div className="absolute inset-0 flex items-center justify-center bg-[rgba(42,12,28,0.18)]">
-          <div key={String(step)} className={`vs-count ${step === 'go' ? 'vs-count-go' : ''}`}>
-            {step === 'go' ? 'はじめ！' : step}
-          </div>
+      {showVs && <VsSplash player={player} cpu={cpu} />}
+      <div className={`absolute inset-0 flex items-center justify-center ${showVs ? '' : 'bg-[rgba(42,12,28,0.18)]'}`}>
+        <div key={String(step)} className={`vs-count ${showVs ? 'vs-count-on-vs' : ''} ${step === 'go' ? 'vs-count-go' : ''}`}>
+          {step === 'go' ? 'はじめ！' : step}
         </div>
-      )}
+      </div>
     </div>
   );
 };
