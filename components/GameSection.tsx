@@ -4,7 +4,7 @@ import { SectionTitle } from './SectionTitle';
 import { GameControllerIcon } from './icons/GameControllerIcon';
 import { PuyoPuyoGame } from './game/PuyoPuyoGame';
 import { PuyoVsCpuGame, DIFFICULTY_LABELS } from './game/PuyoVsCpuGame';
-import { PuyoTitle } from './game/PuyoTitle';
+import { NubatamaCard } from './game/NubatamaCard';
 import { NubatamaTitleScreen } from './game/NubatamaTitleScreen';
 import './game/wapop.css';
 import { FrogPrincessMaze } from './frog-maze/FrogPrincessMaze';
@@ -55,21 +55,8 @@ export const GameSection: React.FC = () => {
           
           {!gameMode ? (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
-              {/* ぬばたま落とし Card（和ポップ） */}
-              <div className="wp-seigaiha rounded-3xl border-[3px] border-coffee-dark shadow-[0_6px_0_#3b2f2f] p-7 animate-fade-in-up">
-                <PuyoTitle />
-
-                <div className="wp-card p-4 mb-6 text-sm text-coffee-dark font-serif space-y-2">
-                  <p>おなじ色を <span className="text-[#e5598a]">4つ</span> つなげると きえるよ</p>
-                  <p>つづけて きえると <span className="text-[#e5598a]">れんさ</span>！</p>
-                  <p className="hidden sm:block text-xs text-coffee-dark/70 pt-1">←→ うごかす　Z / X まわす　↓ はやく　Space おとす</p>
-                  <p className="sm:hidden text-xs text-coffee-dark/70 pt-1">スワイプで うごかす・タップで まわす</p>
-                </div>
-
-                <button type="button" onClick={() => setGameMode('nubatama-title')} className="wp-btn wp-btn-sakura w-full py-3 text-base">
-                  あそぶ
-                </button>
-              </div>
+              {/* ぬばたま落とし Card（和ポップ・咲耶が飛び出す） */}
+              <NubatamaCard onPlay={() => setGameMode('nubatama-title')} />
 
               {/* Frog Maze Card */}
               <div className="bg-white rounded-3xl shadow-2xl border-4 border-pink-200 p-8 transform animate-fade-in-up">

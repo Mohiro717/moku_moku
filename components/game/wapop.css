@@ -239,3 +239,11 @@
 @media (prefers-reduced-motion: reduce) {
   .wp-petal, .wp-pop-in, .wp-hanko-in { animation: none; }
 }
+
+/* ふわふわ上下（ゲームえらびのカードの題字と顔） */
+.wp-bob { animation: wp-bob 2.4s ease-in-out infinite; }
+@keyframes wp-bob {
+  0%, 100% { translate: 0 0; }
+  50%      { translate: 0 -4px; }
+}
+@media (prefers-reduced-motion: reduce) { .wp-bob { animation: none; } }
