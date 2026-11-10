@@ -3,7 +3,8 @@ import { KitanCredit } from './CpuCharacter';
 import { FANWORKS_URL } from '../../constants/cpuCharacters';
 import './wapop.css';
 
-// H3 で作ったタイトルの動画（8秒・1回だけ流して最後の画で止める）。咲耶の声「ぬばたま おとし！」が 6.8 秒で終わる
+// H3 で作ったタイトルの動画 T3（8秒・1回だけ流して最後の画で止める）。ぬばたまが降って咲耶が埋もれ、
+// 山のてっぺんから顔を出して叫ぶ「ぬばたま おとし！」が 6.75 秒で終わる
 const TITLE_VIDEO = `${import.meta.env.BASE_URL}video/nubatama_title.mp4`;
 const BUTTONS_AT_SEC = 6.8;
 
@@ -51,6 +52,17 @@ export const NubatamaTitleScreen: React.FC<Props> = ({ onVsCpu, onSingle, onBack
       ひとりで あそぶ
     </button>
   );
+  // PC の画の上に重ねる版：左右の地面が狭いので2行に折って小さくする
+  const vsCpuButtonPc = (
+    <button type="button" onClick={onVsCpu} className="wp-btn wp-btn-sakura w-full py-2 text-sm leading-tight flex-col gap-0">
+      <span>CPUと</span><span>たいせん</span>
+    </button>
+  );
+  const singleButtonPc = (
+    <button type="button" onClick={onSingle} className="wp-btn wp-btn-kinari w-full py-2 text-sm leading-tight flex-col gap-0">
+      <span>ひとりで</span><span>あそぶ</span>
+    </button>
+  );
 
   return (
     <div className="max-w-4xl mx-auto animate-fade-in-up">
@@ -79,11 +91,11 @@ export const NubatamaTitleScreen: React.FC<Props> = ({ onVsCpu, onSingle, onBack
           </button>
         )}
 
-        {/* PC：咲耶とぬばたまの左右にある、何も無い地面に置く */}
+        {/* PC：ぬばたまの山（画の幅の約17%〜83%）の左右にある、何も無い地面に置く。山の裾にかからない幅 */}
         {ready && (
           <>
-            <div className="hidden sm:block absolute left-[3%] bottom-[7%] w-[26%] wp-pop-in">{vsCpuButton}</div>
-            <div className="hidden sm:block absolute right-[3%] bottom-[7%] w-[26%] wp-pop-in">{singleButton}</div>
+            <div className="hidden sm:block absolute left-[2%] bottom-[14%] w-[16%] wp-pop-in">{vsCpuButtonPc}</div>
+            <div className="hidden sm:block absolute right-[2%] bottom-[14%] w-[16%] wp-pop-in">{singleButtonPc}</div>
           </>
         )}
       </div>
