@@ -1,10 +1,10 @@
 import { useEffect, useRef, type MutableRefObject, type RefObject } from 'react';
 import type { GameState } from '../../types/game';
-import { endFever, fxVariant, variantFx } from './ChainFxVariants';
+import { petalFx } from './ChainFxPetals';
 
 // ========================================
 // 連鎖の演出（全部盛り）
-// 消える瞬間に、消えたぷよから火花と衝撃の輪を散らし、盤面をドンと揺らしてふちを光らせる。
+// 消える瞬間に、消えたぷよから火花と衝撃の輪を散らし、光の柱と花びら（ChainFxPetals）を舞い上げ、盤面をドンと揺らしてふちを光らせる。
 // 3連鎖から集中線、5連鎖からは白く光らせて「〇連鎖」の判子、7連鎖から虹色で二度光る。
 // 消えたぷよの位置は覚えておき、攻撃の光（AttackBeams）の出発点に使う。
 // 演出は DOM に直接足して終わったら消す（再描画させない）。
@@ -85,7 +85,7 @@ const overBoard = (board: HTMLElement, style: Partial<CSSStyleDeclaration>) => {
 
 /** 段が上がるほど増える火花。丸と四つ星が飛び散り、放物線を描いて落ちる */
 const sparks = (points: PopPoint[], step: number) => {
-  const perPuyo = Math.min(9, 3 + step);
+  const perPuyo = Math.min(14, 5 + step * 2);
   points.forEach(p => {
     for (let i = 0; i < perPuyo; i++) {
       const star = i % 3 === 1;
@@ -238,8 +238,6 @@ export const useChainFx = (
 ) => {
   const step = side?.chainAnimationStep;
   const prevStep = useRef(step);
-  const variant = useRef(fxVariant());
-  const lastStep = useRef(0);
 
   useEffect(() => {
     if (side && step === 'deleting' && prevStep.current !== 'deleting') {
@@ -253,18 +251,9 @@ export const useChainFx = (
         glow(board.current, n, points[0]?.color ?? '#fff');
         if (n >= SPEED_LINES_CHAIN) speedLines(board.current, points, n);
         if (n >= BIG_CHAIN) flashAndStamp(board.current, n);
-        if (variant.current) variantFx(variant.current, board.current, points, n);
+        petalFx(points, n);
       }
-      lastStep.current = n;
     }
     prevStep.current = step;
   }, [step]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // 見比べ用の案 c は、連鎖が終わったときに締めの演出を出す
-  const chaining = !!side?.isChaining;
-  useEffect(() => {
-    if (chaining || variant.current !== 'c') return;
-    endFever(board.current, lastStep.current);
-    lastStep.current = 0;
-  }, [chaining]); // eslint-disable-line react-hooks/exhaustive-deps
 };
