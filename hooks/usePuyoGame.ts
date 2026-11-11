@@ -37,6 +37,14 @@ const chainTestStart = (): Pick<GameState, 'grid' | 'currentPair'> | null => {
   return { grid, currentPair: { main: 'red', sub: 'blue', x: 0, y: 1, rotation: 0 } };
 };
 
+/**
+ * 開発用：URL に ?ojamatest を付けて開いた開発サーバーの「ひとりで」でだけ、ペアを置くたびに
+ * おじゃまを 1→3→6→12→18→30 個の順に降らせる（量で変わる音の聞き比べ用）。
+ * 降らせる前に盤面を空にするので、どの回も数どおりに積もる。
+ */
+const OJAMA_TEST = import.meta.env.DEV && new URLSearchParams(location.search).has('ojamatest') ? [1, 3, 6, 12, 18, 30] : null;
+let ojamaTestTurn = 0;
+
 const createInitialGameState = (): GameState => ({
   grid: createEmptyGrid(),
   currentPair: null,
@@ -398,7 +406,12 @@ export const usePuyoGame = (ojamaLink?: OjamaLink) => {
           // 連鎖が起きなかったら、ためていたおじゃまを先に降らせる。
           // grid が変わるのでこの effect がもう一度走り、落ち切ってから次のペアが出る
           if (!ojamaDropped.current) {
-            const ojama = ojamaLinkRef.current?.takeOjama() ?? 0;
+            if (OJAMA_TEST && !ojamaLinkRef.current && gameState.grid.some(row => row.some(cell => cell.color))) {
+              setGameState(prev => ({ ...prev, grid: createEmptyGrid() }));
+              return;
+            }
+            const ojama =
+              ojamaLinkRef.current?.takeOjama() ?? (OJAMA_TEST ? OJAMA_TEST[ojamaTestTurn++ % OJAMA_TEST.length] : 0);
             if (ojama > 0) {
               ojamaDropped.current = true;
               setGameState(prev => (prev.isGameOver ? prev : { ...prev, grid: dropOjamaPuyos(prev.grid, ojama) }));

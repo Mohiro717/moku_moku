@@ -95,7 +95,8 @@ const useBoardSound = (side: GameState | undefined, volume: number, onChainStep?
   }, [step]);
 
   useEffect(() => {
-    if (ojama > prevOjama.current) playSe('ojama', 1, volume);
+    // 降った個数で音が変わる（積もる場所が無くて消えた分は数えない）
+    if (ojama > prevOjama.current) playSe('ojama', ojama - prevOjama.current, volume);
     prevOjama.current = ojama;
   }, [ojama]);
 };

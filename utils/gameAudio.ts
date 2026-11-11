@@ -4,6 +4,10 @@
 // （<audio> 1本を差し替えて鳴らす作りは、Android のブラウザで声が出ないことがあった。2026-11-09）。
 // ブラウザは操作なしの再生を止めるので、START を押したときに unlockAudio() を呼ぶ。
 
+import { GAME_TIMINGS } from '../constants/gameTimings';
+import { GAME_CONFIG } from './puyoGameLogic';
+import { MAX_OJAMA_PER_DROP } from './ojamaSystem';
+
 export type SeName =
   | 'move'
   | 'rotate'
@@ -416,6 +420,15 @@ function taiko(start: number, gain: number, dest: AudioNode | null, pitch = 100)
   hiss({ length: 0.1, gain: gain * 0.3, from: 700, to: 150, filter: 'lowpass', start, attack: 0.002, dest });
 }
 
+/** ぬばたまが1つ着地した音：ぼとっ（柔らかくて重い） */
+function plop(start: number, gain: number, dest: AudioNode | null, pitch: number) {
+  tone({ from: pitch, to: pitch * 0.45, length: 0.12, gain, start, attack: 0.002, dest });
+  hiss({ length: 0.05, gain: gain * 0.35, from: 1200, to: 250, filter: 'lowpass', start, attack: 0.001, dest });
+}
+
+/** おじゃまが上から落ちて着地するまでの秒数（GameGrid の落下アニメーションの上限。降るおじゃまはほぼこの長さで落ちる） */
+const OJAMA_LAND = GAME_TIMINGS.drop / 1000;
+
 const semitone = (base: number, n: number) => base * Math.pow(2, n / 12);
 /** 陽旋法（明るい和の音階）。連鎖の段ごとにひとつずつ上がる */
 const YO_SCALE = [0, 2, 5, 7, 9, 12, 14, 17, 19, 21, 24];
@@ -423,6 +436,7 @@ const YO_SCALE = [0, 2, 5, 7, 9, 12, 14, 17, 19, 21, 24];
 /**
  * 効果音を鳴らす。
  * pop の step は連鎖の段（1始まり）。段が上がるほど鈴が上がり、音も厚くなる。
+ * ojama の step は降った個数。多いほど重く、長くなる。
  * volume は 0〜1（相手側の音を小さくするのに使う）
  */
 export function playSe(name: SeName, step = 1, volume = 1) {
@@ -477,9 +491,34 @@ export function playSe(name: SeName, step = 1, volume = 1) {
       break;
     }
     case 'ojama': {
-      // ドドドン
-      const d = out(0, 0.2);
-      [0, 0.16, 0.26].forEach((t, i) => taiko(t, 0.65 * v, d, 110 - i * 8));
+      // おじゃまが降ってきた。step は降った個数（1〜30）。音は着地の瞬間に合わせる。
+      // 数個：ぼと、ぼとっと粒だけ。横一列（6個）から：落ちてくる風と、1段ごとに太鼓（ドン〜ドドドドド）。
+      // 3段（18個）から：地鳴り。5段（30個・上限）：ずしんと腹に来る一撃
+      const n = Math.max(1, step);
+      const weight = Math.min(1, n / MAX_OJAMA_PER_DROP);
+      const rows = Math.ceil(n / GAME_CONFIG.gridWidth);
+      const land = OJAMA_LAND;
+      if (n >= 6) {
+        hiss({ length: land + 0.04, gain: (0.05 + 0.15 * weight) * v, from: 2500, to: 400, q: 0.7, attack: land, dest: out(0, 0.15) });
+      }
+      const grains = Math.min(n, 10);
+      const spread = 0.02 + grains * 0.012;
+      for (let i = 0; i < grains; i++) {
+        plop(land + (i === 0 ? 0 : Math.random() * spread), (0.32 - 0.12 * weight) * v, out(Math.random() * 1.4 - 0.7, 0.1), 150 + Math.random() * 90);
+      }
+      if (n >= 6) {
+        const d = out(0, 0.2);
+        for (let i = 0; i < rows; i++) taiko(land + i * 0.06, (0.4 + 0.35 * weight) * v, d, 105 - i * 9);
+      }
+      const low = out(0, 0.05);
+      tone({ from: 75, to: 30, length: 0.3 + 0.6 * weight, gain: (0.15 + 0.6 * weight) * v, start: land, attack: 0.004, dest: low });
+      if (n >= 18) {
+        hiss({ length: 0.5 + 0.9 * weight, gain: (0.1 + 0.3 * weight) * v, from: 260, to: 50, filter: 'lowpass', start: land, attack: 0.02, dest: out(0, 0.3) });
+      }
+      if (n >= MAX_OJAMA_PER_DROP) {
+        taiko(land + 0.03, 0.5 * v, out(0, 0.35), 62);
+        tone({ from: 48, to: 24, length: 1.2, gain: 0.3 * v, start: land + 0.03, attack: 0.004, dest: low });
+      }
       break;
     }
     case 'cutin': {
