@@ -8,6 +8,7 @@ export type SeName =
   | 'move'
   | 'rotate'
   | 'land'
+  | 'charge'
   | 'pop'
   | 'ojama'
   | 'cutin'
@@ -458,6 +459,21 @@ export function playSe(name: SeName, step = 1, volume = 1) {
       tone({ from: 70, to: 32, length: 0.6, gain: Math.min(0.9, 0.35 + step * 0.08) * w, attack: 0.003, dest: hit });
       hiss({ length: 0.12, gain: Math.min(0.5, 0.2 + step * 0.05) * w, from: 3000, to: 200, q: 0.5, attack: 0.003, dest: hit });
       taiko(0.02, Math.min(0.9, 0.3 + step * 0.06) * w, hit, 150);
+      // 3段目から：琴が陽旋法をシャラランと駆け上がる。段が上がるほど音が増えて高く
+      if (step >= 3) {
+        const run = Math.min(8, step + 2);
+        for (let i = 0; i < run; i++) {
+          pluck(semitone(294, YO_SCALE[Math.min(YO_SCALE.length - 1, i + step - 3)]) * 2, 0.06 + i * 0.035, 0.32 * v, out(-0.6 + (1.2 * i) / run, 0.4));
+        }
+      }
+      break;
+    }
+    case 'charge': {
+      // ため：はじける直前まで、風の音と鈴のトレモロがせり上がる（連鎖の消える前の点滅のあいだ）
+      const d = out(0, 0.3);
+      const top = semitone(294, YO_SCALE[Math.min(step, YO_SCALE.length - 1)]) * 4;
+      hiss({ length: 0.55, gain: 0.16 * v, from: 600, to: 6000, q: 2, attack: 0.45, dest: d });
+      for (let i = 0; i < 8; i++) bell(top * Math.pow(1.04, i), i * 0.06, (0.02 + i * 0.008) * v, d, 0.25);
       break;
     }
     case 'ojama': {

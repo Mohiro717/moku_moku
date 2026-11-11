@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { GameGrid } from './GameGrid';
+import { useChainFx } from './ChainFx';
 import { GameControls } from './GameControls';
 import { TouchControls } from './TouchControls';
 import { ErrorBoundary } from '../ErrorBoundary';
@@ -51,6 +52,10 @@ export const PuyoPuyoGame: React.FC<PuyoPuyoGameProps> = ({ playerCharacterId, o
     gameState,
     ally: { ...ally, character, voiceSrc: (kind, n) => allyVoiceOf(character, kind, n), voices: allAllyVoicesOf(character) }
   });
+
+  // 連鎖の演出（火花・衝撃の輪・揺れ・集中線・判子）。対戦と同じもの
+  const boardRef = useRef<HTMLDivElement>(null);
+  useChainFx(gameState, boardRef);
 
   const [muted, setMutedState] = useState(isMuted);
   const toggleMuted = () => {
@@ -134,7 +139,7 @@ export const PuyoPuyoGame: React.FC<PuyoPuyoGameProps> = ({ playerCharacterId, o
               onHardDrop={hardDropPair}
               isActive={gameState.isPlaying && !gameState.isPaused && !gameState.isGameOver}
             >
-              <div className="relative">
+              <div ref={boardRef} className="relative">
               <GameGrid
                 grid={gameState.grid}
                 currentPair={gameState.currentPair}

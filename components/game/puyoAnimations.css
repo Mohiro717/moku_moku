@@ -135,57 +135,85 @@
   50% { transform: scale(1.03, 0.97); }
 }
 
-/* 4つそろった：白く光って点滅 */
+/* 4つそろった：白く光って点滅しながら、はじける直前までふくらんで震える（ため） */
 .puyo-blink {
-  animation: puyo-flash 150ms steps(1, end) infinite;
+  transform-origin: 50% 50%;
+  animation:
+    puyo-flash 150ms steps(1, end) infinite,
+    puyo-charge 600ms cubic-bezier(0.5, 0, 0.9, 0.6) forwards;
 }
 @keyframes puyo-flash {
-  0%  { filter: brightness(1.5) drop-shadow(0 0 5px #fff); }
-  50% { filter: none; }
+  0%  { filter: brightness(1.6) drop-shadow(0 0 6px #fff); }
+  50% { filter: brightness(1.1); }
+}
+@keyframes puyo-charge {
+  0%   { transform: scale(1); }
+  55%  { transform: scale(1.08, 1.04); }
+  70%  { transform: scale(1.12) rotate(-4deg); }
+  78%  { transform: scale(1.14) rotate(4deg); }
+  86%  { transform: scale(1.16) rotate(-5deg); }
+  93%  { transform: scale(1.18) rotate(5deg); }
+  100% { transform: scale(1.2) rotate(0deg); }
 }
 
-/* 消える：ふくらんでから横につぶれて割れる */
+/* 消える：真っ白に光ってパンッと張り、横につぶれて割れる */
 .puyo-pop {
   transform-origin: 50% 50%;
-  animation: puyo-pop 260ms ease-in forwards;
+  animation: puyo-pop 300ms cubic-bezier(0.3, 0, 0.6, 1) forwards;
 }
 @keyframes puyo-pop {
-  40%  { transform: scale(1.25, 1.25); filter: brightness(1.3); }
-  100% { transform: scale(1.5, 0.2); opacity: 0; }
+  0%   { transform: scale(1.2); filter: brightness(3) drop-shadow(0 0 8px #fff); }
+  30%  { transform: scale(1.45, 1.3); filter: brightness(2); }
+  100% { transform: scale(1.9, 0.1); filter: brightness(1.4); opacity: 0; }
 }
 
-/* はじけた後：色の輪が広がる */
+/* はじけた瞬間の白い芯：一瞬だけ大きく光る */
+.puyo-core {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: puyo-core 220ms ease-out both;
+}
+@keyframes puyo-core {
+  0%   { opacity: 1; transform: scale(0.5); }
+  100% { opacity: 0; transform: scale(2.4); }
+}
+
+/* はじけた後：色の輪と白い輪が二重に広がる */
 .puyo-ring {
   fill: none;
   transform-box: fill-box;
   transform-origin: center;
-  animation: puyo-ring 380ms ease-out 60ms both;
+  animation: puyo-ring 460ms cubic-bezier(0.1, 0.7, 0.3, 1) 40ms both;
+}
+.puyo-ring-2 {
+  animation-duration: 560ms;
+  animation-delay: 110ms;
 }
 @keyframes puyo-ring {
-  0%   { opacity: 0.9; transform: scale(0.3); stroke-width: 7; }
-  100% { opacity: 0; transform: scale(2); stroke-width: 1; }
+  0%   { opacity: 1; transform: scale(0.3); stroke-width: 8; }
+  100% { opacity: 0; transform: scale(2.7); stroke-width: 0.5; }
 }
 
-/* しずくが飛ぶ */
+/* しずくが飛んで、少し落ちる */
 .puyo-droplet {
-  animation: puyo-droplet 380ms cubic-bezier(0.2, 0.7, 0.4, 1) 60ms both;
+  animation: puyo-droplet 520ms cubic-bezier(0.15, 0.8, 0.4, 1) 40ms both;
 }
 @keyframes puyo-droplet {
-  0%   { opacity: 1; transform: translate(0, 0) scale(1); }
-  70%  { opacity: 1; }
-  100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0.3); }
+  0%   { opacity: 1; transform: translate(0, 0) scale(1.2); }
+  55%  { opacity: 1; transform: translate(var(--dx), var(--dy)) scale(0.9); }
+  100% { opacity: 0; transform: translate(var(--dx), calc(var(--dy) + 14px)) scale(0.3); }
 }
 
 /* 星がきらっと回る */
 .puyo-star {
   transform-box: fill-box;
   transform-origin: center;
-  animation: puyo-star 360ms ease-out 80ms both;
+  animation: puyo-star 440ms ease-out 60ms both;
 }
 @keyframes puyo-star {
   0%   { opacity: 0; transform: scale(0) rotate(0deg); }
-  35%  { opacity: 1; transform: scale(1.1) rotate(60deg); }
-  100% { opacity: 0; transform: scale(0.4) rotate(160deg); }
+  30%  { opacity: 1; transform: scale(1.5) rotate(70deg); }
+  100% { opacity: 0; transform: scale(0.4) rotate(200deg); }
 }
 
 /* 同色の隣どうしをつなぐ橋。落ちきってから出す */
@@ -202,9 +230,17 @@
   transition: transform 90ms linear, opacity 90ms linear;
 }
 
-/* 連鎖数の表示：後ろで光の筋が回り、文字が弾んで出て、上へ抜ける */
+/* 連鎖数の表示：後ろで光の筋が回り、文字が弾んで出て、上へ抜ける。
+   段が上がるほど大きく（--chain-scale）、左右に交互に傾く（--chain-tilt） */
 .chain-popup {
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%) scale(var(--chain-scale, 1)) rotate(var(--chain-tilt, 0deg));
+}
+/* 6連鎖から：文字の色が虹色に回る */
+.chain-rainbow {
+  animation: chain-hue 600ms linear infinite;
+}
+@keyframes chain-hue {
+  to { filter: hue-rotate(360deg); }
 }
 .chain-rays {
   transform-box: fill-box;
@@ -263,10 +299,10 @@
 
 @media (prefers-reduced-motion: reduce) {
   .puyo-drop, .puyo-squash, .puyo-eye-squint, .puyo-blink, .puyo-pop, .puyo-ring, .puyo-droplet,
-  .puyo-star, .puyo-bridge, .chain-rays, .chain-text, .attack-beam, .ojama-in {
+  .puyo-star, .puyo-core, .puyo-bridge, .chain-rays, .chain-text, .attack-beam, .ojama-in {
     animation-duration: 1ms; animation-delay: 0ms;
   }
-  .puyo-eye, .nubatama-eye, .puyo-idle, .ojama-ready { animation: none; }
+  .puyo-eye, .nubatama-eye, .puyo-idle, .ojama-ready, .chain-rainbow { animation: none; }
   .puyo-active { transition: none; }
 }
 

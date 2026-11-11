@@ -141,6 +141,13 @@ const ResultOverlay: React.FC<{ kind: keyof typeof OVERLAY_TEXT; actions?: React
   );
 };
 
+/** 連鎖数の色：2〜3は朱、4〜5は金、6からは虹色に回る。光の筋も段ごとに増える */
+const chainPopupTier = (n: number) => {
+  if (n >= 6) return { fill: '#ff4f4f', rays: '#ffd23f', rayCount: 20, rainbow: true };
+  if (n >= 4) return { fill: '#ffc21a', rays: '#ff7a3d', rayCount: 16, rainbow: false };
+  return { fill: '#e8553d', rays: '#f6b93b', rayCount: 12, rainbow: false };
+};
+
 // Game Over Line Component：上端の危険ライン（朱の破線）
 const GameOverLine: React.FC = () => (
   <div className={GAME_GRID_STYLES.gameOverLine}>
@@ -196,11 +203,14 @@ export const GameGrid: React.FC<GameGridProps> = ({
     }));
     if (n > 0) {
       chainPopup = {
-        left: ((sumX / n + 0.5) / columnCount) * 100,
+        // 段が上がると文字が大きくなるので、端の列でも盤面からはみ出さないよう真ん中寄りに留める
+        left: Math.min(67, Math.max(33, ((sumX / n + 0.5) / columnCount) * 100)),
         top: ((sumY / n + 0.5) / visibleRows) * 100
       };
     }
   }
+
+  const popupTier = chainPopupTier(chainNumber);
 
   // Render overlay based on current state
   const renderOverlay = () => {
@@ -280,17 +290,23 @@ export const GameGrid: React.FC<GameGridProps> = ({
           <div
             key={`chain-${chainNumber}`}
             className="chain-popup absolute z-20 pointer-events-none font-serif"
-            style={{ left: `${chainPopup.left}%`, top: `${chainPopup.top}%` }}
+            style={{
+              left: `${chainPopup.left}%`,
+              top: `${chainPopup.top}%`,
+              // 段が上がるほど大きく、左右へ交互に傾く
+              '--chain-scale': Math.min(1.7, 1 + (chainNumber - 2) * 0.13),
+              '--chain-tilt': `${chainNumber % 2 ? 6 : -6}deg`
+            } as React.CSSProperties}
           >
-            <svg width="170" height="100" viewBox="-85 -50 170 100" className="overflow-visible" aria-label={`${chainNumber}連鎖`}>
-              <g className="chain-rays" fill="#f6b93b" opacity="0.75">
-                {Array.from({ length: 12 }, (_, i) => (
-                  <path key={i} d="M0 0 L-4 -70 L4 -70 Z" transform={`rotate(${i * 30})`} />
+            <svg width="170" height="100" viewBox="-85 -50 170 100" className={`overflow-visible ${popupTier.rainbow ? 'chain-rainbow' : ''}`} aria-label={`${chainNumber}連鎖`}>
+              <g className="chain-rays" fill={popupTier.rays} opacity="0.8">
+                {Array.from({ length: popupTier.rayCount }, (_, i) => (
+                  <path key={i} d="M0 0 L-4 -70 L4 -70 Z" transform={`rotate(${(i * 360) / popupTier.rayCount})`} />
                 ))}
               </g>
               <g className="chain-text" fontSize="32" fontWeight="900" textAnchor="middle">
                 <text x="0" y="11" fill="#fff" stroke="#fff" strokeWidth="8" strokeLinejoin="round">{chainNumber}連鎖!</text>
-                <text x="0" y="11" fill="#e8553d" stroke="#3b2f2f" strokeWidth="1.4">{chainNumber}連鎖!</text>
+                <text x="0" y="11" fill={popupTier.fill} stroke="#3b2f2f" strokeWidth="1.4">{chainNumber}連鎖!</text>
               </g>
             </svg>
           </div>

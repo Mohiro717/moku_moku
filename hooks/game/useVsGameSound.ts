@@ -79,6 +79,12 @@ const useBoardSound = (side: GameState | undefined, volume: number, onChainStep?
   const prevOjama = useRef(0);
   const step = side?.chainAnimationStep;
   const ojama = side ? countOjama(side.grid) : 0;
+  // そろって点滅している間（はじける前のため）。連鎖の判定の始めにも highlighting になるので、そろったぷよがあるかで見る
+  const charging = step === 'highlighting' && !!side?.grid.some(row => row.some(cell => cell.isConnected));
+
+  useEffect(() => {
+    if (charging && side) playSe('charge', side.currentChainStep + 1, volume);
+  }, [charging]);
 
   useEffect(() => {
     if (side && step === 'deleting' && prevStep.current !== 'deleting') {

@@ -147,14 +147,16 @@ export const PuyoFace: React.FC<{ squint?: boolean; blinkDelay?: string }> = ({ 
 
 /** 消えるときの輪・しずく・星。マスからはみ出して飛ぶ */
 const Burst: React.FC<{ color: string }> = ({ color }) => {
-  const drops = useMemo(() => Array.from({ length: 5 }, (_, k) => {
-    const angle = (-90 + (k - 2) * 38 + (Math.random() * 16 - 8)) * Math.PI / 180;
-    const dist = 26 + Math.random() * 18;
+  const drops = useMemo(() => Array.from({ length: 7 }, (_, k) => {
+    const angle = (-90 + (k - 3) * 34 + (Math.random() * 16 - 8)) * Math.PI / 180;
+    const dist = 30 + Math.random() * 22;
     return { dx: Math.cos(angle) * dist, dy: Math.sin(angle) * dist + 6 };
   }), []);
   return (
     <svg className="absolute inset-0 w-full h-full pointer-events-none overflow-visible z-[2]" viewBox="0 0 40 40">
+      <circle className="puyo-core" cx="20" cy="20" r="14" fill="#fff" />
       <circle className="puyo-ring" cx="20" cy="20" r="16" stroke={color} />
+      <circle className="puyo-ring puyo-ring-2" cx="20" cy="20" r="16" stroke="#fff" />
       {drops.map((d, i) => (
         <ellipse
           key={i}

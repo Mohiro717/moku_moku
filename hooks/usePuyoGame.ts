@@ -19,6 +19,24 @@ import { removeAdjacentOjama, dropOjamaPuyos } from '../utils/ojamaSystem';
 import { attemptRotationWithKick } from '../utils/puyoKickSystem';
 import { GAME_TIMINGS } from '../constants/gameTimings';
 
+/**
+ * 開発用：URL に ?chaintest を付けて開いた開発サーバーでだけ、6連鎖の階段を置いて始める。
+ * 最初のペア（赤の上に青）をそのまま左端へ落とすと、赤→青→緑→黄→赤→青と6連鎖して全部消える。
+ * 本番のビルドでは import.meta.env.DEV が false になり、この中身ごと消える。
+ */
+const chainTestStart = (): Pick<GameState, 'grid' | 'currentPair'> | null => {
+  if (!import.meta.env.DEV || !new URLSearchParams(location.search).has('chaintest')) return null;
+  const grid = createEmptyGrid();
+  const colors = ['red', 'blue', 'green', 'yellow', 'red', 'blue'] as const;
+  const bottom = GAME_CONFIG.gridHeight - 1;
+  colors.forEach((color, x) => {
+    for (let r = 0; r < 3; r++) grid[bottom - r][x].color = color;
+    // 上に乗せた鍵：下の3つが消えると落ちて、右の列の3つとつながる
+    if (x >= 1 && x <= 4) grid[bottom - 3][x].color = colors[x + 1];
+  });
+  return { grid, currentPair: { main: 'red', sub: 'blue', x: 0, y: 1, rotation: 0 } };
+};
+
 const createInitialGameState = (): GameState => ({
   grid: createEmptyGrid(),
   currentPair: null,
@@ -490,7 +508,8 @@ export const usePuyoGame = (ojamaLink?: OjamaLink) => {
         nextPair: createRandomPair(),
         nextNextPair: createRandomPair(),
         chainAnimationStep: 'idle',
-        currentChainStep: 0
+        currentChainStep: 0,
+        ...chainTestStart()
       };
     });
   }, []);
