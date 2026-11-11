@@ -1,5 +1,6 @@
 import { useEffect, useRef, type MutableRefObject, type RefObject } from 'react';
 import type { GameState } from '../../types/game';
+import { endFever, fxVariant, variantFx } from './ChainFxVariants';
 
 // ========================================
 // 連鎖の演出（全部盛り）
@@ -237,6 +238,8 @@ export const useChainFx = (
 ) => {
   const step = side?.chainAnimationStep;
   const prevStep = useRef(step);
+  const variant = useRef(fxVariant());
+  const lastStep = useRef(0);
 
   useEffect(() => {
     if (side && step === 'deleting' && prevStep.current !== 'deleting') {
@@ -250,8 +253,18 @@ export const useChainFx = (
         glow(board.current, n, points[0]?.color ?? '#fff');
         if (n >= SPEED_LINES_CHAIN) speedLines(board.current, points, n);
         if (n >= BIG_CHAIN) flashAndStamp(board.current, n);
+        if (variant.current) variantFx(variant.current, board.current, points, n);
       }
+      lastStep.current = n;
     }
     prevStep.current = step;
   }, [step]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // 見比べ用の案 c は、連鎖が終わったときに締めの演出を出す
+  const chaining = !!side?.isChaining;
+  useEffect(() => {
+    if (chaining || variant.current !== 'c') return;
+    endFever(board.current, lastStep.current);
+    lastStep.current = 0;
+  }, [chaining]); // eslint-disable-line react-hooks/exhaustive-deps
 };

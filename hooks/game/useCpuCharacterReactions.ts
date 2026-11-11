@@ -24,6 +24,11 @@ interface Params {
   opponent: SideState;
   /** このキャラの側の盤面にあるおじゃまの数（増えたら「食らった」声） */
   selfOjama: number;
+  /**
+   * このキャラの側に降る予定のおじゃまの数（予告）。向かいの連鎖がこちらの予告を増やしたときだけ
+   * 「攻撃を受けた」台詞を言う。相殺で打ち消されて届かなかった連鎖では言わない
+   */
+  selfPending: number;
   /** このキャラの側の盤面が上まで積み上がり、しかも向かいより高いか（ピンチの台詞用） */
   selfPinch: boolean;
 }
@@ -47,7 +52,7 @@ const PINCH_GAP_MS = 8000;
 const roundsOf = (side: SideState) => (side.isChaining ? side.currentChainStep + 1 : 0);
 
 /** 対戦の流れに合わせて、片方の側のキャラの台詞とカットインを決める（CPU 側と自分の側で1つずつ使う） */
-export const useCharacterReactions = ({ character, lines, isGameOver, won, self, opponent, selfOjama, selfPinch }: Params) => {
+export const useCharacterReactions = ({ character, lines, isGameOver, won, self, opponent, selfOjama, selfPending, selfPinch }: Params) => {
   const [lineKind, setLineKind] = useState<CpuLineKind>('intro');
   const [lineIndex, setLineIndex] = useState(() => Math.floor(Math.random() * Math.max(1, lines.intro.length)));
   // 同じ台詞をもう一度言ったときも分かるように、言うたびに数える（ボイスの合図）
@@ -100,22 +105,30 @@ export const useCharacterReactions = ({ character, lines, isGameOver, won, self,
     say('attack');
   }, [selfRounds, character]);
 
-  // 前におじゃまが降ってから、向かいがした一番長い連鎖（いま降ってきたおじゃまの出どころ）
+  // 前におじゃまが降ってから、向かいがこちらへ実際に届かせた一番長い連鎖（いま降ってきたおじゃまの出どころ）。
+  // 相殺で打ち消されて届かなかった連鎖は数えない
   const opponentBestChain = useRef(0);
-  useEffect(() => {
-    if (opponentRounds > opponentBestChain.current) opponentBestChain.current = opponentRounds;
-  }, [opponentRounds]);
+  // 向かいのいまの連鎖が、こちらの予告を増やしたか
+  const reachedThisChain = useRef(false);
+  const prevPending = useRef(selfPending);
 
-  // 向かいの大連鎖を受けたとき
+  // 向かいの大連鎖が、こちらに届いたとき。
+  // 予告は「消えた瞬間」に増え、連鎖の段の表示はそのあとに進むので、この連鎖で一度でも増えていれば届いた扱い
   useEffect(() => {
+    const grew = selfPending > prevPending.current;
+    prevPending.current = selfPending;
     if (opponentRounds === 0) {
       opponentFired.current = false;
+      reachedThisChain.current = false;
       return;
     }
+    if (grew) reachedThisChain.current = true;
+    if (!reachedThisChain.current) return;
+    if (opponentRounds > opponentBestChain.current) opponentBestChain.current = opponentRounds;
     if (opponentFired.current || opponentRounds < CUTIN_MIN_CHAIN) return;
     opponentFired.current = true;
     say('attacked');
-  }, [opponentRounds]);
+  }, [opponentRounds, selfPending]);
 
   // おじゃまが降ってきた瞬間（大きな連鎖から来たものだけ。小さな連鎖のおじゃまは黙って受ける）
   const prevOjama = useRef(selfOjama);

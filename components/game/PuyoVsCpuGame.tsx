@@ -154,6 +154,7 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
       self: gameState?.cpu ?? idleSide,
       opponent: gameState?.player ?? idleSide,
       selfOjama: gameState ? countOjama(gameState.cpu.grid) : 0,
+      selfPending: gameState?.pendingOjamaCpu ?? 0,
       selfPinch: cpuLosing
     });
     // 自分の側：あるじどのの味方として、味方用の台詞を言う
@@ -165,6 +166,7 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
       self: gameState?.player ?? idleSide,
       opponent: gameState?.cpu ?? idleSide,
       selfOjama: gameState ? countOjama(gameState.player.grid) : 0,
+      selfPending: gameState?.pendingOjamaPlayer ?? 0,
       selfPinch: playerLosing
     });
     const { line, lineTick, cutin } = cpuSide;

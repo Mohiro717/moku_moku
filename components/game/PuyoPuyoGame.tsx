@@ -46,6 +46,7 @@ export const PuyoPuyoGame: React.FC<PuyoPuyoGameProps> = ({ playerCharacterId, o
     self: gameState,
     opponent: IDLE_SIDE,
     selfOjama: 0,
+    selfPending: 0,
     selfPinch: isPinch(gameState.grid)
   });
   useSoloGameSound({
