@@ -437,61 +437,35 @@ function gong(start: number, gain: number, dest: AudioNode | null, freq: number,
   hiss({ length: 0.3, gain: gain * 0.4, from: 900, to: 300, q: 0.7, start, attack: 0.003, dest });
 }
 
-// --- おじゃまの音（11-11 オーナーが案A「ドシャーン」の方向を選んだ。B カラカラ連打・C ぬばたまの不吉・最初の地味な版は消した） ---
-
 /**
- * おじゃまが降ってきた音「ドシャーン」：重さで押す。1個でも風を切って太鼓が鳴り、崩れ落ちる「ジャッ」が量で長くなる。
- * 3段から地鳴り、30個で銅鑼。
- * scatter（11-11 オーナー「大量に落ちてくるときはもっとバラバラ落ちてくる」）：粒を降った数だけ鳴らし、
- * 量が多いほど長いあいだに不規則にばらけて落ちる。段ごとの太鼓もそろえず散らす。ときどき小さく跳ね返る
+ * おじゃまが降ってきた音「ドシャーン」（2026-11-11 オーナーが3案から選び、バラバラに落ちる形で決めた）。
+ * n は降った個数。1個でも風を切って太鼓が鳴る。粒は降った数だけ鳴り、量が多いほど長いあいだに
+ * 不規則にばらけて落ちる（30個で着地から約0.7秒）。段ごとの太鼓もそろえず散らす。
+ * 崩れ落ちる「ジャッ」はばらける長さだけ続く。3段から地鳴り、30個で銅鑼
  */
-function ojamaCrash(n: number, v: number, scatter = true) {
+function ojamaCrash(n: number, v: number) {
   const w = Math.min(1, n / MAX_OJAMA_PER_DROP);
   const rows = Math.ceil(n / GAME_CONFIG.gridWidth);
   const land = OJAMA_LAND;
   hiss({ length: land + 0.03, gain: (0.12 + 0.25 * w) * v, from: 3000, to: 300, q: 0.6, attack: land, dest: out(0, 0.2) });
   const hit = out(0, 0.25);
   taiko(land, (0.7 + 0.3 * w) * v, hit, 120 - 50 * w);
-  if (scatter) {
-    // 30個なら着地から約0.7秒のあいだ。前のほうに多く、あとはぽつぽつ
-    const spread = 0.06 + 0.64 * w;
-    hiss({ length: 0.15 + spread, gain: (0.22 + 0.2 * w) * v, from: 1800, to: 120, q: 0.4, start: land, attack: 0.003, dest: out(0, 0.3) });
-    for (let i = 0; i < n; i++) {
-      const t = land + (i === 0 ? 0 : spread * Math.pow(Math.random(), 1.6));
-      const g = (0.2 + 0.18 * Math.random()) * v;
-      const d = out(Math.random() * 1.8 - 0.9, 0.15);
-      plop(t, g, d, 120 + Math.random() * 170);
-      if (Math.random() < 0.35) plop(t + 0.06 + Math.random() * 0.06, g * 0.4, d, 220 + Math.random() * 140);
-    }
-    for (let i = 1; i < rows; i++) taiko(land + 0.04 + Math.random() * spread, (0.45 + 0.3 * w) * v, hit, 90 + Math.random() * 35);
-  } else {
-    hiss({ length: 0.15 + 0.5 * w, gain: (0.25 + 0.25 * w) * v, from: 1800, to: 120, q: 0.4, start: land, attack: 0.003, dest: out(0, 0.3) });
-    const grains = Math.min(n, 14);
-    for (let i = 0; i < grains; i++) {
-      plop(land + 0.02 + Math.random() * (0.05 + 0.02 * grains), 0.38 * v, out(Math.random() * 1.6 - 0.8, 0.15), 130 + Math.random() * 120);
-    }
-    for (let i = 1; i < rows; i++) taiko(land + i * 0.07, (0.55 + 0.3 * w) * v, hit, 100 - i * 8);
+  // 30個なら着地から約0.7秒のあいだ。前のほうに多く、あとはぽつぽつ
+  const spread = 0.06 + 0.64 * w;
+  hiss({ length: 0.15 + spread, gain: (0.22 + 0.2 * w) * v, from: 1800, to: 120, q: 0.4, start: land, attack: 0.003, dest: out(0, 0.3) });
+  for (let i = 0; i < n; i++) {
+    const t = land + (i === 0 ? 0 : spread * Math.pow(Math.random(), 1.6));
+    const g = (0.2 + 0.18 * Math.random()) * v;
+    const d = out(Math.random() * 1.8 - 0.9, 0.15);
+    plop(t, g, d, 120 + Math.random() * 170);
+    if (Math.random() < 0.35) plop(t + 0.06 + Math.random() * 0.06, g * 0.4, d, 220 + Math.random() * 140);
   }
+  for (let i = 1; i < rows; i++) taiko(land + 0.04 + Math.random() * spread, (0.45 + 0.3 * w) * v, hit, 90 + Math.random() * 35);
   tone({ from: 90, to: 28, length: 0.4 + 0.8 * w, gain: (0.35 + 0.5 * w) * v, start: land, attack: 0.003, dest: out(0, 0.05) });
   if (n >= 18) {
     hiss({ length: 0.8 + 1.0 * w, gain: (0.25 + 0.3 * w) * v, from: 300, to: 45, filter: 'lowpass', start: land, attack: 0.02, dest: out(0, 0.3) });
   }
   if (n >= MAX_OJAMA_PER_DROP) gong(land + 0.02, 0.45 * v, out(0, 0.5), 70, 3);
-}
-
-/** バラバラにするか（開発用の ?ojamatest で 0 キー＝さっきの A、1 キー＝バラバラ。左下に出る。選び終えたら切り替えごと消す） */
-let ojamaScatter = true;
-if (import.meta.env.DEV && typeof location !== 'undefined' && new URLSearchParams(location.search).has('ojamatest')) {
-  const label = document.createElement('div');
-  label.style.cssText = 'position:fixed;left:8px;bottom:8px;z-index:9999;padding:6px 10px;border-radius:8px;background:#1f1d34;color:#fff;font:bold 14px sans-serif';
-  const show = () => (label.textContent = `おじゃまの音：${ojamaScatter ? '1 バラバラ（新）' : '0 さっきの A'}（0・1 キーで切り替え）`);
-  show();
-  document.body.appendChild(label);
-  window.addEventListener('keydown', e => {
-    if (e.key !== '0' && e.key !== '1') return;
-    ojamaScatter = e.key === '1';
-    show();
-  });
 }
 
 const semitone = (base: number, n: number) => base * Math.pow(2, n / 12);
@@ -557,7 +531,7 @@ export function playSe(name: SeName, step = 1, volume = 1) {
     }
     case 'ojama':
       // おじゃまが降ってきた。step は降った個数（1〜30）。音は着地の瞬間（OJAMA_LAND）に合わせる
-      ojamaCrash(Math.max(1, step), v, ojamaScatter);
+      ojamaCrash(Math.max(1, step), v);
       break;
     case 'cutin': {
       // カン、カン、ドン、琴の和音と鈴
