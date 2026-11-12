@@ -224,6 +224,14 @@
   from { opacity: 0; }
   to   { opacity: 1; }
 }
+/* つながった体が出るのと同時に、ひとつぶの体を消す（輪郭が二重にならないように） */
+.puyo-unjoin {
+  animation: puyo-fade-out 120ms ease-out var(--bridge-delay, 0ms) both;
+}
+@keyframes puyo-fade-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
 
 /* 操作中のペア：マスの間をすべって動く */
 .puyo-active {
@@ -299,7 +307,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .puyo-drop, .puyo-squash, .puyo-eye-squint, .puyo-blink, .puyo-pop, .puyo-ring, .puyo-droplet,
-  .puyo-star, .puyo-core, .puyo-bridge, .chain-rays, .chain-text, .attack-beam, .ojama-in {
+  .puyo-star, .puyo-core, .puyo-bridge, .puyo-unjoin, .chain-rays, .chain-text, .attack-beam, .ojama-in {
     animation-duration: 1ms; animation-delay: 0ms;
   }
   .puyo-eye, .nubatama-eye, .puyo-idle, .ojama-ready, .chain-rainbow { animation: none; }

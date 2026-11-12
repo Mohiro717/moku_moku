@@ -1,5 +1,5 @@
 import React, { useMemo, useRef } from 'react';
-import { Puyo, BRIDGE_COLORS, dropDuration } from './Puyo';
+import { Puyo, dropDuration, LINK_RIGHT, LINK_DOWN, LINK_LEFT, LINK_UP } from './Puyo';
 import './wapop.css';
 import type { PuyoCell, PuyoColor, PuyoPair, Position, GameResult } from '../../types/game';
 
@@ -197,10 +197,33 @@ export const GameGrid: React.FC<GameGridProps> = ({
   const columnCount = grid[0]?.length || 6;
   const visibleRows = grid.length - 1; // row 0 は出現用の隠し行
 
+  // row 0（隠し行）のぷよとはつながない
   const isLinkable = (y: number, x: number): boolean => {
     const cell = grid[y]?.[x];
-    return !!cell && !!cell.color && cell.color !== 'ojama' && !cell.isDeleting;
+    return y >= 1 && !!cell && !!cell.color && cell.color !== 'ojama' && !cell.isDeleting;
   };
+  const sameLink = (y: number, x: number, ny: number, nx: number) =>
+    isLinkable(y, x) && isLinkable(ny, nx) && grid[ny][nx].color === grid[y][x].color;
+
+  // つながったかたまりは同じ位相で呼吸させる（ばらばらだとつなぎ目がゆがむ）。
+  // かたまりの中でいちばん左上のマスの番号から位相を決める
+  const groupPhase: Array<Array<number | undefined>> = grid.map(row => row.map(() => undefined));
+  grid.forEach((row, y) => row.forEach((_, x) => {
+    if (groupPhase[y][x] !== undefined || !isLinkable(y, x)) return;
+    const members: Array<[number, number]> = [];
+    const stack: Array<[number, number]> = [[y, x]];
+    const seen = new Set([`${y},${x}`]);
+    while (stack.length) {
+      const [cy, cx] = stack.pop()!;
+      members.push([cy, cx]);
+      for (const [ny, nx] of [[cy + 1, cx], [cy - 1, cx], [cy, cx + 1], [cy, cx - 1]]) {
+        if (!seen.has(`${ny},${nx}`) && sameLink(cy, cx, ny, nx)) { seen.add(`${ny},${nx}`); stack.push([ny, nx]); }
+      }
+    }
+    if (members.length < 2) return;
+    const phase = ((y * columnCount + x) * 0.618034) % 1;
+    members.forEach(([my, mx]) => { groupPhase[my][mx] = phase; });
+  }));
 
   // 消えるぷよの重心に連鎖数を出す
   const chainNumber = chainStep + 1;
@@ -244,27 +267,22 @@ export const GameGrid: React.FC<GameGridProps> = ({
           row.map((cell, colIndex) => {
             const y = visibleIndex + 1;
             const anim = anims[y][colIndex];
-            const linkRight = isLinkable(y, colIndex) && isLinkable(y, colIndex + 1) && grid[y][colIndex + 1].color === cell.color;
-            const linkDown = isLinkable(y, colIndex) && isLinkable(y + 1, colIndex) && grid[y + 1][colIndex].color === cell.color;
-            const delayWith = (other: CellAnim) =>
-              `${Math.max(anim.landed ? dropDuration(anim.fallRows) : 0, other.landed ? dropDuration(other.fallRows) : 0)}ms`;
+            // 同じ色のとなりとのつながり。つなぎ目は、どちらかが落ちてくる途中なら着地を待って出す
+            let links = 0;
+            let linkWait = 0;
+            const keyParts: string[] = [];
+            for (const [bit, ny, nx] of [
+              [LINK_RIGHT, y, colIndex + 1], [LINK_DOWN, y + 1, colIndex], [LINK_LEFT, y, colIndex - 1], [LINK_UP, y - 1, colIndex]
+            ] as const) {
+              if (!sameLink(y, colIndex, ny, nx)) continue;
+              const other = anims[ny][nx];
+              links |= bit;
+              linkWait = Math.max(linkWait, anim.landed ? dropDuration(anim.fallRows) : 0, other.landed ? dropDuration(other.fallRows) : 0);
+              keyParts.push(`${bit}:${other.version}`);
+            }
 
             return (
               <div key={`${y}-${colIndex}`} className={GAME_GRID_STYLES.cell}>
-                {linkRight && (
-                  <div
-                    key={`r-${anim.version}-${anims[y][colIndex + 1].version}`}
-                    className={`puyo-bridge absolute left-1/2 top-[22%] h-[56%] ${BRIDGE_COLORS[cell.color!]}`}
-                    style={{ width: 'calc(100% + 4px)', '--bridge-delay': delayWith(anims[y][colIndex + 1]) } as React.CSSProperties}
-                  />
-                )}
-                {linkDown && (
-                  <div
-                    key={`d-${anim.version}-${anims[y + 1][colIndex].version}`}
-                    className={`puyo-bridge absolute top-1/2 left-[22%] w-[56%] ${BRIDGE_COLORS[cell.color!]}`}
-                    style={{ height: 'calc(100% + 4px)', '--bridge-delay': delayWith(anims[y + 1][colIndex]) } as React.CSSProperties}
-                  />
-                )}
                 <Puyo
                   key={anim.version}
                   color={cell.color}
@@ -273,6 +291,10 @@ export const GameGrid: React.FC<GameGridProps> = ({
                   landed={anim.landed}
                   fallRows={anim.fallRows}
                   idle
+                  links={links}
+                  linkKey={`${links}-${keyParts.join('-')}`}
+                  linkDelay={`${linkWait}ms`}
+                  breathPhase={groupPhase[y][colIndex]}
                 />
               </div>
             );

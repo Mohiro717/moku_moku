@@ -12,15 +12,21 @@ interface PuyoProps {
   fallRows?: number;
   /** 盤面に積もって止まっているぷよ。ゆっくり息をする */
   idle?: boolean;
+  /** 同じ色のとなりとつながっている向き（LINK_* の和）。0 ならつながりなし */
+  links?: number;
+  /** つながりが変わるたびに変える。つなぎ目を出し直す（フェードし直す）ための鍵 */
+  linkKey?: string;
+  /** つなぎ目が出るまでの待ち（落ちてくるぷよが着地してから） */
+  linkDelay?: string;
+  /** 呼吸の位相（0〜1）。つながったかたまりは同じ値にして一緒に息をさせる */
+  breathPhase?: number;
 }
 
-/** つながりの橋の色（玉の中間色に合わせる） */
-export const BRIDGE_COLORS: Record<string, string> = {
-  red: 'bg-[#fb7a7a]',
-  blue: 'bg-[#6aa9fb]',
-  green: 'bg-[#55dc86]',
-  yellow: 'bg-[#fbd23a]'
-};
+/** つながりの向き。links はこの和 */
+export const LINK_RIGHT = 1;
+export const LINK_DOWN = 2;
+export const LINK_LEFT = 4;
+export const LINK_UP = 8;
 
 /** はじけたときの輪・しずくの色 */
 const BURST_COLORS: Record<string, string> = {
@@ -72,12 +78,114 @@ const PuyoSkin: React.FC<{ color: string }> = ({ color }) => {
         <use href="#puyo-body" fill="none" stroke={light} strokeOpacity=".75" strokeWidth="2.2" />
         <ellipse cx="22" cy="31" rx="9" ry="4" fill="#fff" opacity=".4" filter="url(#puyo-soft)" />
       </g>
-      <path d="M8 15 C8 9 12.5 5.5 18 5.2 L17.6 8.2 C13.8 8.6 11.2 11 10.8 15 Z" fill="#fff" opacity=".9" />
-      <circle cx="13.6" cy="17" r="1.1" fill="#fff" opacity=".8" />
       <use href="#puyo-body" fill="none" stroke={dark} strokeOpacity=".6" strokeWidth=".8" />
     </>
   );
 };
+
+/** 窓の形の白い照り。つながっていてもぷよ1個ずつに置く */
+const PuyoShine: React.FC = () => (
+  <>
+    <path d="M8 15 C8 9 12.5 5.5 18 5.2 L17.6 8.2 C13.8 8.6 11.2 11 10.8 15 Z" fill="#fff" opacity=".9" />
+    <circle cx="13.6" cy="17" r="1.1" fill="#fff" opacity=".8" />
+  </>
+);
+
+// ========================================
+// つながったぷよの体（オーナー 11-12 の選択「A くびれてつながる」。見比べた案 B は溶けて一体）
+// 体に、となりの中心まで伸びる少しくびれた首を足し、ぼかして切ることで1つの輪郭に溶かす。
+// 首のまん中（d = 18〜26）は太さが一定なので、となりどうしが同じ形・同じ塗りで出会い、継ぎ目が出ない。
+// 右・下のつながりは中心から 25 先まで描き、左・上は 21.5 で切る。DOM で後に来る右・下のぷよが
+// 上に重なるので、呼吸でわずかにずれても隙間は前のぷよの首が埋める。
+// ========================================
+
+/** ぷよの中心から見た首の形。右向きの首を回して4方向を作る（中心 (20,21)・となりの中心まで 44） */
+const NECK_RIGHT = 'M20 9 C32 9 32 13 38 13 L46 13 C52 13 52 9 64 9 L64 33 C52 33 52 29 46 29 L38 29 C32 29 32 33 20 33 Z';
+const NECK_DOWN = 'M8 20 C8 32 12 32 12 38 L12 46 C12 52 8 52 8 64 L32 64 C32 52 28 52 28 46 L28 38 C28 32 32 32 32 20 Z';
+const NECK_LEFT = 'M20 9 C8 9 8 13 2 13 L-6 13 C-12 13 -12 9 -24 9 L-24 33 C-12 33 -12 29 -6 29 L2 29 C8 29 8 33 20 33 Z';
+const NECK_UP = 'M8 20 C8 8 12 8 12 2 L12 -6 C12 -12 8 -12 8 -24 L32 -24 C32 -12 28 -12 28 -6 L28 2 C28 8 32 8 32 20 Z';
+
+const linkShapes = (links: number) =>
+  `<path d="${BODY_D}"/>` +
+  (links & LINK_RIGHT ? `<path d="${NECK_RIGHT}"/>` : '') +
+  (links & LINK_DOWN ? `<path d="${NECK_DOWN}"/>` : '') +
+  (links & LINK_LEFT ? `<path d="${NECK_LEFT}"/>` : '') +
+  (links & LINK_UP ? `<path d="${NECK_UP}"/>` : '');
+
+/** 切り取りの枠：つながっていない側は大きく空け（輪郭がはみ出せるように）、つながった側は上の規則で切る */
+const linkClip = (links: number) => {
+  const left = links & LINK_LEFT ? -1.5 : -30;
+  const right = links & LINK_RIGHT ? 45 : 70;
+  const top = links & LINK_UP ? -1.5 : -30;
+  const bottom = links & LINK_DOWN ? 45 : 70;
+  return `<rect x="${left}" y="${top}" width="${right - left}" height="${bottom - top}"/>`;
+};
+
+const COLOR_NAMES = ['red', 'blue', 'green', 'yellow'];
+
+const JOIN_DEFS = `
+  <filter id="puyo-goo" x="-20%" y="-20%" width="140%" height="140%">
+    <feGaussianBlur in="SourceGraphic" stdDeviation="1.6" result="b"/>
+    <feColorMatrix in="b" type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 22 -10"/>
+  </filter>
+  ${COLOR_NAMES.map(name => {
+    const [light, mid, dark] = GRADIENTS[name];
+    return `
+    <radialGradient id="puyo-gq-${name}" cx="50%" cy="60.46%" r="40.54%">
+      <stop offset="0" stop-color="${light}"/><stop offset=".5" stop-color="${mid}"/><stop offset="1" stop-color="${dark}"/>
+    </radialGradient>
+    <linearGradient id="puyo-nh-${name}" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="${dark}"/><stop offset=".3" stop-color="${mid}"/><stop offset=".62" stop-color="${light}"/><stop offset=".8" stop-color="${mid}"/><stop offset="1" stop-color="${dark}"/>
+    </linearGradient>
+    <linearGradient id="puyo-nv-${name}" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="${dark}"/><stop offset=".3" stop-color="${mid}"/><stop offset=".5" stop-color="${light}"/><stop offset=".7" stop-color="${mid}"/><stop offset="1" stop-color="${dark}"/>
+    </linearGradient>
+    <filter id="puyo-edge-${name}" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="1.6" result="b"/>
+      <feColorMatrix in="b" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 22 -10" result="sil"/>
+      <feMorphology in="sil" operator="dilate" radius="0.4" result="dil"/>
+      <feMorphology in="sil" operator="erode" radius="0.4" result="ero"/>
+      <feComposite in="dil" in2="ero" operator="out" result="ol"/>
+      <feFlood flood-color="${dark}" flood-opacity=".6"/><feComposite in2="ol" operator="in" result="olc"/>
+      <feMorphology in="sil" operator="erode" radius="1.1" result="ero2"/>
+      <feComposite in="sil" in2="ero2" operator="out" result="rim"/>
+      <feFlood flood-color="${light}" flood-opacity=".75"/><feComposite in2="rim" operator="in" result="rimc"/>
+      <feMerge><feMergeNode in="rimc"/><feMergeNode in="olc"/></feMerge>
+    </filter>`;
+  }).join('')}
+  ${[
+    ['r', 32, 0, 39, 0], ['l', 8, 0, 1, 0], ['d', 0, 32, 0, 38], ['u', 0, 8, 0, 2]
+  ].map(([dir, x1, y1, x2, y2]) => `
+    <linearGradient id="puyo-fade-${dir}" gradientUnits="userSpaceOnUse" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}">
+      <stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#fff"/>
+    </linearGradient>
+    <mask id="puyo-fm-${dir}" maskUnits="userSpaceOnUse" x="-40" y="-40" width="120" height="120">
+      <rect x="-40" y="-40" width="120" height="120" fill="url(#puyo-fade-${dir})"/>
+    </mask>`).join('')}
+  ${Array.from({ length: 15 }, (_, i) => i + 1).map(links => `
+    <g id="puyo-js-${links}">${linkShapes(links)}</g>
+    <mask id="puyo-jm-${links}" maskUnits="userSpaceOnUse" x="-40" y="-40" width="120" height="120">
+      <use href="#puyo-js-${links}" filter="url(#puyo-goo)"/>
+    </mask>
+    <clipPath id="puyo-jc-${links}">${linkClip(links)}</clipPath>`).join('')}`;
+
+/**
+ * つながったぷよの体。体＋首を1つの輪郭に溶かして塗り、輪郭線と内側のふちの光もその輪郭から作る。
+ * 体の塗りはつながっていないときと同じ（グラデーションの中心と半径を合わせてある）
+ */
+const JoinedSkin: React.FC<{ color: string; links: number }> = ({ color, links }) => (
+  <g clipPath={`url(#puyo-jc-${links})`}>
+    <g mask={`url(#puyo-jm-${links})`}>
+      <rect x="-6" y="-6" width="52" height="52" fill={`url(#puyo-gq-${color})`} />
+      <ellipse cx="22" cy="31" rx="9" ry="4" fill="#fff" opacity=".4" filter="url(#puyo-soft)" />
+      {links & LINK_RIGHT ? <rect x="20" y="6" width="50" height="30" fill={`url(#puyo-nh-${color})`} mask="url(#puyo-fm-r)" /> : null}
+      {links & LINK_LEFT ? <rect x="-30" y="6" width="50" height="30" fill={`url(#puyo-nh-${color})`} mask="url(#puyo-fm-l)" /> : null}
+      {links & LINK_DOWN ? <rect x="5" y="20" width="30" height="50" fill={`url(#puyo-nv-${color})`} mask="url(#puyo-fm-d)" /> : null}
+      {links & LINK_UP ? <rect x="5" y="-30" width="30" height="50" fill={`url(#puyo-nv-${color})`} mask="url(#puyo-fm-u)" /> : null}
+    </g>
+    <use href={`#puyo-js-${links}`} filter={`url(#puyo-edge-${color})`} />
+  </g>
+);
 
 const ensureDefs = () => {
   if (typeof document === 'undefined' || !document.body || document.getElementById(DEFS_ID)) return;
@@ -95,6 +203,7 @@ const ensureDefs = () => {
     <path id="puyo-body" d="${BODY_D}"/>
     <filter id="nb-haze" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="1.8"/></filter>
     ${LOOK_DEFS}
+    ${JOIN_DEFS}
     <path id="puyo-star"d="M0 -7 L2 -2 L7 0 L2 2 L0 7 L-2 2 L-7 0 L-2 -2 Z"/>
   </defs>`;
   document.body.appendChild(svg);
@@ -210,7 +319,11 @@ export const Puyo: React.FC<PuyoProps> = memo(({
   isDeleting = false,
   landed = false,
   fallRows = 0,
-  idle = false
+  idle = false,
+  links = 0,
+  linkKey = '',
+  linkDelay = '0ms',
+  breathPhase
 }) => {
   ensureDefs();
   // まばたき・呼吸がそろわないよう、ぷよごとにずらす
@@ -224,7 +337,10 @@ export const Puyo: React.FC<PuyoProps> = memo(({
   const dropStyle = landed
     ? ({ '--fall-rows': fallRows, '--drop-ms': `${dropDuration(fallRows)}ms` } as React.CSSProperties)
     : undefined;
-  const bodyStyle = stateClass === 'puyo-idle' ? { animationDelay: `${(-phase * 2.4).toFixed(2)}s` } : undefined;
+  const bodyStyle = stateClass === 'puyo-idle' ? { animationDelay: `${(-(breathPhase ?? phase) * 2.4).toFixed(2)}s` } : undefined;
+  // つながりがあれば、着地を待ってから、ひとつぶの体をつながった体へ入れ替える
+  const joined = links > 0 && color !== 'ojama';
+  const linkStyle = joined ? ({ '--bridge-delay': linkDelay } as React.CSSProperties) : undefined;
 
   return (
     <div className={`${SIZE} relative z-[1]`}>
@@ -235,7 +351,15 @@ export const Puyo: React.FC<PuyoProps> = memo(({
               <Nubatama variant={phase} blinkDelay={`${(-phase * 6).toFixed(2)}s`} />
             ) : (
               <>
-                <PuyoSkin color={color} />
+                <g key={`base-${linkKey}`} className={joined ? 'puyo-unjoin' : undefined} style={linkStyle}>
+                  <PuyoSkin color={color} />
+                </g>
+                {joined && (
+                  <g key={`join-${linkKey}`} className="puyo-bridge" style={linkStyle}>
+                    <JoinedSkin color={color} links={links} />
+                  </g>
+                )}
+                <PuyoShine />
                 <PuyoFace squint={landed} blinkDelay={`${(-phase * 3.6).toFixed(2)}s`} />
               </>
             )}
