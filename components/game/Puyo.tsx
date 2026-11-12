@@ -2,6 +2,7 @@ import React, { memo, useMemo } from 'react';
 import type { PuyoColor } from '../../types/game';
 import { GAME_TIMINGS } from '../../constants/gameTimings';
 import './puyoAnimations.css';
+import { PREVIEW_SKIN, PieceSkin } from './PieceSkins';
 
 interface PuyoProps {
   color: PuyoColor;
@@ -349,6 +350,8 @@ export const Puyo: React.FC<PuyoProps> = memo(({
           <svg className={`puyo-svg w-full h-full overflow-visible ${stateClass}`} style={bodyStyle} viewBox="0 0 40 40">
             {color === 'ojama' ? (
               <Nubatama variant={phase} blinkDelay={`${(-phase * 6).toFixed(2)}s`} />
+            ) : PREVIEW_SKIN ? (
+              <PieceSkin skin={PREVIEW_SKIN} color={color} />
             ) : (
               <>
                 <g key={`base-${linkKey}`} className={joined ? 'puyo-unjoin' : undefined} style={linkStyle}>
