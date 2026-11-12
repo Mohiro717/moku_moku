@@ -4,11 +4,27 @@ import type { GameState } from '../../types/game';
 import { topRow } from '../../utils/boardStatus';
 
 /** 対戦のはじまりのカウント：3・2・1、'go'＝はじめ！（VS の絵は 3〜1 のあいだ重ねて出す） */
-export type IntroStep = 3 | 2 | 1 | 'go';
+export type IntroStep = 'vs' | 3 | 2 | 1 | 'go';
 
 /** 1つの数字を出す長さ。VS の絵は 3 × COUNT_MS（puyoAnimations.css の 2100ms）出す */
 export const COUNT_MS = 700;
 export const GO_MS = 650;
+
+// ========================================
+// 【見比べ用・開発のみ】?intro=a|b|c でイントロの3案。どれも VS の絵だけを VS_LEAD_MS 見せてから 3・2・1 を重ねる
+//   a 上下に互い違い（自分は上から・相手は下から、ゆっくり入って、そのまま逆向きにゆっくりずれ続ける）
+//   b ゆっくり寄る（入りは今のまま、絵がじわっと顔へ寄る）
+//   c 1人ずつ（自分 → 相手 → VS の順に出す）
+// オーナーが選んだら1案だけ残し、ほかの案と ?intro の読み取りを消す
+// ========================================
+export type IntroLook = 'a' | 'b' | 'c' | null;
+export const INTRO_LOOK: IntroLook = (() => {
+  if (!import.meta.env.DEV || typeof location === 'undefined') return null;
+  const v = new URLSearchParams(location.search).get('intro');
+  return v === 'a' || v === 'b' || v === 'c' ? v : null;
+})();
+/** VS の絵だけを見せる時間（カウントの前） */
+export const VS_LEAD_MS = INTRO_LOOK ? 1200 : 0;
 
 /**
  * 「咲耶 VS 宇迦」：自分のキャラを左（スマホは上）、相手を右（スマホは下）に、名前の文字は出さず絵だけで
@@ -16,7 +32,10 @@ export const GO_MS = 650;
  * カットインは試合中にも頭から流すので、ここでは URL を変えて別に読む（同じ URL だと試合中に頭から再生されないことがある）
  */
 const VsSplash: React.FC<{ player: CpuCharacter; cpu: CpuCharacter }> = ({ player, cpu }) => (
-  <div className="vs-splash absolute inset-0">
+  <div
+    className={`vs-splash absolute inset-0 ${INTRO_LOOK ? `vs-look vs-look-${INTRO_LOOK}` : ''}`}
+    style={{ '--vs-ms': `${VS_LEAD_MS + 3 * COUNT_MS}ms` } as React.CSSProperties}
+  >
     <div className="vs-half vs-half-a">
       {player.cutins[0] && <img src={`${player.cutins[0]}?vs=1`} alt="" className="vs-art" />}
     </div>
@@ -35,9 +54,11 @@ export const VsIntroOverlay: React.FC<{ step: IntroStep | null; showVs: boolean;
     <div className="pointer-events-none absolute inset-0 z-50 overflow-hidden rounded-2xl" aria-live="polite">
       {showVs && <VsSplash player={player} cpu={cpu} />}
       <div className={`absolute inset-0 flex items-center justify-center ${showVs ? '' : 'bg-[rgba(42,12,28,0.18)]'}`}>
-        <div key={String(step)} className={`vs-count ${showVs ? 'vs-count-on-vs' : ''} ${step === 'go' ? 'vs-count-go' : ''}`}>
-          {step === 'go' ? 'はじめ！' : step}
-        </div>
+        {step !== 'vs' && (
+          <div key={String(step)} className={`vs-count ${showVs ? 'vs-count-on-vs' : ''} ${step === 'go' ? 'vs-count-go' : ''}`}>
+            {step === 'go' ? 'はじめ！' : step}
+          </div>
+        )}
       </div>
     </div>
   );

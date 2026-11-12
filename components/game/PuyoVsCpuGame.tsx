@@ -11,7 +11,7 @@ import { useVsCpuGame } from '../../hooks/useVsCpuGame';
 import { useCharacterReactions } from '../../hooks/game/useCpuCharacterReactions';
 import { useVsGameSound } from '../../hooks/game/useVsGameSound';
 import { isMuted, playSe, playVoice, setMuted, unlockAudio } from '../../utils/gameAudio';
-import { COUNT_MS, GO_MS, MoodIcon, VsIntroOverlay, nextMood, type IntroStep, type Mood } from './VsIntro';
+import { COUNT_MS, GO_MS, VS_LEAD_MS, MoodIcon, VsIntroOverlay, nextMood, type IntroStep, type Mood } from './VsIntro';
 import './wapop.css';
 import { AllyCharacterPanel, CpuCharacterPanel, CpuCutinOverlay, KitanCredit } from './CpuCharacter';
 import {
@@ -190,20 +190,26 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
       introTimers.current.forEach(clearTimeout);
       introTimers.current = [];
       const at = (ms: number, fn: () => void) => introTimers.current.push(window.setTimeout(fn, ms));
+      // VS の絵だけを先に見せる時間（見比べ中の案だけ。今の形は 0 で、絵とカウントが同時）
+      const lead = withVs ? VS_LEAD_MS : 0;
       setShowVs(withVs);
-      setIntro(3);
+      setIntro(lead > 0 ? 'vs' : 3);
       playSe(withVs ? 'cutin' : 'move');
       setIntroRun(n => n + 1);
-      ([2, 1] as const).forEach((n, i) => at((i + 1) * COUNT_MS, () => {
+      if (lead > 0) at(lead, () => {
+        setIntro(3);
+        playSe('move');
+      });
+      ([2, 1] as const).forEach((n, i) => at(lead + (i + 1) * COUNT_MS, () => {
         setIntro(n);
         playSe('move');
       }));
-      at(3 * COUNT_MS, () => {
+      at(lead + 3 * COUNT_MS, () => {
         setIntro('go');
         setShowVs(false);
         startGameRef.current();
       });
-      at(3 * COUNT_MS + GO_MS, () => setIntro(null));
+      at(lead + 3 * COUNT_MS + GO_MS, () => setIntro(null));
     };
     useEffect(() => {
       runIntro(true);

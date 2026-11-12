@@ -405,6 +405,52 @@
 @keyframes vs-in-top { from { transform: translateY(-100%); } to { transform: translateY(0); } }
 @keyframes vs-in-bottom { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
+/* 【見比べ用・開発のみ】?intro=a|b|c（VsIntro.tsx の INTRO_LOOK）。長さは --vs-ms（絵だけの時間＋3カウント） */
+.vs-look,
+.vs-look .vs-slash,
+.vs-look .vs-mark { animation-duration: var(--vs-ms); }
+
+/* a 上下に互い違い：自分は上から・相手は下からゆっくり入り、そのまま逆向きにずれ続ける */
+.vs-look-a .vs-half-a { animation: vs-in-top 900ms cubic-bezier(0.25, 0.8, 0.3, 1) both; }
+.vs-look-a .vs-half-b { animation: vs-in-bottom 900ms cubic-bezier(0.25, 0.8, 0.3, 1) 150ms both; }
+.vs-look-a .vs-half-a .vs-art { animation: vs-drift-down var(--vs-ms) linear both; }
+.vs-look-a .vs-half-b .vs-art { animation: vs-drift-up-flip var(--vs-ms) linear both; }
+@keyframes vs-drift-down { from { transform: scale(1.16) translateY(-5%); } to { transform: scale(1.16) translateY(5%); } }
+@keyframes vs-drift-up-flip { from { transform: scale(-1.16, 1.16) translateY(5%); } to { transform: scale(-1.16, 1.16) translateY(-5%); } }
+@media (max-width: 1023px) {
+  /* スマホは上下に並ぶので、互い違いは左右に */
+  .vs-look-a .vs-half-a { animation-name: vs-in-left; }
+  .vs-look-a .vs-half-b { animation-name: vs-in-right; }
+  .vs-look-a .vs-half-a .vs-art { animation-name: vs-drift-right; }
+  .vs-look-a .vs-half-b .vs-art { animation-name: vs-drift-left-flip; }
+}
+@keyframes vs-drift-right { from { transform: scale(1.16) translateX(-5%); } to { transform: scale(1.16) translateX(5%); } }
+@keyframes vs-drift-left-flip { from { transform: scale(-1.16, 1.16) translateX(-5%); } to { transform: scale(-1.16, 1.16) translateX(5%); } }
+
+/* b ゆっくり寄る：入りは今のまま、絵がじわっと大きくなる */
+.vs-look-b .vs-art { transform-origin: 50% 35%; animation: vs-push-in var(--vs-ms) ease-out both; }
+.vs-look-b .vs-art-flip { animation-name: vs-push-in-flip; }
+@keyframes vs-push-in { from { transform: scale(1); } to { transform: scale(1.18); } }
+@keyframes vs-push-in-flip { from { transform: scale(-1, 1); } to { transform: scale(-1.18, 1.18); } }
+
+/* c 1人ずつ：自分 → 相手 → VS（相手は 600ms 遅れ、VS は2人がそろってから） */
+.vs-look-c .vs-half-a { animation-duration: 450ms; }
+.vs-look-c .vs-half-b { animation-duration: 450ms; animation-delay: 600ms; }
+.vs-look-c .vs-mark { animation-name: vs-stamp-late; }
+.vs-look-c .vs-slash { animation-name: vs-flash-late; }
+@keyframes vs-stamp-late {
+  0%, 30% { opacity: 0; transform: translate(-50%, -150%) scale(3) rotate(-12deg); }
+  38% { opacity: 1; transform: translate(-50%, -150%) scale(0.92) rotate(-6deg); }
+  42% { transform: translate(-50%, -150%) scale(1.05) rotate(-6deg); }
+  92% { opacity: 1; transform: translate(-50%, -150%) scale(1.08) rotate(-6deg); }
+  100% { opacity: 0; transform: translate(-50%, -150%) scale(1.2) rotate(-6deg); }
+}
+@keyframes vs-flash-late {
+  0%, 28% { opacity: 0; }
+  34%, 92% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
 /* 3・2・1・はじめ！ */
 .vs-count {
   font-family: 'Mochiy Pop One', sans-serif;
