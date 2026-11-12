@@ -104,9 +104,16 @@ const useLandingTracker = (grid: PuyoCell[][], pairCells: Position[] | null): Ce
 };
 
 // Overlay Components
-const Veil: React.FC<{ dark?: boolean; children: React.ReactNode }> = ({ dark = false, children }) => (
-  <div className={`absolute inset-0 z-30 rounded-[1rem] flex flex-col items-center justify-center gap-4 p-4 overflow-hidden ${dark ? 'wp-veil-dark' : 'wp-veil'}`}>
+/**
+ * 幕。判子と一言（center）はいつも盤面の上下まんなかに置き、ボタン（below）はその下に足す。
+ * ボタンを一緒に真ん中寄せにすると、ボタンのある側（自分）だけ判子が上にずれ、
+ * 隣の盤面（相手）の判子と高さがそろわない（11-12 オーナー「かち！、まけ…の高さのずれ」）
+ */
+const Veil: React.FC<{ dark?: boolean; center: React.ReactNode; below?: React.ReactNode; children?: React.ReactNode }> = ({ dark = false, center, below, children }) => (
+  <div className={`absolute inset-0 z-30 rounded-[1rem] grid grid-rows-[minmax(0,1fr)_auto_minmax(0,1fr)] justify-items-center p-4 overflow-hidden ${dark ? 'wp-veil-dark' : 'wp-veil'}`}>
     {children}
+    <div className="row-start-2 flex flex-col items-center gap-4">{center}</div>
+    {below && <div className="row-start-3 self-start mt-4 w-full flex justify-center">{below}</div>}
   </div>
 );
 
@@ -132,11 +139,15 @@ const OVERLAY_TEXT: Record<'pause' | 'win' | 'lose' | 'over', { stamp: string; s
 const ResultOverlay: React.FC<{ kind: keyof typeof OVERLAY_TEXT; actions?: React.ReactNode }> = ({ kind, actions }) => {
   const { stamp, sub } = OVERLAY_TEXT[kind];
   return (
-    <Veil dark={kind === 'lose'}>
+    <Veil
+      dark={kind === 'lose'}
+      center={<>
+        <div className="wp-hanko wp-hanko-in px-4 py-2 text-3xl sm:px-5 sm:text-4xl whitespace-nowrap">{stamp}</div>
+        <div className={`font-serif text-sm ${kind === 'lose' ? 'text-white' : 'text-coffee-dark'}`}>{sub}</div>
+      </>}
+      below={actions && <div className="relative flex flex-col items-stretch gap-2 w-full max-w-[13rem]">{actions}</div>}
+    >
       {kind === 'win' && <Petals />}
-      <div className="wp-hanko wp-hanko-in px-4 py-2 text-3xl sm:px-5 sm:text-4xl whitespace-nowrap">{stamp}</div>
-      <div className={`font-serif text-sm ${kind === 'lose' ? 'text-white' : 'text-coffee-dark'}`}>{sub}</div>
-      {actions && <div className="relative flex flex-col items-stretch gap-2 w-full max-w-[13rem]">{actions}</div>}
     </Veil>
   );
 };
@@ -218,7 +229,7 @@ export const GameGrid: React.FC<GameGridProps> = ({
     if (gameResult === 'win') return <ResultOverlay kind="win" actions={actions} />;
     if (gameResult === 'lose') return <ResultOverlay kind="lose" actions={actions} />;
     if (isGameOver && !gameResult) return <ResultOverlay kind="over" actions={actions} />;
-    if (startPrompt) return <Veil>{startPrompt}</Veil>;
+    if (startPrompt) return <Veil center={startPrompt} />;
     return null;
   };
 
