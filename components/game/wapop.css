@@ -374,3 +374,15 @@
   background: #c8283a; color: #fff6ea; font-weight: 900; letter-spacing: 0.15em;
 }
 .kf-look-c .kf-window { background: #fffaf0; border: 1px solid rgba(58, 36, 20, 0.5); border-radius: 4px; }
+
+/* d お守り（生成画像）：画像の窓の縁で9分割（240×439 の画像で 上145・左右17・下39）。窓だけが伸びて、紐・縁は伸びない */
+.kf-look-d.wp-kifuda-wrap { filter: drop-shadow(0 3px 2px rgba(90, 58, 34, 0.35)); }
+.kf-look-d .wp-kifuda {
+  background: none; clip-path: none; box-shadow: none; color: #8a2a3a;
+  border-style: solid; border-width: 60px 7px 16px;
+  border-image: var(--kf-img) 145 17 39 fill / 60px 7px 16px stretch;
+  padding: 4px 2px 2px;
+}
+.kf-look-d .wp-kifuda::before { display: none; }
+.kf-look-d .kf-label { font-weight: 900; letter-spacing: 0.25em; color: #8a2a3a; }
+.kf-look-d .kf-window { background: transparent; border: 0; padding: 0 2px 2px; }
