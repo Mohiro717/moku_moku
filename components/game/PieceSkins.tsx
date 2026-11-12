@@ -1,14 +1,14 @@
 import React from 'react';
 
 // 色の駒の見た目の試作（オーナー 11-12「A〜D全てを見てみたい」）。URL に ?skin=a|b|c|d を付けたときだけ使う。
-// A 花の駒・B 手まり・C 勾玉・D 狐火。どれも顔なし。つながりの形はまだ作っていない（1マスずつ描く）。
+// A 花の駒・B 手まり・C 勾玉・D 狐火・E 今の飴玉から目を除いたもの（Puyo.tsx 側で描く）。どれも顔なし。つながりの形はまだ作っていない（1マスずつ描く）。
 
-export type SkinId = 'a' | 'b' | 'c' | 'd';
+export type SkinId = 'a' | 'b' | 'c' | 'd' | 'e';
 
 export const PREVIEW_SKIN: SkinId | null = (() => {
   if (typeof location === 'undefined') return null;
   const s = new URLSearchParams(location.search).get('skin');
-  return s === 'a' || s === 'b' || s === 'c' || s === 'd' ? s : null;
+  return s === 'a' || s === 'b' || s === 'c' || s === 'd' || s === 'e' ? s : null;
 })();
 
 const PAL: Record<string, { light: string; mid: string; dark: string }> = {

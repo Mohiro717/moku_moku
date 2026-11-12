@@ -21,6 +21,8 @@ interface PuyoProps {
   linkDelay?: string;
   /** 呼吸の位相（0〜1）。つながったかたまりは同じ値にして一緒に息をさせる */
   breathPhase?: number;
+  /** 目を描かない（オーナー 11-12「飴玉から目を無くす」の試作） */
+  hideFace?: boolean;
 }
 
 /** つながりの向き。links はこの和 */
@@ -324,7 +326,8 @@ export const Puyo: React.FC<PuyoProps> = memo(({
   links = 0,
   linkKey = '',
   linkDelay = '0ms',
-  breathPhase
+  breathPhase,
+  hideFace = PREVIEW_SKIN === 'e'
 }) => {
   ensureDefs();
   // まばたき・呼吸がそろわないよう、ぷよごとにずらす
@@ -350,7 +353,7 @@ export const Puyo: React.FC<PuyoProps> = memo(({
           <svg className={`puyo-svg w-full h-full overflow-visible ${stateClass}`} style={bodyStyle} viewBox="0 0 40 40">
             {color === 'ojama' ? (
               <Nubatama variant={phase} blinkDelay={`${(-phase * 6).toFixed(2)}s`} />
-            ) : PREVIEW_SKIN ? (
+            ) : PREVIEW_SKIN && PREVIEW_SKIN !== 'e' ? (
               <PieceSkin skin={PREVIEW_SKIN} color={color} />
             ) : (
               <>
@@ -363,7 +366,7 @@ export const Puyo: React.FC<PuyoProps> = memo(({
                   </g>
                 )}
                 <PuyoShine />
-                <PuyoFace squint={landed} blinkDelay={`${(-phase * 3.6).toFixed(2)}s`} />
+                {!hideFace && <PuyoFace squint={landed} blinkDelay={`${(-phase * 3.6).toFixed(2)}s`} />}
               </>
             )}
           </svg>

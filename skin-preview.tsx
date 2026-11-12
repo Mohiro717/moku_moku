@@ -18,14 +18,34 @@ const COLUMNS: string[][] = [
 ];
 const ROWS = 8;
 const CELL = 46;
-const SKINS: { id: SkinId; name: string }[] = [
-  { id: 'a', name: 'A 花の駒（椿・桔梗・四つ葉・山吹）' },
-  { id: 'b', name: 'B 手まり' },
-  { id: 'c', name: 'C 勾玉' },
-  { id: 'd', name: 'D 狐火' }
-];
+type Look = { skin: SkinId | 'now'; name: string; face?: boolean; join?: boolean };
+const ALL: Record<string, Look[]> = {
+  abcd: [
+    { skin: 'a', name: 'A 花の駒（椿・桔梗・四つ葉・山吹）' },
+    { skin: 'b', name: 'B 手まり' },
+    { skin: 'c', name: 'C 勾玉' },
+    { skin: 'd', name: 'D 狐火' }
+  ],
+  // オーナー 11-12「飴玉から目を無くすのが違和感なくいけそう。それか鬼火が好きかな」
+  ed: [
+    { skin: 'now', name: '今（目あり・くびれてつながる）', face: true, join: true },
+    { skin: 'e', name: 'E 目なし・くびれてつながる', face: false, join: true },
+    { skin: 'e', name: 'E2 目なし・つながらない', face: false, join: false },
+    { skin: 'd', name: 'D 鬼火' }
+  ]
+};
+const SET = new URLSearchParams(location.search).get('set') ?? 'abcd';
+const SKINS = ALL[SET] ?? ALL.abcd;
 
-const Board: React.FC<{ skin: SkinId }> = ({ skin }) => (
+/** 同じ色のとなりの向き（Puyo.tsx の LINK_*: 右1・下2・左4・上8）。row は下から数える */
+const linksAt = (x: number, row: number) => {
+  const c = COLUMNS[x][row];
+  if (!c || c === O) return 0;
+  const same = (xx: number, rr: number) => COLUMNS[xx]?.[rr] === c;
+  return (same(x + 1, row) ? 1 : 0) | (same(x, row - 1) ? 2 : 0) | (same(x - 1, row) ? 4 : 0) | (same(x, row + 1) ? 8 : 0);
+};
+
+const Board: React.FC<{ look: Look }> = ({ look }) => (
   <div style={{ display: 'grid', gridTemplateColumns: `repeat(6, ${CELL}px)`, gridAutoRows: `${CELL}px`, background: '#fffaf0', border: '4px solid #6b2f3a', borderRadius: 14, padding: 6 }}>
     {Array.from({ length: ROWS }, (_, r) => ROWS - 1 - r).map(row =>
       COLUMNS.map((col, x) => {
@@ -34,8 +54,12 @@ const Board: React.FC<{ skin: SkinId }> = ({ skin }) => (
           <div key={`${x}-${row}`} style={{ width: CELL, height: CELL }}>
             {c === O ? (
               <div style={{ width: CELL, height: CELL, ['--puyo-size' as string]: `${CELL}px` }}><Puyo color="ojama" /></div>
+            ) : c && (look.skin === 'now' || look.skin === 'e') ? (
+              <div style={{ width: CELL, height: CELL, ['--puyo-size' as string]: `${CELL}px` }}>
+                <Puyo color={c as never} idle links={look.join ? linksAt(x, row) : 0} linkKey="p" hideFace={!look.face} />
+              </div>
             ) : c ? (
-              <svg viewBox="0 0 40 40" width={CELL} height={CELL} style={{ overflow: 'visible' }}><PieceSkin skin={skin} color={c} /></svg>
+              <svg viewBox="0 0 40 40" width={CELL} height={CELL} style={{ overflow: 'visible' }}><PieceSkin skin={look.skin as SkinId} color={c} /></svg>
             ) : null}
           </div>
         );
@@ -47,9 +71,9 @@ const Board: React.FC<{ skin: SkinId }> = ({ skin }) => (
 const App: React.FC = () => (
   <div style={{ display: 'flex', gap: 28, padding: 24, flexWrap: 'wrap' }}>
     {SKINS.map(s => (
-      <div key={s.id}>
+      <div key={s.name}>
         <div style={{ fontSize: 16, fontWeight: 600, margin: '0 0 8px' }}>{s.name}</div>
-        <Board skin={s.id} />
+        <Board look={s} />
       </div>
     ))}
   </div>
