@@ -428,7 +428,7 @@ export const GameSection: React.FC = () => {
               <div className="wp-seigaiha rounded-3xl border-[3px] border-coffee-dark shadow-[0_6px_0_#3b2f2f] p-5 sm:p-7 max-w-2xl mx-auto">
                 <p className="text-xs font-serif text-coffee-dark/60 mb-1">2 / 2</p>
                 <h3 className="text-2xl font-serif text-coffee-dark mb-1">あいてを えらぶ</h3>
-                <p className="text-xs font-serif text-coffee-dark/70 mb-4">れんさで おじゃまを おくって、あいての上まで うめたら かち</p>
+                <p className="text-xs font-serif text-coffee-dark/70 mb-4">れんさで ぬばたまを おくって、あいての上まで うめたら かち</p>
 
                 {/* 相手：顔を並べて選ぶ。自分と同じキャラも選べる（同キャラ戦） */}
                 <CharacterPicker

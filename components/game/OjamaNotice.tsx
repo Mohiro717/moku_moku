@@ -59,7 +59,7 @@ export const OjamaNotice: React.FC<OjamaNoticeProps> = memo(({ count, ready = fa
   }, [hit]);
 
   return (
-    <div className="h-10 mb-1.5 flex items-end justify-center" aria-label={`おじゃま予告 ${count}個`}>
+    <div className="h-10 mb-1.5 flex items-end justify-center" aria-label={`ぬばたま予告 ${count}個`}>
       <div ref={row} className="flex items-end gap-1 min-h-[1px]">
         {count > 0 && (
           <>

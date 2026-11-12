@@ -4,6 +4,9 @@ import { GAME_TIMINGS } from '../../constants/gameTimings';
 import './puyoAnimations.css';
 import { PREVIEW_SKIN, PieceSkin } from './PieceSkins';
 
+/** 色の駒の見た目。オーナー 11-12「鬼火」（ぷよに似る飴玉から替えた。見比べた A 花・B 手鞠・C 勾玉・E 目なし飴玉）。?skin= で試作に切り替えられる */
+const ACTIVE_SKIN = PREVIEW_SKIN ?? 'f';
+
 interface PuyoProps {
   color: PuyoColor;
   isConnected?: boolean;
@@ -327,7 +330,7 @@ export const Puyo: React.FC<PuyoProps> = memo(({
   linkKey = '',
   linkDelay = '0ms',
   breathPhase,
-  hideFace = PREVIEW_SKIN === 'e'
+  hideFace = ACTIVE_SKIN === 'e'
 }) => {
   ensureDefs();
   // まばたき・呼吸がそろわないよう、ぷよごとにずらす
@@ -353,8 +356,8 @@ export const Puyo: React.FC<PuyoProps> = memo(({
           <svg className={`puyo-svg w-full h-full overflow-visible ${stateClass}`} style={bodyStyle} viewBox="0 0 40 40">
             {color === 'ojama' ? (
               <Nubatama variant={phase} blinkDelay={`${(-phase * 6).toFixed(2)}s`} />
-            ) : PREVIEW_SKIN && PREVIEW_SKIN !== 'e' ? (
-              <PieceSkin skin={PREVIEW_SKIN} color={color} />
+            ) : ACTIVE_SKIN !== 'e' ? (
+              <PieceSkin skin={ACTIVE_SKIN} color={color} seed={phase} />
             ) : (
               <>
                 <g key={`base-${linkKey}`} className={joined ? 'puyo-unjoin' : undefined} style={linkStyle}>
