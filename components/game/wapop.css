@@ -136,28 +136,19 @@
   color: #3a2414;
 }
 
-/* つぎ＝木札：上の角を落とし、紐の穴 */
-.wp-kifuda {
-  position: relative;
-  padding: 1.15rem 0.4rem 0.45rem;
+/* つぎ＝お守りの札（NextPiecePreview.tsx の NextTag）。オーナーの生成画像を窓のふちで9分割する
+   （240×439 の画像で 上145・左右17・下39）。窓だけが伸びて、紐・青海波の縁は伸びない */
+.kf-omamori-wrap { filter: drop-shadow(0 3px 2px rgba(90, 58, 34, 0.35)); }
+.kf-omamori {
   text-align: center;
-  border-radius: 0.3rem 0.3rem 0.45rem 0.45rem;
-  clip-path: polygon(14% 0, 86% 0, 100% 12%, 100% 100%, 0 100%, 0 12%);
+  color: #8a2a3a;
+  border-style: solid;
+  border-width: 60px 7px 16px;
+  border-image: var(--kf-img) 145 17 39 fill / 60px 7px 16px stretch;
+  padding: 4px 2px 2px;
 }
-.wp-kifuda::before {
-  content: "";
-  position: absolute;
-  top: 0.35rem;
-  left: 50%;
-  width: 0.5rem;
-  height: 0.5rem;
-  margin-left: -0.25rem;
-  border-radius: 50%;
-  background: #3a2414;
-}
-/* clip-path で下の影が切れるので、影は外側の包みで出す */
-.wp-kifuda-wrap { filter: drop-shadow(0 4px 0 #5a3a22); }
-.wp-kifuda-wrap > .wp-kifuda { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35); }
+.kf-omamori .kf-label { font-weight: 900; letter-spacing: 0.25em; }
+.kf-omamori .kf-window { background: transparent; border: 0; padding: 0 2px 2px; }
 
 /* とくてん＝小判 */
 .wp-koban {
@@ -225,8 +216,6 @@
   .wp-emaki::before, .wp-emaki::after { width: 0.7rem; top: -0.4rem; bottom: -0.4rem; }
   .wp-emaki::before { left: -0.7rem; }
   .wp-emaki::after { right: -0.7rem; }
-  .wp-kifuda { padding-top: 0.95rem; }
-  .wp-kifuda::before { top: 0.3rem; width: 0.4rem; height: 0.4rem; margin-left: -0.2rem; }
 }
 
 /* 上端の危険ライン：朱の破線 */
@@ -303,7 +292,6 @@
 /* 6. 角丸は3種に ─ 小8（木札・板・マス）／面20（枠・面・ふきだし）／丸（玉・札） */
 .wp-zone .wp-wood,
 .wp-zone .wp-plank,
-.wp-zone .wp-kifuda,
 .wp-zone .rounded-xl { border-radius: 8px; }
 .wp-zone.rounded-3xl,
 .wp-zone .rounded-2xl,
@@ -316,73 +304,3 @@
 
 /* 8. おじゃま予告の行に盤面の縁が食い込んでいた → 行と盤のあいだを 12px に */
 .wp-zone [aria-label^="おじゃま予告"] { margin-bottom: 12px; }
-
-/* ========================================
-   【見比べ用・開発のみ】「つぎ」の木札の3案（NextPiecePreview.tsx の NextTag・?next=a|b|c）。選んだら1案だけ残す
-   ======================================== */
-.kf-look-a, .kf-look-c {
-  /* ムラのある木目（縦に流れる繊維）。fractalNoise を横に細かく・縦に長く */
-  --kf-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='320'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.55 0.018' numOctaves='3' seed='11'/%3E%3CfeColorMatrix values='0 0 0 0 0.33 0 0 0 0 0.18 0 0 0 0 0.06 0 0 0 1.4 -0.55'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
-}
-/* 紐（a・c 共通）：紅白のより紐が札の穴まで下りる */
-.kf-look-a, .kf-look-c { position: relative; padding-top: 0.9rem; }
-.kf-look-a::before, .kf-look-c::before {
-  content: ""; position: absolute; z-index: 1; top: 0; left: 50%;
-  width: 4px; height: 1.45rem; margin-left: -2px; border-radius: 2px;
-  background: repeating-linear-gradient(150deg, #c8283a 0 3px, #fff 3px 6px);
-}
-
-/* a 木札 */
-.kf-look-a .wp-kifuda {
-  background: var(--kf-grain), linear-gradient(90deg, #c48a50, #e3b67c 28%, #d8a366 62%, #ba7d44);
-  border: 2px solid #6b4423;
-  box-shadow: inset 0 0 0 2px rgba(255, 236, 200, 0.35), inset 0 -8px 12px rgba(80, 40, 10, 0.22);
-}
-.kf-look-a .wp-kifuda::before { background: #2a170a; box-shadow: inset 0 1px 2px #000, 0 1px 0 rgba(255, 240, 210, 0.55); }
-.kf-look-a .kf-label { font-weight: 900; letter-spacing: 0.25em; color: #3a1d0a; text-shadow: 0 1px 0 rgba(255, 230, 190, 0.7); }
-.kf-look-a .kf-window {
-  background: #f4e6c8; border: 0; border-radius: 6px;
-  box-shadow: inset 0 2px 5px rgba(60, 30, 8, 0.5), 0 1px 0 rgba(255, 240, 210, 0.6);
-}
-
-/* b 漆の札 */
-.kf-look-b.wp-kifuda-wrap { filter: drop-shadow(0 4px 0 #5e1612); }
-.kf-look-b .wp-kifuda {
-  background:
-    radial-gradient(ellipse 80% 35% at 30% 0%, rgba(255, 255, 255, 0.22), transparent 70%),
-    linear-gradient(180deg, #2e1b1b, #110909);
-  border: 3px solid #b8322a;
-  box-shadow: inset 0 0 0 1.5px #d9a441;
-  color: #ecc66a;
-}
-.kf-look-b .wp-kifuda::before { background: #0b0505; box-shadow: 0 0 0 1.5px #d9a441; }
-.kf-look-b .kf-label { font-weight: 900; letter-spacing: 0.25em; color: #ecc66a; text-shadow: 0 1px 0 #5a3c0c; }
-.kf-look-b .kf-window { background: #fbf3e2; border: 1.5px solid #d9a441; border-radius: 6px; box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.35); }
-
-/* c 絵馬：屋根の形。屋根のところだけ濃い木 */
-.kf-look-c .wp-kifuda {
-  clip-path: polygon(50% 0, 100% 16%, 100% 100%, 0 100%, 0 16%);
-  padding-top: 1.55rem;
-  background:
-    linear-gradient(180deg, rgba(70, 35, 12, 0.55) 0 1.1rem, rgba(70, 35, 12, 0.85) 1.1rem 1.25rem, transparent 1.25rem),
-    var(--kf-grain), linear-gradient(90deg, #d6a066, #ecc48f 40%, #d39b5f);
-  border: 2px solid #6b4423;
-}
-.kf-look-c .wp-kifuda::before { top: 0.55rem; background: #2a170a; }
-.kf-look-c .kf-label {
-  display: inline-block; padding: 0 0.4em; border-radius: 3px; transform: rotate(-4deg);
-  background: #c8283a; color: #fff6ea; font-weight: 900; letter-spacing: 0.15em;
-}
-.kf-look-c .kf-window { background: #fffaf0; border: 1px solid rgba(58, 36, 20, 0.5); border-radius: 4px; }
-
-/* d お守り（生成画像）：画像の窓の縁で9分割（240×439 の画像で 上145・左右17・下39）。窓だけが伸びて、紐・縁は伸びない */
-.kf-look-d.wp-kifuda-wrap { filter: drop-shadow(0 3px 2px rgba(90, 58, 34, 0.35)); }
-.kf-look-d .wp-kifuda {
-  background: none; clip-path: none; box-shadow: none; color: #8a2a3a;
-  border-style: solid; border-width: 60px 7px 16px;
-  border-image: var(--kf-img) 145 17 39 fill / 60px 7px 16px stretch;
-  padding: 4px 2px 2px;
-}
-.kf-look-d .wp-kifuda::before { display: none; }
-.kf-look-d .kf-label { font-weight: 900; letter-spacing: 0.25em; color: #8a2a3a; }
-.kf-look-d .kf-window { background: transparent; border: 0; padding: 0 2px 2px; }

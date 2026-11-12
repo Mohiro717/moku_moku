@@ -7,7 +7,6 @@ import { MocopiSection } from './components/MocopiSection';
 import { WorksSection } from './components/WorksSection';
 import { GameSection } from './components/GameSection';
 import { Footer } from './components/Footer';
-import { NextTagSheet } from './components/game/NextTagSheet';
 
 export const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -22,9 +21,6 @@ export const App: React.FC = () => {
       aboutSection.scrollIntoView({ behavior: 'smooth' });
     }
   };
-
-  // 【見比べ用・開発のみ】「つぎ」の木札の案。案を決めたら消す
-  if (import.meta.env.DEV && new URLSearchParams(location.search).has('nextsheet')) return <NextTagSheet />;
 
   return (
     <>

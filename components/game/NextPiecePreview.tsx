@@ -34,35 +34,15 @@ export const NextPiecePreview: React.FC<NextPiecePreviewProps> = memo(({ nextPai
   );
 });
 
-// ========================================
-// 【見比べ用・開発のみ】対戦の「つぎ」の木札の3案。?next=a|b|c でゲームの中、?nextsheet で並べて見る。
-//   a 木札（ムラのある木目・焼印の字・紅白の紐・彫り込んだ窓）
-//   b 漆の札（黒漆・朱の縁・金の字・金の縁の窓）
-//   c 絵馬（屋根の形・朱の印の字・和紙の窓）
-//   d お守り（オーナーが外のサービスで生成した画像 public/images/game/kifuda_omamori.png を border-image で9分割して伸ばす）
-// オーナーが選んだら1案だけ残し、ほかの案・?next・NextTagSheet.tsx を消す（wapop.css の「見比べ用」も）
-// ========================================
-export type KifudaLook = 'now' | 'a' | 'b' | 'c' | 'd';
-export const KIFUDA_LOOKS: { id: KifudaLook; name: string }[] = [
-  { id: 'now', name: 'いま' },
-  { id: 'a', name: 'a 木札' },
-  { id: 'b', name: 'b 漆の札' },
-  { id: 'c', name: 'c 絵馬' },
-  { id: 'd', name: 'd お守り（生成画像）' }
-];
-const URL_KIFUDA: KifudaLook = (() => {
-  if (!import.meta.env.DEV || typeof location === 'undefined') return 'now';
-  const v = new URLSearchParams(location.search).get('next');
-  return v === 'a' || v === 'b' || v === 'c' || v === 'd' ? v : 'now';
-})();
+const OMAMORI_IMG = `url(${import.meta.env.BASE_URL}images/game/kifuda_omamori.png)`;
 
-/** 対戦の「つぎ」＝木札（和ポップの地のまま、目が行く部品だけ道具にする） */
-export const NextTag: React.FC<{ nextPair: PuyoPair | null; nextNextPair?: PuyoPair | null; className?: string; look?: KifudaLook }> = ({ nextPair, nextNextPair, className = '', look = URL_KIFUDA }) => (
-  <div
-    className={`wp-kifuda-wrap ${look === 'now' ? '' : `kf-look-${look}`} ${className}`}
-    style={look === 'd' ? ({ '--kf-img': `url(${import.meta.env.BASE_URL}images/game/kifuda_omamori.png)` } as React.CSSProperties) : undefined}
-  >
-    <div className="wp-wood wp-kifuda">
+/**
+ * 対戦の「つぎ」＝お守りの札（オーナー 11-12 が外のサービスで生成した画像。木札・漆・絵馬の3案のあと「d で決める」）。
+ * 画像は wapop.css の .kf-omamori が窓のふちで9分割して貼る。紐と縁は伸ばさず、窓だけを中身に合わせて伸ばす
+ */
+export const NextTag: React.FC<{ nextPair: PuyoPair | null; nextNextPair?: PuyoPair | null; className?: string }> = ({ nextPair, nextNextPair, className = '' }) => (
+  <div className={`kf-omamori-wrap ${className}`}>
+    <div className="kf-omamori" style={{ '--kf-img': OMAMORI_IMG } as React.CSSProperties}>
       <div className="kf-label text-xs font-serif mb-1">つぎ</div>
       <NextPiecePreview nextPair={nextPair} nextNextPair={nextNextPair} />
     </div>
