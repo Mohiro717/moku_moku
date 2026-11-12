@@ -34,7 +34,10 @@ export const NextPiecePreview: React.FC<NextPiecePreviewProps> = memo(({ nextPai
   );
 });
 
-const OMAMORI_IMG = `url(${import.meta.env.BASE_URL}images/game/kifuda_omamori.png)`;
+// 本番の BASE_URL は './'（相対）。CSS 変数に入れた url() の相対パスは、使う側の CSS ファイル（assets/）を起点に解かれて
+// assets/images/… を探してしまう（11-12 公開後に画像が出なかった）。ページを起点にした絶対の URL にしてから渡す
+const OMAMORI_SRC = `${import.meta.env.BASE_URL}images/game/kifuda_omamori.png`;
+const OMAMORI_IMG = `url("${typeof document === 'undefined' ? OMAMORI_SRC : new URL(OMAMORI_SRC, document.baseURI).href}")`;
 
 /**
  * 対戦の「つぎ」＝お守りの札（オーナー 11-12 が外のサービスで生成した画像。木札・漆・絵馬の3案のあと「d で決める」）。
