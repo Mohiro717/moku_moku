@@ -247,3 +247,72 @@
   50%      { translate: 0 -4px; }
 }
 @media (prefers-reduced-motion: reduce) { .wp-bob { animation: none; } }
+
+/* ---- 金継ぎ（2026-11-12・オーナー「本体に反映して」）：和ポップのまま、強弱をつけて「どれも同じシール」をやめる ----
+   効く範囲は .wp-zone（ぬばたま落としの画面だけ。カエルの迷宮・バナナには効かない）。
+   新しい色は木の板の下側の1色だけ（読みやすさのため、色味は同じで明るさだけ上げた）。 */
+:root {
+  --wp-wood-low-light: #c8925a; /* 木の板の下側 #b98149 を明るさだけ上げた色 */
+}
+
+/* 1. 重みは主役のボタンにだけ ─ 二番手（生成り）は線を細く・影を浅く */
+.wp-zone .wp-btn.wp-btn-kinari { border-width: 2px; box-shadow: 0 2px 0 var(--wp-sumi); }
+.wp-zone .wp-btn.wp-btn-kinari:hover { box-shadow: 0 3px 0 var(--wp-sumi); }
+.wp-zone .wp-btn.wp-btn-kinari:active { box-shadow: 0 0 0 var(--wp-sumi); }
+/* 選んでいない「つよさ」は影なしで静かに（半透明にはしない＝字は読めるまま） */
+.wp-zone .grid > .wp-btn.wp-btn-kinari.opacity-70 { opacity: 1; box-shadow: none; }
+.wp-zone .grid > .wp-btn.wp-btn-kinari.opacity-70:hover { box-shadow: 0 2px 0 var(--wp-sumi); }
+
+/* 2. 内側の面（遊び方・顔えらび・つぎ・とくてん）はシールにしない ─ 線は細く、影なし */
+.wp-zone .wp-card { border-width: 2px; box-shadow: none; }
+/* 対戦の名札も同じ太さ（3px→2px） */
+.wp-zone .puyo-vs .rounded-full.border-\[3px\].w-full { border-width: 2px; }
+
+/* 3. 青海波は額縁に ─ 中ほどは生成りで霞ませ、縁にだけ柄を残す */
+.wp-zone.wp-seigaiha,
+.wp-zone .wp-seigaiha {
+  background-image:
+    radial-gradient(ellipse closest-side at 50% 50%, rgba(251, 245, 233, 0.86) 0%, rgba(251, 245, 233, 0.86) 72%, rgba(251, 245, 233, 0.2) 100%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='24' viewBox='0 0 48 24'%3E%3Cg fill='none' stroke='%23f7b9cb' stroke-width='1.4' opacity='.55'%3E%3Cpath d='M0 24a24 24 0 0 1 48 0M6 24a18 18 0 0 1 36 0M12 24a12 12 0 0 1 24 0M18 24a6 6 0 0 1 12 0'/%3E%3Cpath d='M-24 12a24 24 0 0 1 48 0M-18 12a18 18 0 0 1 36 0M-12 12a12 12 0 0 1 24 0M24 12a24 24 0 0 1 48 0M30 12a18 18 0 0 1 36 0M36 12a12 12 0 0 1 24 0'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 100% 100%, 48px 24px;
+  background-repeat: no-repeat, repeat;
+}
+
+/* 4. 薄い灰の小さな字を読める濃さに（墨の8割）。12px 未満は 12px へ */
+.wp-zone .text-coffee-dark\/30,
+.wp-zone .text-coffee-dark\/50,
+.wp-zone .text-coffee-dark\/60,
+.wp-zone .text-coffee-dark\/70 { color: rgb(59 47 47 / 0.8); }
+.wp-zone .text-\[10px\],
+.wp-zone .text-\[11px\] { font-size: 12px; }
+.wp-zone .tracking-\[0\.35em\] { letter-spacing: 0.2em; }
+
+/* 5. 桜の地に白い字は読みにくい ─ 墨の字に（山吹のボタンと同じ組み方） */
+.wp-zone .wp-btn-sakura { color: var(--wp-sumi); text-shadow: none; }
+.wp-zone .bg-\[\#f79ab7\].text-white { color: var(--wp-sumi); }
+.wp-zone .wp-tag[style*="--wp-sakura"] { color: var(--wp-sumi) !important; }
+/* 生成りの面に置いた桜色の強調（4つ・れんさ・とくてん）は、濃い桜へ */
+.wp-zone .text-\[\#e5598a\] { color: #b8324f; }
+/* 木の板（ひとやすみ）の下側を少しだけ明るく（字の暗いところで読みにくいため） */
+.wp-zone .wp-plank.wp-wood:not(.wp-plank-light) {
+  background:
+    repeating-linear-gradient(91deg, rgba(90, 50, 20, 0.10) 0 2px, transparent 2px 7px, rgba(90, 50, 20, 0.06) 7px 8px, transparent 8px 15px),
+    linear-gradient(180deg, #d9a86c, var(--wp-wood-low-light));
+}
+
+/* 6. 角丸は3種に ─ 小8（木札・板・マス）／面20（枠・面・ふきだし）／丸（玉・札） */
+.wp-zone .wp-wood,
+.wp-zone .wp-plank,
+.wp-zone .wp-kifuda,
+.wp-zone .rounded-xl { border-radius: 8px; }
+.wp-zone.rounded-3xl,
+.wp-zone .rounded-2xl,
+.wp-zone .rounded-3xl { border-radius: 20px; }
+
+/* 7. 似て非なる白を和紙に寄せる */
+.wp-zone .bg-\[\#fffaf0\] { background-color: var(--wp-washi); }
+.wp-zone .border-\[\#d99a1e\] { border-color: var(--wp-yamabuki); }
+.wp-zone .bg-\[\#efe3cf\] { background-color: var(--wp-kinari); }
+
+/* 8. おじゃま予告の行に盤面の縁が食い込んでいた → 行と盤のあいだを 12px に */
+.wp-zone [aria-label^="おじゃま予告"] { margin-bottom: 12px; }

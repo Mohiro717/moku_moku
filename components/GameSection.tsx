@@ -383,7 +383,7 @@ export const GameSection: React.FC = () => {
               </div>
             </div>
           ) : gameMode === 'nubatama-title' ? (
-            <div ref={playAreaRef}>
+            <div ref={playAreaRef} className="wp-zone">
               <NubatamaTitleScreen
                 onVsCpu={() => setGameMode('player-select')}
                 onSingle={() => setGameMode('solo-select')}
@@ -392,7 +392,7 @@ export const GameSection: React.FC = () => {
             </div>
           ) : gameMode === 'player-select' || gameMode === 'solo-select' ? (
             // 自分のキャラえらび。CPU 対戦は 1/2（つぎに相手えらび）、ひとりであそぶは これだけで はじまる
-            <div ref={playAreaRef} className="transition-all duration-500 animate-fade-in-up">
+            <div ref={playAreaRef} className="wp-zone transition-all duration-500 animate-fade-in-up">
               <div className="wp-seigaiha rounded-3xl border-[3px] border-coffee-dark shadow-[0_6px_0_#3b2f2f] p-5 sm:p-7 max-w-2xl mx-auto">
                 {gameMode === 'player-select' && <p className="text-xs font-serif text-coffee-dark/60 mb-1">1 / 2</p>}
                 <h3 className="text-2xl font-serif text-coffee-dark mb-1">じぶんを えらぶ</h3>
@@ -424,7 +424,7 @@ export const GameSection: React.FC = () => {
               </div>
             </div>
           ) : gameMode === 'difficulty-select' ? (
-            <div ref={playAreaRef} className="transition-all duration-500 animate-fade-in-up">
+            <div ref={playAreaRef} className="wp-zone transition-all duration-500 animate-fade-in-up">
               <div className="wp-seigaiha rounded-3xl border-[3px] border-coffee-dark shadow-[0_6px_0_#3b2f2f] p-5 sm:p-7 max-w-2xl mx-auto">
                 <p className="text-xs font-serif text-coffee-dark/60 mb-1">2 / 2</p>
                 <h3 className="text-2xl font-serif text-coffee-dark mb-1">あいてを えらぶ</h3>
@@ -472,7 +472,7 @@ export const GameSection: React.FC = () => {
               </div>
             </div>
           ) : (
-            <div ref={playAreaRef} className="transition-all duration-500 animate-fade-in-up">
+            <div ref={playAreaRef} className={`${isPuyo ? 'wp-zone ' : ''}transition-all duration-500 animate-fade-in-up`}>
               {gameMode === 'playing-single' ? (
                 <PuyoPuyoGame playerCharacterId={playerCharacterId} onChangeCharacter={() => setGameMode('solo-select')} />
               ) : gameMode === 'vs-cpu' ? (

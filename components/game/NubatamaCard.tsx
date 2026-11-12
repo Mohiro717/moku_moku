@@ -71,7 +71,7 @@ const PlayButton: React.FC<{ onPlay: () => void }> = ({ onPlay }) => (
 );
 
 export const NubatamaCard: React.FC<Props> = ({ onPlay }) => (
-  <div className={`relative mt-14 ${CARD} px-5 pb-5 pt-20 flex flex-col gap-4`}>
+  <div className={`wp-zone relative mt-14 ${CARD} px-5 pb-5 pt-20 flex flex-col gap-4`}>
     <div className="absolute -top-14 left-1/2 -translate-x-1/2 w-32 h-32 rounded-full bg-[#fde7ee] border-[3px] border-coffee-dark shadow-[0_4px_0_#3b2f2f] overflow-hidden">
       <img src={SAKUYA.icon} alt={SAKUYA.name} loading="lazy" className="w-full h-full object-cover wp-bob" />
     </div>
