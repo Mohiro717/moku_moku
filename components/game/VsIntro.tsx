@@ -6,25 +6,30 @@ import { topRow } from '../../utils/boardStatus';
 /** 対戦のはじまりのカウント：3・2・1、'go'＝はじめ！（VS の絵は 3〜1 のあいだ重ねて出す） */
 export type IntroStep = 'vs' | 3 | 2 | 1 | 'go';
 
-/** 1つの数字を出す長さ。VS の絵は 3 × COUNT_MS（puyoAnimations.css の 2100ms）出す */
+/** 1つの数字を出す長さ。VS の絵は VS_LEAD_MS + 3 × COUNT_MS（CSS の --vs-ms）出す */
 export const COUNT_MS = 700;
 export const GO_MS = 650;
 
-// ========================================
-// 【見比べ用・開発のみ】?intro=a|b|c でイントロの3案。どれも VS の絵だけを VS_LEAD_MS 見せてから 3・2・1 を重ねる
-//   a 上下に互い違い（自分は上から・相手は下から、ゆっくり入って、そのまま逆向きにゆっくりずれ続ける）
-//   b ゆっくり寄る（入りは今のまま、絵がじわっと顔へ寄る）
-//   c 1人ずつ（自分 → 相手 → VS の順に出す）
-// オーナーが選んだら1案だけ残し、ほかの案と ?intro の読み取りを消す
-// ========================================
-export type IntroLook = 'a' | 'b' | 'c' | null;
-export const INTRO_LOOK: IntroLook = (() => {
-  if (!import.meta.env.DEV || typeof location === 'undefined') return null;
-  const v = new URLSearchParams(location.search).get('intro');
-  return v === 'a' || v === 'b' || v === 'c' ? v : null;
-})();
-/** VS の絵だけを見せる時間（カウントの前） */
-export const VS_LEAD_MS = INTRO_LOOK ? 1200 : 0;
+/** VS の絵だけを先に見せる時間。そのあと 3・2・1 を重ねる（オーナー 11-12「じっくり見る間もなく始まる」→ 1人ずつ出す案 c を選択） */
+export const VS_LEAD_MS = 1200;
+
+/** VS で使う絵の URL。試合中のカットインと別に頭から流すため、URL を変えて別に読む */
+const vsArtUrl = (src: string) => `${src}?vs=1`;
+
+/**
+ * VS の絵を先に読み込む。絵は外のサーバーから読むので、届く順は毎回違う。
+ * 自分の絵が遅れると自分の側が空のまま入り、相手が先に出たように見える（11-12 オーナー「稀に cpu から先に入る」）ので、
+ * 2人とも届いてから始める。届かないときも timeoutMs で始める
+ */
+export const preloadVsArt = (srcs: (string | undefined)[], timeoutMs = 2500): Promise<void> =>
+  Promise.race([
+    Promise.all(srcs.filter((src): src is string => !!src).map(src => new Promise<void>(resolve => {
+      const img = new Image();
+      img.onload = img.onerror = () => resolve();
+      img.src = vsArtUrl(src);
+    }))).then(() => undefined),
+    new Promise<void>(resolve => window.setTimeout(resolve, timeoutMs))
+  ]);
 
 /**
  * 「咲耶 VS 宇迦」：自分のキャラを左（スマホは上）、相手を右（スマホは下）に、名前の文字は出さず絵だけで
@@ -33,14 +38,14 @@ export const VS_LEAD_MS = INTRO_LOOK ? 1200 : 0;
  */
 const VsSplash: React.FC<{ player: CpuCharacter; cpu: CpuCharacter }> = ({ player, cpu }) => (
   <div
-    className={`vs-splash absolute inset-0 ${INTRO_LOOK ? `vs-look vs-look-${INTRO_LOOK}` : ''}`}
+    className="vs-splash absolute inset-0"
     style={{ '--vs-ms': `${VS_LEAD_MS + 3 * COUNT_MS}ms` } as React.CSSProperties}
   >
     <div className="vs-half vs-half-a">
-      {player.cutins[0] && <img src={`${player.cutins[0]}?vs=1`} alt="" className="vs-art" />}
+      {player.cutins[0] && <img src={vsArtUrl(player.cutins[0])} alt="" className="vs-art" />}
     </div>
     <div className="vs-half vs-half-b">
-      {cpu.cutins[0] && <img src={`${cpu.cutins[0]}?vs=1`} alt="" className="vs-art vs-art-flip" />}
+      {cpu.cutins[0] && <img src={vsArtUrl(cpu.cutins[0])} alt="" className="vs-art vs-art-flip" />}
     </div>
     <div className="vs-slash" />
     <div className="vs-mark">VS</div>

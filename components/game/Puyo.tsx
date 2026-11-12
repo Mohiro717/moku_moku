@@ -48,117 +48,34 @@ const GRADIENTS: Record<string, [string, string, string]> = {
 const DEFS_ID = 'puyo-svg-defs';
 const BODY_D = 'M20 3 C31 3 37 11 37 21 C37 31 30 37 20 37 C10 37 3 31 3 21 C3 11 9 3 20 3 Z';
 
-// ========================================
-// 【見比べ用・開発のみ】ぷよの質感の4案。オーナーが選んだら1案だけ残して、ほかと PuyoLookSheet.tsx を消す
-//   a ゼリー（ふちの色線・下の照り返し・くっきりした白い照り）
-//   b 練り切り（つやを消した和菓子。粉っぽい粒・やわらかい光・ほっぺ）
-//   c セル塗り（キャラの絵と同じアニメ塗り。影の面・墨の輪郭）
-//   d 飴玉（中から光る透けた飴。内側のふちの光・窓の照り）
-// ========================================
-export type PuyoLook = 'now' | 'a' | 'b' | 'c' | 'd';
-export const PUYO_LOOKS: { id: PuyoLook; name: string }[] = [
-  { id: 'now', name: 'いま' },
-  { id: 'a', name: 'a ゼリー' },
-  { id: 'b', name: 'b 練り切り' },
-  { id: 'c', name: 'c セル塗り' },
-  { id: 'd', name: 'd 飴玉' }
-];
-const urlLook = (): PuyoLook => {
-  if (!import.meta.env.DEV || typeof location === 'undefined') return 'now';
-  const v = new URLSearchParams(location.search).get('puyo');
-  return PUYO_LOOKS.some(l => l.id === v) ? (v as PuyoLook) : 'now';
-};
-const URL_LOOK = urlLook();
-
 const LOOK_DEFS = `
   <clipPath id="puyo-clip"><path d="${BODY_D}"/></clipPath>
   <filter id="puyo-soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.4"/></filter>
-  <pattern id="puyo-grain" width="3" height="3" patternUnits="userSpaceOnUse">
-    <circle cx=".8" cy=".8" r=".42" fill="#fff" opacity=".32"/><circle cx="2.3" cy="2.1" r=".38" fill="#5a3a2a" opacity=".12"/>
-  </pattern>
   ${['red', 'blue', 'green', 'yellow'].map(name => {
     const [light, mid, dark] = GRADIENTS[name];
     return `
-    <linearGradient id="puyo-gl-${name}" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="${light}"/><stop offset=".55" stop-color="${mid}"/><stop offset="1" stop-color="${mid}"/>
-    </linearGradient>
     <radialGradient id="puyo-gc-${name}" cx="50%" cy="66%" r="62%">
       <stop offset="0" stop-color="${light}"/><stop offset=".5" stop-color="${mid}"/><stop offset="1" stop-color="${dark}"/>
     </radialGradient>`;
   }).join('')}`;
 
-/** ぷよの体（顔の下）。look ごとに塗りが違う */
-const PuyoSkin: React.FC<{ color: string; look: PuyoLook }> = ({ color, look }) => {
-  const [light, mid, dark] = GRADIENTS[color];
-  switch (look) {
-    case 'a':
-      return (
-        <>
-          <use href="#puyo-body" fill={`url(#puyo-g-${color})`} stroke={dark} strokeWidth="1.4" />
-          <g clipPath="url(#puyo-clip)">
-            <ellipse cx="21" cy="35" rx="11" ry="4.5" fill={light} opacity=".75" filter="url(#puyo-soft)" />
-          </g>
-          <path d="M8.5 13 C9.8 7.8 14.6 5.4 19 5.8 C15.4 7.2 12.6 9.8 11.2 13.8 Z" fill="#fff" opacity=".95" />
-          <circle cx="22.6" cy="6.8" r="1.3" fill="#fff" opacity=".9" />
-        </>
-      );
-    case 'b':
-      return (
-        <>
-          <use href="#puyo-body" fill={`url(#puyo-gl-${color})`} />
-          <use href="#puyo-body" fill="url(#puyo-grain)" />
-          <ellipse cx="15" cy="11" rx="8" ry="5" fill={light} opacity=".6" filter="url(#puyo-soft)" />
-          <use href="#puyo-body" fill="none" stroke={dark} strokeOpacity=".55" strokeWidth=".9" />
-          <ellipse cx="9.4" cy="26.5" rx="2.8" ry="1.5" fill="#ff6f96" opacity=".45" />
-          <ellipse cx="30.6" cy="26.5" rx="2.8" ry="1.5" fill="#ff6f96" opacity=".45" />
-        </>
-      );
-    case 'c':
-      return (
-        <>
-          <use href="#puyo-body" fill={mid} />
-          <g clipPath="url(#puyo-clip)">
-            <path d="M40 10 L40 40 L2 40 C18 38.5 31.5 31 33 10 Z" fill={dark} opacity=".5" />
-          </g>
-          <path d="M9 13.5 C10 9 13.2 6.4 17.4 5.9 C14.8 7.9 12.8 10.4 11.8 14 Z" fill="#fff" />
-          <use href="#puyo-body" fill="none" stroke="#3b2f2f" strokeWidth="1.6" />
-        </>
-      );
-    case 'd':
-      return (
-        <>
-          <use href="#puyo-body" fill={`url(#puyo-gc-${color})`} />
-          <g clipPath="url(#puyo-clip)">
-            <use href="#puyo-body" fill="none" stroke={light} strokeOpacity=".75" strokeWidth="2.2" />
-            <ellipse cx="22" cy="31" rx="9" ry="4" fill="#fff" opacity=".4" filter="url(#puyo-soft)" />
-          </g>
-          <path d="M8 15 C8 9 12.5 5.5 18 5.2 L17.6 8.2 C13.8 8.6 11.2 11 10.8 15 Z" fill="#fff" opacity=".9" />
-          <circle cx="13.6" cy="17" r="1.1" fill="#fff" opacity=".8" />
-          <use href="#puyo-body" fill="none" stroke={dark} strokeOpacity=".6" strokeWidth=".8" />
-        </>
-      );
-    default:
-      return (
-        <>
-          <use href="#puyo-body" fill={`url(#puyo-g-${color})`} />
-          <ellipse cx="13" cy="10" rx="6" ry="3.4" fill="#fff" opacity=".65" transform="rotate(-25 13 10)" />
-        </>
-      );
-  }
-};
-
-/** 見比べの表（PuyoLookSheet）用：止まった1粒を look 指定で描く */
-export const PuyoSample: React.FC<{ color: string; look: PuyoLook }> = ({ color, look }) => {
-  ensureDefs();
+/**
+ * ぷよの体（顔の下）。飴玉：中から光る透けた飴（オーナー 11-12 の選択。見比べた案 a ゼリー・b 練り切り・c セル塗りから）。
+ * 光の中心を下寄りに置いて中から光らせ、内側のふちの光・下のにじんだ照り返し・窓の形の白い照り・細い色の輪郭
+ */
+const PuyoSkin: React.FC<{ color: string }> = ({ color }) => {
+  const [light, , dark] = GRADIENTS[color];
   return (
-    <svg className="puyo-svg w-full h-full overflow-visible" viewBox="0 0 40 40">
-      {color === 'ojama' ? <Nubatama variant={0.3} /> : (
-        <>
-          <PuyoSkin color={color} look={look} />
-          <PuyoFace />
-        </>
-      )}
-    </svg>
+    <>
+      <use href="#puyo-body" fill={`url(#puyo-gc-${color})`} />
+      <g clipPath="url(#puyo-clip)">
+        <use href="#puyo-body" fill="none" stroke={light} strokeOpacity=".75" strokeWidth="2.2" />
+        <ellipse cx="22" cy="31" rx="9" ry="4" fill="#fff" opacity=".4" filter="url(#puyo-soft)" />
+      </g>
+      <path d="M8 15 C8 9 12.5 5.5 18 5.2 L17.6 8.2 C13.8 8.6 11.2 11 10.8 15 Z" fill="#fff" opacity=".9" />
+      <circle cx="13.6" cy="17" r="1.1" fill="#fff" opacity=".8" />
+      <use href="#puyo-body" fill="none" stroke={dark} strokeOpacity=".6" strokeWidth=".8" />
+    </>
   );
 };
 
@@ -318,7 +235,7 @@ export const Puyo: React.FC<PuyoProps> = memo(({
               <Nubatama variant={phase} blinkDelay={`${(-phase * 6).toFixed(2)}s`} />
             ) : (
               <>
-                <PuyoSkin color={color} look={URL_LOOK} />
+                <PuyoSkin color={color} />
                 <PuyoFace squint={landed} blinkDelay={`${(-phase * 3.6).toFixed(2)}s`} />
               </>
             )}

@@ -1,5 +1,6 @@
-import React from 'react';
-import { CPU_CHARACTERS } from '../../constants/cpuCharacters';
+import React, { useEffect } from 'react';
+import { CPU_CHARACTERS, characterById } from '../../constants/cpuCharacters';
+import { preloadVsArt } from './VsIntro';
 
 interface Props {
   selectedId: string;
@@ -18,6 +19,10 @@ const TONES = {
 
 /** ぬばたま落とし：16人の顔を並べて1人を選ぶ（自分えらび・相手えらびで使う） */
 export const CharacterPicker: React.FC<Props> = ({ selectedId, onSelect, tone = 'sakura', markId, markLabel }) => {
+  // 選んだキャラの VS の絵を先に読んでおく（たいせんを押してから絵が届くまでの待ちを減らす）
+  useEffect(() => {
+    void preloadVsArt([characterById(selectedId)?.cutins[0]]);
+  }, [selectedId]);
   const t = TONES[tone];
   return (
     <div className="wp-card p-3 mb-4">

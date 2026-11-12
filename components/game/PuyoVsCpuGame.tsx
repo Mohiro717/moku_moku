@@ -11,7 +11,7 @@ import { useVsCpuGame } from '../../hooks/useVsCpuGame';
 import { useCharacterReactions } from '../../hooks/game/useCpuCharacterReactions';
 import { useVsGameSound } from '../../hooks/game/useVsGameSound';
 import { isMuted, playSe, playVoice, setMuted, unlockAudio } from '../../utils/gameAudio';
-import { COUNT_MS, GO_MS, VS_LEAD_MS, MoodIcon, VsIntroOverlay, nextMood, type IntroStep, type Mood } from './VsIntro';
+import { COUNT_MS, GO_MS, VS_LEAD_MS, MoodIcon, preloadVsArt, VsIntroOverlay, nextMood, type IntroStep, type Mood } from './VsIntro';
 import './wapop.css';
 import { AllyCharacterPanel, CpuCharacterPanel, CpuCutinOverlay, KitanCredit } from './CpuCharacter';
 import {
@@ -186,11 +186,25 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
     const introTimers = useRef<number[]>([]);
     const startGameRef = useRef(startGame);
     startGameRef.current = startGame;
+    const introToken = useRef(0);
     const runIntro = (withVs: boolean) => {
       introTimers.current.forEach(clearTimeout);
       introTimers.current = [];
+      const token = ++introToken.current;
+      if (withVs) {
+        // 2人の絵が届くまで、絵もカウントも出さずに薄く暗くして待つ（届く順で相手が先に出ないように）
+        setShowVs(false);
+        setIntro('vs');
+        preloadVsArt([playerCharacter.cutins[0], character.cutins[0]]).then(() => {
+          if (token === introToken.current) playIntro(true);
+        });
+        return;
+      }
+      playIntro(false);
+    };
+    const playIntro = (withVs: boolean) => {
       const at = (ms: number, fn: () => void) => introTimers.current.push(window.setTimeout(fn, ms));
-      // VS の絵だけを先に見せる時間（見比べ中の案だけ。今の形は 0 で、絵とカウントが同時）
+      // VS の絵だけを先に見せてから 3・2・1（もういちど・やりなおすは絵なしでカウントだけ）
       const lead = withVs ? VS_LEAD_MS : 0;
       setShowVs(withVs);
       setIntro(lead > 0 ? 'vs' : 3);
@@ -213,7 +227,10 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
     };
     useEffect(() => {
       runIntro(true);
-      return () => introTimers.current.forEach(clearTimeout);
+      return () => {
+        introToken.current++;
+        introTimers.current.forEach(clearTimeout);
+      };
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
     // はじめの台詞は VS のあいだに言う。自分の側が先、相手が返す。
     // やりなおしで声を止める処理（useVsGameSound）のあとに鳴らすため、効果の中で鳴らす
