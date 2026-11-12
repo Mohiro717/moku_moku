@@ -37,7 +37,6 @@ const BIG_CHAIN = 5;
 /** 7連鎖から虹色・二度光る */
 const RAINBOW_CHAIN = 7;
 const KANJI = ['', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
-const STAR_CLIP = 'polygon(50% 0, 61% 39%, 100% 50%, 61% 61%, 50% 100%, 39% 61%, 0 50%, 39% 39%)';
 
 const reducedMotion = () =>
   typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
@@ -83,54 +82,71 @@ const overBoard = (board: HTMLElement, style: Partial<CSSStyleDeclaration>) => {
   return spawn({ left: `${r.left}px`, top: `${r.top}px`, width: `${r.width}px`, height: `${r.height}px`, ...style });
 };
 
-/** 段が上がるほど増える火花。丸と四つ星が飛び散り、放物線を描いて落ちる */
-const sparks = (points: PopPoint[], step: number) => {
-  const perPuyo = Math.min(14, 5 + step * 2);
+/**
+ * 鬼火がはぜて、火の粉が舞い上がる（オーナー 11-12「もっと火の粉が舞い上がる感じに」）。
+ * 前は丸と四つ星が四方へ飛び散り、放物線で落ちていた（ぷよがはじける表現）。今は全部が上へ向かう：
+ * はぜた勢いで少し広がり、熱に押されて左右に揺れながら昇り、ちらついて小さくなって消える。
+ * 段が上がるほど多く、高く昇る
+ */
+export const sparks = (points: PopPoint[], step: number) => {
+  const perPuyo = Math.min(20, 9 + step * 2);
   points.forEach(p => {
     for (let i = 0; i < perPuyo; i++) {
-      const star = i % 3 === 1;
-      const size = star ? 9 + Math.random() * 7 : 4 + Math.random() * 5;
+      const size = 3.5 + Math.random() * 4;
+      const hot = i % 3 === 0;
       const el = spawn({
         left: `${p.x - size / 2}px`,
         top: `${p.y - size / 2}px`,
         width: `${size}px`,
         height: `${size}px`,
-        borderRadius: star ? '0' : '50%',
-        clipPath: star ? STAR_CLIP : '',
-        background: i % 3 === 0 ? '#fff' : star ? '#ffe27a' : p.color,
-        boxShadow: star ? '' : `0 0 8px ${p.color}`
+        borderRadius: '50%',
+        // 盤面は明るい和紙なので、白っぽい粒は溶けて見えない。芯だけ白く、外は色を濃く残す
+        background: `radial-gradient(circle, #fffbe8 0%, ${hot ? '#ffa630' : p.color} 45%)`,
+        boxShadow: `0 0 ${size * 1.4}px ${size * 0.4}px ${hot ? '#ff8a1f' : p.color}`,
+        opacity: '0'
       });
-      const a = Math.random() * Math.PI * 2;
-      const d = 30 + Math.random() * (40 + step * 12);
-      const dx = Math.cos(a) * d;
-      const dy = Math.sin(a) * d - 18;
-      const fall = 40 + Math.random() * 30 + step * 4;
-      const spin = (Math.random() < 0.5 ? -1 : 1) * (180 + Math.random() * 360);
+      // はぜる向き：真上から左右 55° まで
+      const a = (-90 + (Math.random() * 2 - 1) * 55) * Math.PI / 180;
+      const kick = 14 + Math.random() * 26;
+      const kx = Math.cos(a) * kick;
+      const ky = Math.sin(a) * kick;
+      const drift = kx * 1.6;
+      const rise = 90 + Math.random() * 130 + step * 14;
+      const sway = (5 + Math.random() * 12) * (Math.random() < 0.5 ? -1 : 1);
       play(el, [
-        { transform: 'translate(0, 0) scale(1.5) rotate(0deg)', opacity: 1 },
-        { transform: `translate(${dx}px, ${dy}px) scale(1) rotate(${spin / 2}deg)`, opacity: 1, offset: 0.45 },
-        { transform: `translate(${dx * 1.15}px, ${dy + fall}px) scale(0) rotate(${spin}deg)`, opacity: 0 }
-      ], { duration: 600 + Math.random() * 400, easing: 'cubic-bezier(.15,.7,.5,1)' });
+        { transform: 'translate(0, 0) scale(1.5)', opacity: 1 },
+        { transform: `translate(${kx}px, ${ky}px) scale(1.2)`, opacity: 1, offset: 0.1 },
+        { transform: `translate(${drift * 0.7 + sway}px, ${ky - rise * 0.3}px) scale(1)`, opacity: 0.45, offset: 0.32 },
+        { transform: `translate(${drift * 0.8 - sway * 0.8}px, ${ky - rise * 0.52}px) scale(0.9)`, opacity: 1, offset: 0.5 },
+        { transform: `translate(${drift * 0.9 + sway * 0.6}px, ${ky - rise * 0.74}px) scale(0.6)`, opacity: 0.3, offset: 0.7 },
+        { transform: `translate(${drift * 0.95 - sway * 0.3}px, ${ky - rise * 0.88}px) scale(0.45)`, opacity: 0.85, offset: 0.82 },
+        { transform: `translate(${drift}px, ${ky - rise}px) scale(0.1)`, opacity: 0 }
+      ], { duration: 1000 + Math.random() * 700 + step * 40, delay: Math.random() * 140, easing: 'cubic-bezier(.2,.6,.45,1)' });
     }
   });
 };
 
-/** 同じ色で消えたまとまりごとに、衝撃の輪をひとつ広げる */
-const shockwaves = (points: PopPoint[], step: number) => {
+/**
+ * 同じ色で消えたまとまりごとに、炎の明かりがふわっと広がって上へ抜ける。
+ * 前は硬い輪が広がっていた（はじける表現）。鬼火に合わせて柔らかい明かりにした（オーナー 11-12）
+ */
+export const heatFlares = (points: PopPoint[], step: number) => {
   const byColor = new Map<string, PopPoint[]>();
   points.forEach(p => byColor.set(p.color, [...(byColor.get(p.color) ?? []), p]));
   byColor.forEach((group, color) => {
     const c = centerOf(group);
-    const size = 120 + step * 30 + group.length * 6;
-    const ring = spawn({
-      left: `${c.x - size / 2}px`, top: `${c.y - size / 2}px`, width: `${size}px`, height: `${size}px`,
-      borderRadius: '50%', border: `${Math.min(10, 4 + step)}px solid ${color}`,
-      boxShadow: `0 0 16px ${color}, inset 0 0 16px #fff`
+    const size = 90 + step * 20 + group.length * 6;
+    const flare = spawn({
+      left: `${c.x - size / 2}px`, top: `${c.y - size * 0.65}px`, width: `${size}px`, height: `${size * 1.25}px`,
+      // screen で重ねると明るい和紙の上では消えるので、普通に重ねる
+      borderRadius: '50%',
+      background: `radial-gradient(ellipse at 50% 62%, #fffbe8 0%, ${color}cc 26%, ${color}55 50%, transparent 70%)`
     });
-    play(ring, [
-      { transform: 'scale(0.1)', opacity: 1 },
-      { transform: 'scale(1)', opacity: 0 }
-    ], { duration: 420 + step * 30, easing: 'cubic-bezier(.1,.8,.3,1)' });
+    play(flare, [
+      { transform: 'translateY(0) scale(0.3)', opacity: 1 },
+      { transform: 'translateY(-6%) scale(1, 1.05)', opacity: 0.85, offset: 0.3 },
+      { transform: 'translateY(-28%) scale(0.6, 1.3)', opacity: 0 }
+    ], { duration: 540 + step * 30, easing: 'ease-out' });
   });
 };
 
@@ -246,7 +262,7 @@ export const useChainFx = (
       if (pops) pops.current = { at: performance.now(), points };
       sparks(points, n);
       if (board.current && !reducedMotion()) {
-        shockwaves(points, n);
+        heatFlares(points, n);
         punch(board.current, n);
         glow(board.current, n, points[0]?.color ?? '#fff');
         if (n >= SPEED_LINES_CHAIN) speedLines(board.current, points, n);

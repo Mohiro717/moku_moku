@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { PieceSkin, type SkinId } from './components/game/PieceSkins';
 import { Puyo } from './components/game/Puyo';
 import { petalFx } from './components/game/ChainFxPetals';
+import { sparks, heatFlares } from './components/game/ChainFx';
 import './components/game/puyoAnimations.css';
 
 // 駒の見た目 A〜D を同じ盤面で並べる確認用ページ（オーナー 11-12「A〜D全てを見てみたい」）。
@@ -108,10 +109,13 @@ const BurstDemo: React.FC = () => {
     const t = setTimeout(() => {
       setDel(true);
       const cells = [...(row.current?.querySelectorAll('[data-c]') ?? [])] as HTMLElement[];
-      petalFx(cells.map(el => {
+      const pts = cells.map(el => {
         const r = el.getBoundingClientRect();
         return { x: r.left + r.width / 2, y: r.top + r.height / 2, color: el.dataset.c! };
-      }) as never, 3);
+      }) as never;
+      sparks(pts, 3);
+      heatFlares(pts, 3);
+      petalFx(pts, 3);
       // ?freeze=ms: 消えはじめから ms の時点で全部の動きを止める（撮るため）
       const freeze = new URLSearchParams(location.search).get('freeze');
       if (freeze) setTimeout(() => document.getAnimations().forEach(a => { a.pause(); a.currentTime = Number(freeze); }), 80);
