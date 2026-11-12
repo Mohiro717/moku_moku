@@ -1,14 +1,15 @@
 import React from 'react';
+import { RichOnibi, RichTemari } from './RichSkins';
 
 // 色の駒の見た目の試作（オーナー 11-12「A〜D全てを見てみたい」）。URL に ?skin=a|b|c|d を付けたときだけ使う。
-// A 花の駒・B 手まり・C 勾玉・D 狐火・E 今の飴玉から目を除いたもの（Puyo.tsx 側で描く）。どれも顔なし。つながりの形はまだ作っていない（1マスずつ描く）。
+// A 花の駒・B 手まり・C 勾玉・D 狐火・E 今の飴玉から目を除いたもの（Puyo.tsx 側で描く）。F 鬼火の作り込み・G 手鞠の作り込み（RichSkins.tsx）。どれも顔なし。つながりの形はまだ作っていない（1マスずつ描く）。
 
-export type SkinId = 'a' | 'b' | 'c' | 'd' | 'e';
+export type SkinId = 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g';
 
 export const PREVIEW_SKIN: SkinId | null = (() => {
   if (typeof location === 'undefined') return null;
   const s = new URLSearchParams(location.search).get('skin');
-  return s === 'a' || s === 'b' || s === 'c' || s === 'd' || s === 'e' ? s : null;
+  return s === 'a' || s === 'b' || s === 'c' || s === 'd' || s === 'e' || s === 'f' || s === 'g' ? s : null;
 })();
 
 const PAL: Record<string, { light: string; mid: string; dark: string }> = {
@@ -156,8 +157,10 @@ const Kitsunebi: React.FC<{ color: string }> = ({ color }) => {
   );
 };
 
-export const PieceSkin: React.FC<{ skin: SkinId; color: string }> = ({ skin, color }) => {
+export const PieceSkin: React.FC<{ skin: SkinId; color: string; seed?: number }> = ({ skin, color, seed }) => {
   if (!PAL[color]) return null;
+  if (skin === 'f') return <RichOnibi color={color} seed={seed} />;
+  if (skin === 'g') return <RichTemari color={color} />;
   if (skin === 'a') {
     const F = FLOWERS[color];
     return <F />;

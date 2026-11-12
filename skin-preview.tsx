@@ -32,6 +32,11 @@ const ALL: Record<string, Look[]> = {
     { skin: 'e', name: 'E 目なし・くびれてつながる', face: false, join: true },
     { skin: 'e', name: 'E2 目なし・つながらない', face: false, join: false },
     { skin: 'd', name: 'D 鬼火' }
+  ],
+  // オーナー 11-12「鬼火か手鞠の方向で進めたい。リッチに表現できる方でいきたい」
+  rich: [
+    { skin: 'f', name: '鬼火（作り込み）' },
+    { skin: 'g', name: '手鞠（作り込み）' }
   ]
 };
 const SET = new URLSearchParams(location.search).get('set') ?? 'abcd';
@@ -59,7 +64,7 @@ const Board: React.FC<{ look: Look }> = ({ look }) => (
                 <Puyo color={c as never} idle links={look.join ? linksAt(x, row) : 0} linkKey="p" hideFace={!look.face} />
               </div>
             ) : c ? (
-              <svg viewBox="0 0 40 40" width={CELL} height={CELL} style={{ overflow: 'visible' }}><PieceSkin skin={look.skin as SkinId} color={c} /></svg>
+              <svg viewBox="0 0 40 40" width={CELL} height={CELL} style={{ overflow: 'visible' }}><PieceSkin skin={look.skin as SkinId} color={c} seed={(x * 7 + row * 3) % 10 / 10} /></svg>
             ) : null}
           </div>
         );
@@ -68,14 +73,29 @@ const Board: React.FC<{ look: Look }> = ({ look }) => (
   </div>
 );
 
+const BIG = 110;
 const App: React.FC = () => (
-  <div style={{ display: 'flex', gap: 28, padding: 24, flexWrap: 'wrap' }}>
+  <div style={{ display: 'flex', gap: 28, padding: 24, flexWrap: 'wrap', alignItems: 'flex-start' }}>
     {SKINS.map(s => (
       <div key={s.name}>
         <div style={{ fontSize: 16, fontWeight: 600, margin: '0 0 8px' }}>{s.name}</div>
         <Board look={s} />
       </div>
     ))}
+    {SET === 'rich' && (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {SKINS.map(s => (
+          <div key={s.name} style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
+            {['red', 'blue', 'green', 'yellow'].map((c, i) => (
+              <svg key={c} viewBox="0 0 40 40" width={BIG} height={BIG} style={{ overflow: 'visible' }}>
+                <PieceSkin skin={s.skin as SkinId} color={c} seed={i / 4} />
+              </svg>
+            ))}
+            <div style={{ width: BIG, height: BIG, ['--puyo-size' as string]: `${BIG}px` }}><Puyo color="ojama" /></div>
+          </div>
+        ))}
+      </div>
+    )}
   </div>
 );
 
