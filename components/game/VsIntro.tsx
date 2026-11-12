@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import type { CpuCharacter } from '../../constants/cpuCharacters';
 import type { GameState } from '../../types/game';
 import { topRow } from '../../utils/boardStatus';
@@ -7,11 +8,14 @@ import { topRow } from '../../utils/boardStatus';
 export type IntroStep = 'vs' | 3 | 2 | 1 | 'go';
 
 /** 1つの数字を出す長さ。VS の絵は VS_LEAD_MS + 3 × COUNT_MS（CSS の --vs-ms）出す */
-export const COUNT_MS = 700;
-export const GO_MS = 650;
+export const COUNT_MS = 800;
+export const GO_MS = 900;
 
-/** VS の絵だけを先に見せる時間。そのあと 3・2・1 を重ねる（オーナー 11-12「じっくり見る間もなく始まる」→ 1人ずつ出す案 c を選択） */
-export const VS_LEAD_MS = 1200;
+/**
+ * VS の絵だけを先に見せる時間。そのあと 3・2・1 を重ねる（オーナー 11-12「じっくり見る間もなく始まる」→ 1人ずつ出す案 c を選択）。
+ * VS の絵が出てから はじめ！ が消えるまでで 5 秒（1700 + 3 × 800 + 900。オーナー 11-12「イントロはカウントダウン含めて５秒で良い」）
+ */
+export const VS_LEAD_MS = 1700;
 
 /** VS で使う絵の URL。試合中のカットインと別に頭から流すため、URL を変えて別に読む */
 const vsArtUrl = (src: string) => `${src}?vs=1`;
@@ -52,11 +56,35 @@ const VsSplash: React.FC<{ player: CpuCharacter; cpu: CpuCharacter }> = ({ playe
   </div>
 );
 
-/** 盤面まわり全体に重ねる、はじまりの演出。showVs のときは VS の絵の上にカウントを重ねる */
+/**
+ * スマホ・タブレットでは盤面まわりが画面より縦に長く、そこに重ねると VS の絵が画面からはみ出す（オーナー 11-12）。
+ * なので画面いっぱいに出す。PC（幅 1024 以上でマウス）は今までどおり盤面まわりに重ねる
+ */
+const FULL_SCREEN_QUERY = '(max-width: 1023px), (pointer: coarse)';
+const useFullScreenIntro = () => {
+  const [full, setFull] = useState(() => window.matchMedia(FULL_SCREEN_QUERY).matches);
+  useEffect(() => {
+    const media = window.matchMedia(FULL_SCREEN_QUERY);
+    const onChange = () => setFull(media.matches);
+    media.addEventListener('change', onChange);
+    return () => media.removeEventListener('change', onChange);
+  }, []);
+  return full;
+};
+
+/**
+ * はじまりの演出。showVs のときは VS の絵の上にカウントを重ねる。
+ * 画面いっぱいのときは body に出す（盤面の親に transform があり、fixed が盤面の中に閉じこめられるため）。ヘッダー（z 50）より上
+ */
 export const VsIntroOverlay: React.FC<{ step: IntroStep | null; showVs: boolean; player: CpuCharacter; cpu: CpuCharacter }> = ({ step, showVs, player, cpu }) => {
+  const fullScreen = useFullScreenIntro();
   if (step === null) return null;
-  return (
-    <div className="pointer-events-none absolute inset-0 z-50 overflow-hidden rounded-2xl" aria-live="polite">
+  const overlay = (
+    <div
+      className={`pointer-events-none overflow-hidden ${fullScreen ? 'fixed inset-0' : 'absolute inset-0 rounded-2xl'}`}
+      style={{ zIndex: fullScreen ? 60 : 50 }}
+      aria-live="polite"
+    >
       {showVs && <VsSplash player={player} cpu={cpu} />}
       <div className={`absolute inset-0 flex items-center justify-center ${showVs ? '' : 'bg-[rgba(42,12,28,0.18)]'}`}>
         {step !== 'vs' && (
@@ -67,6 +95,7 @@ export const VsIntroOverlay: React.FC<{ step: IntroStep | null; showVs: boolean;
       </div>
     </div>
   );
+  return fullScreen ? createPortal(overlay, document.body) : overlay;
 };
 
 /** 優勢・ふつう・劣勢・勝ち・負け */

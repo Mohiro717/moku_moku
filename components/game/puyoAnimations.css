@@ -374,12 +374,12 @@
 
 /* ========================================
    対戦のはじまり（VsIntro.tsx）：自分 → 相手 → VS の順に1人ずつ出し、絵だけを VS_LEAD_MS 見せてから 3・2・1 を重ねて → はじめ！
-   長さは --vs-ms（VS_LEAD_MS + COUNT_MS × 3 = 3300ms。VsIntro.tsx が入れる）
-   PC は左右に、スマホ（縦長）は上下に斜めに切って並べる
+   長さは --vs-ms（VS_LEAD_MS + COUNT_MS × 3 = 4100ms。VsIntro.tsx が入れる）
+   PC は左右に、スマホ（縦長）は上下に斜めに切って並べる。スマホ・タブレットは盤面でなく画面いっぱいに出す
    ======================================== */
 .vs-splash {
   background: radial-gradient(ellipse at center, #3a1530, #120914 75%);
-  animation: vs-splash-out var(--vs-ms, 3300ms) ease both;
+  animation: vs-splash-out var(--vs-ms, 4100ms) ease both;
 }
 @keyframes vs-splash-out {
   0%, 90% { opacity: 1; }
@@ -399,7 +399,7 @@
 .vs-slash {
   position: absolute; inset: 0;
   background: linear-gradient(100deg, transparent calc(50% - 5px), #fff calc(50% - 2px), var(--wp-sakura, #f79ab7) 50%, #fff calc(50% + 2px), transparent calc(50% + 5px));
-  animation: vs-flash var(--vs-ms, 3300ms) ease both;
+  animation: vs-flash var(--vs-ms, 4100ms) ease both;
 }
 @keyframes vs-flash {
   0%, 28% { opacity: 0; }
@@ -415,7 +415,7 @@
   -webkit-text-stroke: 3px #7a1030;
   paint-order: stroke fill;
   text-shadow: 0 6px 0 #7a1030, 0 0 24px #ff4f9a;
-  animation: vs-stamp var(--vs-ms, 3300ms) ease-out both;
+  animation: vs-stamp var(--vs-ms, 4100ms) ease-out both;
 }
 /* VS は2人がそろってから押す。真ん中のカウントとぶつからないよう、切れ目の少し上に */
 @keyframes vs-stamp {
@@ -446,11 +446,11 @@
   -webkit-text-stroke: 4px #3b2f2f;
   paint-order: stroke fill;
   text-shadow: 0 8px 0 #3b2f2f, 0 0 30px rgba(247, 154, 183, 0.9);
-  animation: vs-count 700ms cubic-bezier(0.2, 1.4, 0.4, 1) both;
+  animation: vs-count 800ms cubic-bezier(0.2, 1.4, 0.4, 1) both;
 }
 /* VS の絵の上では、数字を少し小さく、VS の下に */
 .vs-count-on-vs { font-size: clamp(4rem, 12vw, 7rem); transform-origin: center; margin-top: clamp(4rem, 12vw, 7rem); }
-.vs-count-go { color: #ffe066; font-size: clamp(3rem, 10vw, 6rem); -webkit-text-stroke-color: #7a1030; text-shadow: 0 8px 0 #7a1030, 0 0 30px #ff4f9a; animation-duration: 650ms; }
+.vs-count-go { color: #ffe066; font-size: clamp(3rem, 10vw, 6rem); -webkit-text-stroke-color: #7a1030; text-shadow: 0 8px 0 #7a1030, 0 0 30px #ff4f9a; animation-duration: 900ms; }
 @keyframes vs-count {
   0% { opacity: 0; transform: scale(2.2); }
   25% { opacity: 1; transform: scale(1); }
