@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { KitanCredit } from './CpuCharacter';
 import { FANWORKS_URL } from '../../constants/cpuCharacters';
+import { TitleChainDemo } from './TitleChainDemo';
 import './wapop.css';
 
 // H3 で作ったタイトルの動画 T3（8秒・1回だけ流して最後の画で止める）。ぬばたまが降って咲耶が埋もれ、
@@ -14,10 +15,20 @@ interface Props {
   onBack: () => void;
 }
 
-/** ぬばたま落としのタイトル画面：動画が流れて止まったら、左右の空いた地面にボタンが出る */
+/**
+ * ぬばたま落としのタイトル画面：動画が流れて止まったら、見本れんさ（TitleChainDemo）を流し、
+ * それが終わると左右の空いた地面にボタンが出る。とばすと見本ごと飛ばす
+ */
 export const NubatamaTitleScreen: React.FC<Props> = ({ onVsCpu, onSingle, onBack }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [ready, setReady] = useState(false);
+  // 動画が最後まで行ったら見本を流す（1回だけ）
+  const [demo, setDemo] = useState<'waiting' | 'playing' | 'done'>('waiting');
+  const startDemo = () => setDemo(d => (d === 'waiting' ? 'playing' : d));
+  const finishDemo = () => {
+    setDemo('done');
+    setReady(true);
+  };
 
   // カードのボタンを押した直後に開くので、声つきで再生できる。断られたら音なしで流す
   useEffect(() => {
@@ -25,13 +36,14 @@ export const NubatamaTitleScreen: React.FC<Props> = ({ onVsCpu, onSingle, onBack
     if (!video) return;
     video.play().catch(() => {
       video.muted = true;
-      video.play().catch(() => setReady(true));
+      video.play().catch(() => startDemo());
     });
   }, []);
 
+  // BUTTONS_AT_SEC で絵が止まる。そこから最後（8秒）まではそのまま題字を見せ、終わったら見本へ
   const handleTimeUpdate = () => {
     const video = videoRef.current;
-    if (video && video.currentTime >= BUTTONS_AT_SEC) setReady(true);
+    if (video && Number.isFinite(video.duration) && video.currentTime >= Math.max(BUTTONS_AT_SEC, video.duration - 0.05)) startDemo();
   };
 
   // 流れている途中で押したら、最後の画まで飛ばす
@@ -39,7 +51,7 @@ export const NubatamaTitleScreen: React.FC<Props> = ({ onVsCpu, onSingle, onBack
     const video = videoRef.current;
     if (ready || !video) return;
     if (Number.isFinite(video.duration)) video.currentTime = video.duration;
-    setReady(true);
+    finishDemo();
   };
 
   const vsCpuButton = (
@@ -75,17 +87,19 @@ export const NubatamaTitleScreen: React.FC<Props> = ({ onVsCpu, onSingle, onBack
           playsInline
           preload="auto"
           onTimeUpdate={handleTimeUpdate}
-          onEnded={() => setReady(true)}
+          onEnded={startDemo}
           onClick={skip}
           className={`block w-full h-auto ${ready ? '' : 'cursor-pointer'}`}
           aria-label="ぬばたま落とし タイトル"
         />
 
+        {demo === 'playing' && <TitleChainDemo onDone={finishDemo} />}
+
         {!ready && (
           <button
             type="button"
             onClick={skip}
-            className="absolute top-3 right-3 rounded-full bg-black/25 px-3 py-1 text-xs font-serif text-white"
+            className="absolute top-3 right-3 z-30 rounded-full bg-black/25 px-3 py-1 text-xs font-serif text-white"
           >
             とばす ▶▶
           </button>
