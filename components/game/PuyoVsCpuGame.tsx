@@ -5,7 +5,7 @@ import { GameGrid } from './GameGrid';
 import { ErrorBoundary } from '../ErrorBoundary';
 import { GameErrorFallback } from './GameErrorFallback';
 import { TouchControls } from './TouchControls';
-import { NextPiecePreview } from './NextPiecePreview';
+import { NextTag } from './NextPiecePreview';
 import { OjamaNotice } from './OjamaNotice';
 import { useVsCpuGame } from '../../hooks/useVsCpuGame';
 import { useCharacterReactions } from '../../hooks/game/useCpuCharacterReactions';
@@ -50,16 +50,7 @@ const getGameResult = (isGameOver: boolean, winner: string | null, player: 'play
   return 'lose';
 };
 
-// つぎ＝木札、とくてん＝小判（和ポップの地のまま、目が行く部品だけ道具にする）
-const NextTag: React.FC<{ nextPair: PuyoPair | null; nextNextPair?: PuyoPair | null; className?: string }> = ({ nextPair, nextNextPair, className = '' }) => (
-  <div className={`wp-kifuda-wrap ${className}`}>
-    <div className="wp-wood wp-kifuda">
-      <div className="text-xs font-serif mb-1">つぎ</div>
-      <NextPiecePreview nextPair={nextPair} nextNextPair={nextNextPair} />
-    </div>
-  </div>
-);
-
+// つぎ＝木札（NextPiecePreview.tsx の NextTag）、とくてん＝小判
 const ScoreKoban: React.FC<{ score: number; accent?: boolean; className?: string }> = ({ score, accent = false, className = '' }) => (
   <div className={`wp-koban ${className}`}>
     <div className="text-[10px] font-serif opacity-80">とくてん</div>

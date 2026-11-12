@@ -21,7 +21,7 @@ export const NextPiecePreview: React.FC<NextPiecePreviewProps> = memo(({ nextPai
   return (
     // 次の次は、つぎの7割の大きさ。--puyo-size を自分で参照すると循環するので、外側の大きさを一度 --next-size に写す
     <div
-      className="bg-[#fbf5e9] border-2 border-dashed border-coffee-dark/30 rounded-xl p-1.5 flex items-end justify-center gap-1"
+      className="kf-window bg-[#fbf5e9] border-2 border-dashed border-coffee-dark/30 rounded-xl p-1.5 flex items-end justify-center gap-1"
       style={{ '--next-size': 'var(--puyo-size)' } as React.CSSProperties}
     >
       <PairColumn pair={nextPair} />
@@ -33,3 +33,33 @@ export const NextPiecePreview: React.FC<NextPiecePreviewProps> = memo(({ nextPai
     </div>
   );
 });
+
+// ========================================
+// 【見比べ用・開発のみ】対戦の「つぎ」の木札の3案。?next=a|b|c でゲームの中、?nextsheet で並べて見る。
+//   a 木札（ムラのある木目・焼印の字・紅白の紐・彫り込んだ窓）
+//   b 漆の札（黒漆・朱の縁・金の字・金の縁の窓）
+//   c 絵馬（屋根の形・朱の印の字・和紙の窓）
+// オーナーが選んだら1案だけ残し、ほかの案・?next・NextTagSheet.tsx を消す（wapop.css の「見比べ用」も）
+// ========================================
+export type KifudaLook = 'now' | 'a' | 'b' | 'c';
+export const KIFUDA_LOOKS: { id: KifudaLook; name: string }[] = [
+  { id: 'now', name: 'いま' },
+  { id: 'a', name: 'a 木札' },
+  { id: 'b', name: 'b 漆の札' },
+  { id: 'c', name: 'c 絵馬' }
+];
+const URL_KIFUDA: KifudaLook = (() => {
+  if (!import.meta.env.DEV || typeof location === 'undefined') return 'now';
+  const v = new URLSearchParams(location.search).get('next');
+  return v === 'a' || v === 'b' || v === 'c' ? v : 'now';
+})();
+
+/** 対戦の「つぎ」＝木札（和ポップの地のまま、目が行く部品だけ道具にする） */
+export const NextTag: React.FC<{ nextPair: PuyoPair | null; nextNextPair?: PuyoPair | null; className?: string; look?: KifudaLook }> = ({ nextPair, nextNextPair, className = '', look = URL_KIFUDA }) => (
+  <div className={`wp-kifuda-wrap ${look === 'now' ? '' : `kf-look-${look}`} ${className}`}>
+    <div className="wp-wood wp-kifuda">
+      <div className="kf-label text-xs font-serif mb-1">つぎ</div>
+      <NextPiecePreview nextPair={nextPair} nextNextPair={nextNextPair} />
+    </div>
+  </div>
+);
