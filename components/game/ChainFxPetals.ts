@@ -4,9 +4,10 @@ import type { PopPoint } from './ChainFx';
 // 光の柱と花びら（2026-11-11 オーナーが見比べ3案から b を採用「もっとパーティクルいっぱいで派手でもいい」）
 // 消えたまとまりから光の柱が立ち、桜とぬばたま（暗紫）の花びらときらきらが舞い上がる。
 // 3連鎖から画面の下から花吹雪、5連鎖からは左右からも吹き込む。
+// 2026-11-12 駒を鬼火に替えた（オーナー「消える演出を鬼火に」）。桜の花びらを、その色の火の粉に替えた。
+// 粒の多さ・光の柱・花吹雪の段の上がり方はそのまま。ぬばたまの暗紫の花びらは少し残す。
 // ========================================
 
-const SAKURA = '#ffb7cf';
 const NUBATAMA = '#6b4a9a';
 const GOLD = '#ffe27a';
 /** 同時に出しておく粒の上限（スマホで重くならないように） */
@@ -102,16 +103,39 @@ const glitter = (x: number, y: number, rise: number, life: number, delay = 0) =>
   ], { duration: life, delay, easing: 'ease-out' }, true);
 };
 
-const petalColor = (i: number, own: string) => (i % 3 === 0 ? SAKURA : i % 3 === 1 ? own : NUBATAMA);
 
-/** 消えた瞬間に、光の柱・花びら・きらきら。段が上がるほど増え、3連鎖から花吹雪 */
+const EMBER_COLORS = ['#fb7a7a', '#6aa9fb', '#55dc86', '#fbd23a'];
+
+/** 揺れながら昇り、ちらついて消える火の粉 */
+const ember = (x: number, y: number, color: string, rise: number, drift: number, life: number, delay = 0) => {
+  if (!room()) return;
+  const size = 3 + Math.random() * 6;
+  const el = spawn({
+    left: `${x - size / 2}px`, top: `${y - size / 2}px`, width: `${size}px`, height: `${size}px`,
+    borderRadius: '50%', background: `radial-gradient(circle, #fffbe8 0%, #fff 25%, ${color} 70%)`,
+    boxShadow: `0 0 ${size * 1.6}px ${size * 0.6}px ${color}`, opacity: '0'
+  });
+  const sway = 12 + Math.random() * 26;
+  const dir = Math.random() < 0.5 ? -1 : 1;
+  play(el, [
+    { transform: 'translate(0,0) scale(.4)', opacity: 0 },
+    { transform: `translate(${drift * 0.2 + dir * sway * 0.5}px, ${-rise * 0.2}px) scale(1.2)`, opacity: 1, offset: 0.1 },
+    { transform: `translate(${drift * 0.45 - dir * sway * 0.4}px, ${-rise * 0.45}px) scale(1)`, opacity: 0.45, offset: 0.35 },
+    { transform: `translate(${drift * 0.7 + dir * sway * 0.6}px, ${-rise * 0.7}px) scale(.9)`, opacity: 1, offset: 0.6 },
+    { transform: `translate(${drift + dir * sway * 0.2}px, ${-rise}px) scale(.2)`, opacity: 0 }
+  ], { duration: life, delay, easing: 'cubic-bezier(.25,.6,.4,1)' }, true);
+};
+
+/** 消えた瞬間に、光の柱・火の粉・きらきら。段が上がるほど増え、3連鎖から下から火の粉が吹き上がる */
 export const petalFx = (points: PopPoint[], step: number) => {
   pillars(points, step);
   const perPuyo = Math.min(16, 6 + step * 2);
   points.forEach(p => {
     for (let i = 0; i < perPuyo; i++) {
-      petal(p.x + (Math.random() * 2 - 1) * 16, p.y, petalColor(i, p.color),
-        150 + Math.random() * 180 + step * 30, 0, 1400 + Math.random() * 1000, Math.random() * 150);
+      const x = p.x + (Math.random() * 2 - 1) * 16;
+      const rise = 150 + Math.random() * 180 + step * 30;
+      if (i % 5 === 4) petal(x, p.y, NUBATAMA, rise, 0, 1400 + Math.random() * 1000, Math.random() * 150);
+      else ember(x, p.y, i % 4 === 0 ? GOLD : p.color, rise, 0, 1100 + Math.random() * 900, Math.random() * 150);
     }
     for (let i = 0; i < 4 + step; i++) {
       glitter(p.x + (Math.random() * 2 - 1) * 20, p.y, 120 + Math.random() * 160 + step * 20, 900 + Math.random() * 700, Math.random() * 200);
@@ -121,8 +145,10 @@ export const petalFx = (points: PopPoint[], step: number) => {
     // 画面の下から花吹雪
     const count = Math.min(180, 20 + (step - 2) * 30);
     for (let i = 0; i < count; i++) {
-      petal(Math.random() * innerWidth, innerHeight + 10, i % 2 ? SAKURA : NUBATAMA,
+      if (i % 4 === 3) petal(Math.random() * innerWidth, innerHeight + 10, NUBATAMA,
         innerHeight * (0.6 + Math.random() * 0.5), (Math.random() * 2 - 1) * 80, 2000 + Math.random() * 1400, Math.random() * 600);
+      else ember(Math.random() * innerWidth, innerHeight + 10, EMBER_COLORS[i % 4],
+        innerHeight * (0.6 + Math.random() * 0.5), (Math.random() * 2 - 1) * 80, 1800 + Math.random() * 1400, Math.random() * 600);
     }
   }
   if (step >= 5) {
@@ -130,7 +156,7 @@ export const petalFx = (points: PopPoint[], step: number) => {
     const count = Math.min(80, (step - 4) * 25);
     for (let i = 0; i < count; i++) {
       const fromLeft = i % 2 === 0;
-      petal(fromLeft ? -10 : innerWidth + 10, innerHeight * (0.3 + Math.random() * 0.6), i % 3 ? SAKURA : NUBATAMA,
+      ember(fromLeft ? -10 : innerWidth + 10, innerHeight * (0.3 + Math.random() * 0.6), i % 3 ? EMBER_COLORS[i % 4] : GOLD,
         innerHeight * (0.2 + Math.random() * 0.3), (fromLeft ? 1 : -1) * innerWidth * (0.4 + Math.random() * 0.4), 2200 + Math.random() * 1200, Math.random() * 500);
     }
   }

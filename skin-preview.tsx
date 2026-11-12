@@ -2,6 +2,7 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { PieceSkin, type SkinId } from './components/game/PieceSkins';
 import { Puyo } from './components/game/Puyo';
+import { petalFx } from './components/game/ChainFxPetals';
 import './components/game/puyoAnimations.css';
 
 // 駒の見た目 A〜D を同じ盤面で並べる確認用ページ（オーナー 11-12「A〜D全てを見てみたい」）。
@@ -99,4 +100,35 @@ const App: React.FC = () => (
   </div>
 );
 
-createRoot(document.getElementById('root')!).render(<App />);
+/** ?set=burst: 鬼火が消える瞬間を決まった時刻（1.5 秒）に起こす。ヘッドレスの仮想時間で撮るため */
+const BurstDemo: React.FC = () => {
+  const [del, setDel] = React.useState(false);
+  const row = React.useRef<HTMLDivElement>(null);
+  React.useEffect(() => {
+    const t = setTimeout(() => {
+      setDel(true);
+      const cells = [...(row.current?.querySelectorAll('[data-c]') ?? [])] as HTMLElement[];
+      petalFx(cells.map(el => {
+        const r = el.getBoundingClientRect();
+        return { x: r.left + r.width / 2, y: r.top + r.height / 2, color: el.dataset.c! };
+      }) as never, 3);
+      // ?freeze=ms: 消えはじめから ms の時点で全部の動きを止める（撮るため）
+      const freeze = new URLSearchParams(location.search).get('freeze');
+      if (freeze) setTimeout(() => document.getAnimations().forEach(a => { a.pause(); a.currentTime = Number(freeze); }), 80);
+    }, 1500);
+    return () => clearTimeout(t);
+  }, []);
+  const colors = ['#fb7a7a', '#6aa9fb', '#55dc86', '#fbd23a'];
+  return (
+    <div style={{ height: 460, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', paddingBottom: 60 }}>
+      <div ref={row} style={{ display: 'flex', gap: 30, ['--puyo-size' as string]: '90px' }}>
+        {['red', 'blue', 'green', 'yellow'].map((c, i) => (
+          <div key={c} data-c={colors[i]}><Puyo color={c as never} idle={!del} isDeleting={del} /></div>
+        ))}
+        <div><Puyo color="ojama" /></div>
+      </div>
+    </div>
+  );
+};
+
+createRoot(document.getElementById('root')!).render(SET === 'burst' ? <BurstDemo /> : <App />);

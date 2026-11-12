@@ -293,6 +293,33 @@ export const PuyoFace: React.FC<{ squint?: boolean; blinkDelay?: string }> = ({ 
   );
 };
 
+/**
+ * 鬼火が消えるとき（オーナー 11-12「消える演出を鬼火に」）。白い芯が一瞬光り、色の輪が1つ広がり、
+ * 火の粉が上へ散って揺れながら消える。炎そのものは onibi-pop で上へ伸びて燃え尽きる
+ */
+const OnibiBurst: React.FC<{ color: string }> = ({ color }) => {
+  const embers = useMemo(() => Array.from({ length: 9 }, (_, k) => {
+    const angle = (-90 + (k - 4) * 22 + (Math.random() * 14 - 7)) * Math.PI / 180;
+    const dist = 26 + Math.random() * 26;
+    return { dx: Math.cos(angle) * dist, dy: Math.sin(angle) * dist - 8, r: 1.1 + Math.random() * 1.3, delay: Math.random() * 90 };
+  }), []);
+  return (
+    <svg className="absolute inset-0 w-full h-full pointer-events-none overflow-visible z-[2]" viewBox="0 0 40 40">
+      <circle className="puyo-core" cx="20" cy="26" r="11" fill="#fff" />
+      <circle className="puyo-ring" cx="20" cy="26" r="14" stroke={color} />
+      {embers.map((e, i) => (
+        <circle
+          key={i}
+          className="onibi-ember"
+          cx="20" cy="24" r={e.r.toFixed(2)}
+          fill={i % 3 === 0 ? '#fff6d0' : color}
+          style={{ '--dx': `${e.dx.toFixed(1)}px`, '--dy': `${e.dy.toFixed(1)}px`, animationDelay: `${e.delay.toFixed(0)}ms`, filter: `drop-shadow(0 0 2px ${color})` } as React.CSSProperties}
+        />
+      ))}
+    </svg>
+  );
+};
+
 /** 消えるときの輪・しずく・星。マスからはみ出して飛ぶ */
 const Burst: React.FC<{ color: string }> = ({ color }) => {
   const drops = useMemo(() => Array.from({ length: 7 }, (_, k) => {
@@ -340,7 +367,8 @@ export const Puyo: React.FC<PuyoProps> = memo(({
     return <div className={SIZE} />;
   }
 
-  const stateClass = isDeleting ? 'puyo-pop' : isConnected ? 'puyo-blink' : idle ? 'puyo-idle' : '';
+  const onibi = ACTIVE_SKIN === 'f' && color !== 'ojama';
+  const stateClass = isDeleting ? (onibi ? 'onibi-pop' : 'puyo-pop') : isConnected ? 'puyo-blink' : idle ? 'puyo-idle' : '';
   const dropStyle = landed
     ? ({ '--fall-rows': fallRows, '--drop-ms': `${dropDuration(fallRows)}ms` } as React.CSSProperties)
     : undefined;
@@ -375,7 +403,7 @@ export const Puyo: React.FC<PuyoProps> = memo(({
           </svg>
         </div>
       </div>
-      {isDeleting && <Burst color={BURST_COLORS[color] ?? '#fff'} />}
+      {isDeleting && (onibi ? <OnibiBurst color={BURST_COLORS[color] ?? '#fff'} /> : <Burst color={BURST_COLORS[color] ?? '#fff'} />)}
     </div>
   );
 });
