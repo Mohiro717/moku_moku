@@ -12,8 +12,9 @@ import './wapop.css';
 // タイトルは動画ではなくコードで組む（オーナー 11-13「キャラは咲耶のみ。鬼火とぬばたまは出したい。フワフワ上下運動をループ」
 // → 案3b「花札ポップ・踊る題字」を採用）。部品は components/game/title/。
 // 2回目からは OP と見本を飛ばしてタイトルから始める（見たかどうかはブラウザに覚えさせる）。
-// 「あそびかた」で見本をいつでも見直せる。おと・あそびかた・クレジット・権利表記は黒い枠の中の下の帯に入れる
+// 「あそびかた」で見本をいつでも見直せる。おと・あそびかた・クレジット・権利表記は枠の外に出さない
 // （オーナー 11-13「黒い枠の下に出ているのが気になる。一体にしたい。もどる、OPをみるはいらない」）。
+// PC は画の上（右上の隅と左下）、スマホは枠の中の下の帯。
 const OP_VIDEO = `${import.meta.env.BASE_URL}video/nubatama_title.mp4`;
 const SEEN_KEY = 'nubatama-op-seen';
 
@@ -42,9 +43,13 @@ interface Props {
   onSingle: () => void;
 }
 
-/** 下の帯の小さなボタン（案3b の生成り・墨） */
+/** おと・あそびかた・クレジットの小さなボタン（案3b の生成り・墨） */
 const CHIP = 'rounded-full border-2 border-[#221a1f] bg-[#fff4dc] px-3 py-1 text-xs sm:text-[13px] font-serif text-[#221a1f] ' +
   'shadow-[2px_2px_0_#2b2f6b] hover:brightness-105 active:translate-y-px disabled:opacity-50';
+
+/** 権利表記を絵の上に直に置くときの縁どり（墨）。金の霞や墨の丘の上でも読める */
+const OUTLINE = { textShadow: '1px 1px 0 #221a1f, -1px -1px 0 #221a1f, 1px -1px 0 #221a1f, -1px 1px 0 #221a1f, 0 0 3px #221a1f' };
+
 
 export const NubatamaTitleScreen: React.FC<Props> = ({ onVsCpu, onSingle }) => {
   const [phase, setPhase] = useState<Phase>(() => (hasSeenOp() ? 'title' : 'op'));
@@ -122,11 +127,26 @@ export const NubatamaTitleScreen: React.FC<Props> = ({ onVsCpu, onSingle }) => {
           </button>
         )}
 
+        {/* PC：おと・あそびかた・クレジットは画の右上の隅、権利表記は左下に、画の上へ直に置く
+            （オーナー 11-13 帯は「シームレスじゃない」→ 見本 A〜C から「A 右上の隅」） */}
+        {phase === 'title' && (
+          <>
+            <div className="hidden sm:flex absolute z-20 top-[2.5%] right-[1.6%] items-center gap-1.5 whitespace-nowrap">
+              <button type="button" onClick={toggleSound} aria-pressed={!muted} className={CHIP}>{muted ? '🔇 おと' : '🔊 おと'}</button>
+              <button type="button" onClick={() => setPhase('demo')} className={CHIP}>あそびかた</button>
+              <button type="button" onClick={() => setShowCredits(true)} className={CHIP}>クレジット</button>
+            </div>
+            <div className="hidden sm:block absolute z-20 left-[1.6%] bottom-[1.2%]" style={OUTLINE}>
+              <KitanCredit url={FANWORKS_URL} className="text-[#fff4dc]" />
+            </div>
+          </>
+        )}
+
         {showCredits && <Credits onClose={() => setShowCredits(false)} />}
       </div>
 
-      {/* 下の帯（黒い枠の一部）。スマホは画の中のボタンの字が小さく指で押しにくいので、ここに大きく並べる */}
-      <div className="px-3 py-2.5 sm:px-4 sm:py-2">
+      {/* スマホだけの下の帯（黒い枠の一部）。画が小さく、画の中だと字が読めず指で押しにくいので、ここに大きく並べる */}
+      <div className="sm:hidden px-3 py-2.5">
         <div className={`sm:hidden grid grid-cols-2 gap-3 mb-2.5 transition-opacity duration-300 ${phase === 'title' ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
           <button type="button" onClick={onVsCpu} className="wp-btn wp-btn-sakura w-full py-3 text-base">
             CPUと たいせん
