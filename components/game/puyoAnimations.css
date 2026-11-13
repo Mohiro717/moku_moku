@@ -135,6 +135,39 @@
   50% { transform: scale(1.03, 0.97); }
 }
 
+/* 鬼火のゆらめき（炎の根元を軸に伸び縮みしてゆがむ）。もとは SVG の中の炎だけを動かしていたが、
+   SVG の中の動きは駒ごとに毎フレーム描き直しになり端末が熱くなるので、HTML の div ごと動かす（オーナー 11-13） */
+.onibi-flicker {
+  transform-origin: 50% 95%;
+  animation: onibi-flicker 1.3s ease-in-out infinite;
+}
+@keyframes onibi-flicker {
+  0%, 100% { transform: scale(1, 1) skewX(0deg); }
+  25% { transform: scale(.97, 1.05) skewX(-3deg); }
+  50% { transform: scale(1.02, .97) skewX(2deg); }
+  75% { transform: scale(.98, 1.04) skewX(-1.5deg); }
+}
+/* 鬼火の火の粉：炎の上から昇って消える。動かす層は点の大きさだけにする
+   （マスと同じ大きさの層で動かすと、透明な部分まで毎フレーム重ね直して重い）。
+   移動量はマスの大きさ（--puyo-size）に対する割合：横 ±7.5%・上へ 30% */
+.onibi-spark {
+  position: absolute;
+  left: var(--spark-x);
+  top: 22.5%;
+  width: 4.5%;
+  height: 4.5%;
+  margin: -2.25% 0 0 -2.25%;
+  border-radius: 50%;
+  background: var(--spark-c);
+  pointer-events: none;
+  animation: onibi-spark 1.6s ease-out infinite;
+}
+@keyframes onibi-spark {
+  0%   { transform: translate(0, 0); opacity: 0; }
+  20%  { opacity: 1; }
+  100% { transform: translate(calc(var(--puyo-size) * var(--spark-dx)), calc(var(--puyo-size) * -0.3)); opacity: 0; }
+}
+
 /* 4つそろった：白く光って点滅しながら、はじける直前までふくらんで震える（ため） */
 .puyo-blink {
   transform-origin: 50% 50%;
@@ -333,7 +366,8 @@
   .puyo-star, .puyo-core, .puyo-bridge, .puyo-unjoin, .chain-rays, .chain-text, .attack-beam, .ojama-in {
     animation-duration: 1ms; animation-delay: 0ms;
   }
-  .puyo-eye, .nubatama-eye, .puyo-idle, .ojama-ready, .chain-rainbow { animation: none; }
+  .puyo-eye, .nubatama-eye, .puyo-idle, .onibi-flicker, .ojama-ready, .chain-rainbow { animation: none; }
+  .onibi-spark { display: none; }
   .puyo-active { transition: none; }
 }
 

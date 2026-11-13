@@ -157,9 +157,9 @@ const Kitsunebi: React.FC<{ color: string }> = ({ color }) => {
   );
 };
 
-export const PieceSkin: React.FC<{ skin: SkinId; color: string; seed?: number }> = ({ skin, color, seed }) => {
+export const PieceSkin: React.FC<{ skin: SkinId; color: string }> = ({ skin, color }) => {
   if (!PAL[color]) return null;
-  if (skin === 'f') return <RichOnibi color={color} seed={seed} />;
+  if (skin === 'f') return <RichOnibi color={color} />;
   if (skin === 'g') return <RichTemari color={color} />;
   if (skin === 'a') {
     const F = FLOWERS[color];

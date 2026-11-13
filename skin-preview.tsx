@@ -66,7 +66,7 @@ const Board: React.FC<{ look: Look }> = ({ look }) => (
                 <Puyo color={c as never} idle links={look.join ? linksAt(x, row) : 0} linkKey="p" hideFace={!look.face} />
               </div>
             ) : c ? (
-              <svg viewBox="0 0 40 40" width={CELL} height={CELL} style={{ overflow: 'visible' }}><PieceSkin skin={look.skin as SkinId} color={c} seed={(x * 7 + row * 3) % 10 / 10} /></svg>
+              <svg viewBox="0 0 40 40" width={CELL} height={CELL} style={{ overflow: 'visible' }}><PieceSkin skin={look.skin as SkinId} color={c} /></svg>
             ) : null}
           </div>
         );
@@ -88,9 +88,9 @@ const App: React.FC = () => (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {SKINS.map(s => (
           <div key={s.name} style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
-            {['red', 'blue', 'green', 'yellow'].map((c, i) => (
+            {['red', 'blue', 'green', 'yellow'].map(c => (
               <svg key={c} viewBox="0 0 40 40" width={BIG} height={BIG} style={{ overflow: 'visible' }}>
-                <PieceSkin skin={s.skin as SkinId} color={c} seed={i / 4} />
+                <PieceSkin skin={s.skin as SkinId} color={c} />
               </svg>
             ))}
             <div style={{ width: BIG, height: BIG, ['--puyo-size' as string]: `${BIG}px` }}><Puyo color="ojama" /></div>

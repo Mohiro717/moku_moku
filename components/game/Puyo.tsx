@@ -320,6 +320,14 @@ const OnibiBurst: React.FC<{ color: string }> = ({ color }) => {
   );
 };
 
+/** 鬼火の火の粉。位置はマスの幅に対する割合（もとの SVG の cx 13・26 / 40、横ずれ ±3 / 40） */
+const SPARKS = [
+  { x: '32.5%', dx: -0.075, d: 0 },
+  { x: '65%', dx: 0.075, d: 0.8 }
+];
+/** 火の粉の色（RichSkins の鬼火の light と同じ） */
+const SPARK_COLORS: Record<string, string> = { red: '#ffc2b8', blue: '#b8e2ff', green: '#c4f5c8', yellow: '#fff0a6' };
+
 /** 消えるときの輪・しずく・星。マスからはみ出して飛ぶ */
 const Burst: React.FC<{ color: string }> = ({ color }) => {
   const drops = useMemo(() => Array.from({ length: 7 }, (_, k) => {
@@ -368,11 +376,14 @@ export const Puyo: React.FC<PuyoProps> = memo(({
   }
 
   const onibi = ACTIVE_SKIN === 'f' && color !== 'ojama';
-  const stateClass = isDeleting ? (onibi ? 'onibi-pop' : 'puyo-pop') : isConnected ? 'puyo-blink' : idle ? 'puyo-idle' : '';
+  // 鬼火は積もっていても落ちていても、いつも炎がゆらめく（呼吸の代わり）
+  const flicker = onibi && !isDeleting && !isConnected;
+  const stateClass = isDeleting ? (onibi ? 'onibi-pop' : 'puyo-pop') : isConnected ? 'puyo-blink' : flicker ? 'onibi-flicker' : idle ? 'puyo-idle' : '';
   const dropStyle = landed
     ? ({ '--fall-rows': fallRows, '--drop-ms': `${dropDuration(fallRows)}ms` } as React.CSSProperties)
     : undefined;
-  const bodyStyle = stateClass === 'puyo-idle' ? { animationDelay: `${(-(breathPhase ?? phase) * 2.4).toFixed(2)}s` } : undefined;
+  const bodyStyle = stateClass === 'puyo-idle' ? { animationDelay: `${(-(breathPhase ?? phase) * 2.4).toFixed(2)}s` }
+    : flicker ? { animationDelay: `${(-phase * 1.3).toFixed(2)}s` } : undefined;
   // つながりがあれば、着地を待ってから、ひとつぶの体をつながった体へ入れ替える
   const joined = links > 0 && color !== 'ojama';
   const linkStyle = joined ? ({ '--bridge-delay': linkDelay } as React.CSSProperties) : undefined;
@@ -381,11 +392,14 @@ export const Puyo: React.FC<PuyoProps> = memo(({
     <div className={`${SIZE} relative z-[1]`}>
       <div className={`w-full h-full ${landed ? 'puyo-drop' : ''}`} style={dropStyle}>
         <div className={`w-full h-full ${landed ? 'puyo-squash' : ''}`} style={dropStyle}>
-          <svg className={`puyo-svg w-full h-full overflow-visible ${stateClass}`} style={bodyStyle} viewBox="0 0 40 40">
+          {/* 体の動き（呼吸・ゆらめき・光る・消える）は SVG ではなくこの div に付ける。
+              HTML の要素の transform / opacity / filter の動きは合成だけで済み、SVG を毎フレーム描き直さない */}
+          <div className={`w-full h-full ${stateClass}`} style={bodyStyle}>
+          <svg className="puyo-svg w-full h-full overflow-visible" viewBox="0 0 40 40">
             {color === 'ojama' ? (
               <Nubatama variant={phase} blinkDelay={`${(-phase * 6).toFixed(2)}s`} />
             ) : ACTIVE_SKIN !== 'e' ? (
-              <PieceSkin skin={ACTIVE_SKIN} color={color} seed={phase} />
+              <PieceSkin skin={ACTIVE_SKIN} color={color} />
             ) : (
               <>
                 <g key={`base-${linkKey}`} className={joined ? 'puyo-unjoin' : undefined} style={linkStyle}>
@@ -401,6 +415,15 @@ export const Puyo: React.FC<PuyoProps> = memo(({
               </>
             )}
           </svg>
+          </div>
+          {/* 火の粉：炎の上から2粒、ゆっくり昇って消える。HTML の層で動かす */}
+          {flicker && SPARKS.map((s, i) => (
+            <span
+              key={i}
+              className="onibi-spark"
+              style={{ '--spark-x': s.x, '--spark-dx': s.dx, '--spark-c': SPARK_COLORS[color], animationDelay: `${(s.d - phase * 1.6).toFixed(2)}s` } as React.CSSProperties}
+            />
+          ))}
         </div>
       </div>
       {isDeleting && (onibi ? <OnibiBurst color={BURST_COLORS[color] ?? '#fff'} /> : <Burst color={BURST_COLORS[color] ?? '#fff'} />)}

@@ -17,11 +17,14 @@ const COLORS = Object.keys(PAL);
 const DEFS_ID = 'rich-skin-defs';
 
 const defs = () => `
-  <filter id="rk-glow" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="2.6"/></filter>
   <filter id="rk-soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.1"/></filter>
   ${COLORS.map(c => {
     const p = PAL[c];
     return `
+    <radialGradient id="rk-hl-${c}">
+      <stop offset="0" stop-color="${p.mid}" stop-opacity=".75"/><stop offset=".45" stop-color="${p.mid}" stop-opacity=".5"/>
+      <stop offset="1" stop-color="${p.mid}" stop-opacity="0"/>
+    </radialGradient>
     <radialGradient id="rk-fl-${c}" cx="50%" cy="78%" r="80%" fx="50%" fy="85%">
       <stop offset="0" stop-color="${p.core}"/><stop offset=".28" stop-color="${p.light}"/>
       <stop offset=".62" stop-color="${p.mid}"/><stop offset="1" stop-color="${p.dark}"/>
@@ -39,20 +42,6 @@ const defs = () => `
   </radialGradient>
   <clipPath id="rk-ball"><circle cx="20" cy="21" r="17"/></clipPath>`;
 
-const CSS = `
-@keyframes rk-flicker {
-  0%, 100% { transform: scale(1, 1) skewX(0deg); }
-  25% { transform: scale(.97, 1.05) skewX(-3deg); }
-  50% { transform: scale(1.02, .97) skewX(2deg); }
-  75% { transform: scale(.98, 1.04) skewX(-1.5deg); }
-}
-@keyframes rk-breathe { 0%, 100% { opacity: .5; } 50% { opacity: .8; } }
-@keyframes rk-spark { 0% { transform: translate(0, 0); opacity: 0; } 20% { opacity: 1; } 100% { transform: translate(var(--sx), -12px); opacity: 0; } }
-.rk-flame { transform-box: view-box; transform-origin: 20px 38px; animation: rk-flicker 1.3s ease-in-out infinite; }
-.rk-halo { animation: rk-breathe 1.9s ease-in-out infinite; }
-.rk-spark { animation: rk-spark 1.6s ease-out infinite; }
-`;
-
 export const ensureRichDefs = () => {
   if (typeof document === 'undefined' || !document.body || document.getElementById(DEFS_ID)) return;
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -63,36 +52,31 @@ export const ensureRichDefs = () => {
   svg.style.position = 'absolute';
   svg.innerHTML = `<defs>${defs()}</defs>`;
   document.body.appendChild(svg);
-  const style = document.createElement('style');
-  style.textContent = CSS;
-  document.head.appendChild(style);
 };
 
 // ---------- 鬼火 ----------
-// 下が白く熱い芯、上へ色が濃くなる。外に色の光のにじみ、横に小さな炎の舌、上に火の粉。
+// 下が白く熱い芯、上へ色が濃くなる。外に色の光のにじみ、横に小さな炎の舌。
+// ここは止まった絵だけ。ゆらめきと火の粉は Puyo.tsx が SVG の外（HTML の層）で動かす。
+// SVG の中を動かすと駒ごとに毎フレーム描き直しになり、盤面いっぱいで端末が熱くなる（オーナー 11-13）。
+// 光のにじみもぼかしフィルタをやめ、ふちが透ける放射グラデーションにした（同じ理由）
 const FLAME = 'M20 2 C21.5 8 27 11 30.5 17 C34 23 33 31 27.5 35 C25 36.8 22.6 37.4 20 37.4 C17.4 37.4 15 36.8 12.5 35 C7 31 6 23 9.5 17.5 C11 15 13.5 14 14.5 10.5 C16 13 16.6 15 17.6 13 C19 10 18.6 6 20 2 Z';
 const TONGUE = 'M28.5 12 C30.5 14 32 15 32.4 18 C31 17 29.6 16.4 28.8 15 Z';
 const CORE = 'M20 15 C22 19.5 26.5 22.5 26 28 C25.6 32 22.8 34 20 34 C17.2 34 14.4 32 14 28 C13.6 23.5 18.5 20.5 20 15 Z';
 
-export const RichOnibi: React.FC<{ color: string; seed?: number }> = ({ color, seed = 0 }) => {
+export const RichOnibi: React.FC<{ color: string }> = ({ color }) => {
   ensureRichDefs();
   const p = PAL[color];
   if (!p) return null;
-  const delay = `${(-seed * 1.3).toFixed(2)}s`;
   return (
     <g>
-      <ellipse className="rk-halo" cx="20" cy="25" rx="16" ry="15" fill={p.mid} filter="url(#rk-glow)" style={{ animationDelay: delay }} />
-      <g className="rk-flame" style={{ animationDelay: delay }}>
+      <ellipse cx="20" cy="25" rx="20" ry="19" fill={`url(#rk-hl-${color})`} />
+      <g>
         <path d={FLAME} fill={`url(#rk-fl-${color})`} />
         <path d={TONGUE} fill={p.mid} opacity=".85" />
         <path d={FLAME} fill="none" stroke={p.deep} strokeOpacity=".35" strokeWidth=".7" />
         <path d={CORE} fill={`url(#rk-fc-${color})`} />
         <path d="M14.5 21 C13 24 13.4 28 15.4 30.4" stroke="#fff" strokeOpacity=".55" strokeWidth="1.1" fill="none" strokeLinecap="round" />
       </g>
-      {[{ x: 13, d: 0, sx: '-3px' }, { x: 26, d: 0.8, sx: '3px' }].map((s, i) => (
-        <circle key={i} className="rk-spark" cx={s.x} cy="9" r=".9" fill={p.light}
-          style={{ animationDelay: `${(s.d - seed * 1.6).toFixed(2)}s`, ['--sx' as string]: s.sx }} />
-      ))}
     </g>
   );
 };

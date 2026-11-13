@@ -7,9 +7,11 @@ import { MocopiSection } from './components/MocopiSection';
 import { WorksSection } from './components/WorksSection';
 import { GameSection } from './components/GameSection';
 import { Footer } from './components/Footer';
+import { usePauseOffscreenAnimations } from './hooks/usePauseOffscreenAnimations';
 
 export const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
+  usePauseOffscreenAnimations(!isLoading);
 
   const handleLoadingComplete = () => {
     setIsLoading(false);
