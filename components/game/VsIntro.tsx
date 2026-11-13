@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
+import React from 'react';
+import { HEADER_OFFSET } from '../../constants/layout';
 import type { CpuCharacter } from '../../constants/cpuCharacters';
 import type { GameState } from '../../types/game';
 import { topRow } from '../../utils/boardStatus';
@@ -57,45 +57,30 @@ const VsSplash: React.FC<{ player: CpuCharacter; cpu: CpuCharacter }> = ({ playe
 );
 
 /**
- * スマホ・タブレットでは盤面まわりが画面より縦に長く、そこに重ねると VS の絵が画面からはみ出す（オーナー 11-12）。
- * なので画面いっぱいに出す。PC（幅 1024 以上でマウス）は今までどおり盤面まわりに重ねる
- */
-const FULL_SCREEN_QUERY = '(max-width: 1023px), (pointer: coarse)';
-const useFullScreenIntro = () => {
-  const [full, setFull] = useState(() => window.matchMedia(FULL_SCREEN_QUERY).matches);
-  useEffect(() => {
-    const media = window.matchMedia(FULL_SCREEN_QUERY);
-    const onChange = () => setFull(media.matches);
-    media.addEventListener('change', onChange);
-    return () => media.removeEventListener('change', onChange);
-  }, []);
-  return full;
-};
-
-/**
- * はじまりの演出。showVs のときは VS の絵の上にカウントを重ねる。
- * 画面いっぱいのときは body に出す（盤面の親に transform があり、fixed が盤面の中に閉じこめられるため）。ヘッダー（z 50）より上
+ * はじまりの演出。ゲームの黒い枠（.puyo-vs）いっぱいに重ねる（オーナー 11-13「黒い枠までいっぱいに」）。
+ * スマホでは枠が画面より縦に長いので、絵とカウントは .vs-stage に入れて画面に見えている高さに収める（puyoAnimations.css）。
+ * showVs のときは VS の絵の上にカウントを重ねる
  */
 export const VsIntroOverlay: React.FC<{ step: IntroStep | null; showVs: boolean; player: CpuCharacter; cpu: CpuCharacter }> = ({ step, showVs, player, cpu }) => {
-  const fullScreen = useFullScreenIntro();
   if (step === null) return null;
-  const overlay = (
+  return (
     <div
-      className={`pointer-events-none overflow-hidden ${fullScreen ? 'fixed inset-0' : 'absolute inset-0 rounded-2xl'}`}
-      style={{ zIndex: fullScreen ? 60 : 50 }}
+      className={`vs-intro ${showVs ? 'vs-intro-dark' : ''}`}
+      style={{ '--header-offset': `${HEADER_OFFSET}px` } as React.CSSProperties}
       aria-live="polite"
     >
-      {showVs && <VsSplash player={player} cpu={cpu} />}
-      <div className={`absolute inset-0 flex items-center justify-center ${showVs ? '' : 'bg-[rgba(42,12,28,0.18)]'}`}>
-        {step !== 'vs' && (
-          <div key={String(step)} className={`vs-count ${showVs ? 'vs-count-on-vs' : ''} ${step === 'go' ? 'vs-count-go' : ''}`}>
-            {step === 'go' ? 'はじめ！' : step}
-          </div>
-        )}
+      <div className="vs-stage">
+        {showVs && <VsSplash player={player} cpu={cpu} />}
+        <div className="absolute inset-0 flex items-center justify-center">
+          {step !== 'vs' && (
+            <div key={String(step)} className={`vs-count ${showVs ? 'vs-count-on-vs' : ''} ${step === 'go' ? 'vs-count-go' : ''}`}>
+              {step === 'go' ? 'はじめ！' : step}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
-  return fullScreen ? createPortal(overlay, document.body) : overlay;
 };
 
 /** 優勢・ふつう・劣勢・勝ち・負け */

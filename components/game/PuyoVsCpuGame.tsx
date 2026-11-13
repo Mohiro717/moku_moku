@@ -11,6 +11,7 @@ import { useVsCpuGame } from '../../hooks/useVsCpuGame';
 import { useCharacterReactions } from '../../hooks/game/useCpuCharacterReactions';
 import { useVsGameSound } from '../../hooks/game/useVsGameSound';
 import { isMuted, playSe, playVoice, setMuted, unlockAudio } from '../../utils/gameAudio';
+import { HEADER_OFFSET } from '../../constants/layout';
 import { COUNT_MS, GO_MS, VS_LEAD_MS, MoodIcon, preloadVsArt, VsIntroOverlay, nextMood, type IntroStep, type Mood } from './VsIntro';
 import './wapop.css';
 import { AllyCharacterPanel, CpuCharacterPanel, CpuCutinOverlay, KitanCredit } from './CpuCharacter';
@@ -178,11 +179,20 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
     const startGameRef = useRef(startGame);
     startGameRef.current = startGame;
     const introToken = useRef(0);
+    // VS の絵は黒い枠いっぱいに出すので、枠の上端をヘッダーのすぐ下まで送る（スマホでは枠が画面より長く、上から見せる）。
+    // offsetTop で測る（出た直後の animate-fade-in-up のずれを受けない。GameSection と同じ）
+    const frameRef = useRef<HTMLDivElement>(null);
+    const scrollFrameIntoView = () => {
+      let y = 0;
+      for (let el: HTMLElement | null = frameRef.current; el; el = el.offsetParent as HTMLElement | null) y += el.offsetTop;
+      if (frameRef.current) window.scrollTo({ top: Math.max(0, y - HEADER_OFFSET), behavior: 'smooth' });
+    };
     const runIntro = (withVs: boolean) => {
       introTimers.current.forEach(clearTimeout);
       introTimers.current = [];
       const token = ++introToken.current;
       if (withVs) {
+        scrollFrameIntoView();
         // 2人の絵が届くまで、絵もカウントも出さずに薄く暗くして待つ（届く順で相手が先に出ないように）
         setShowVs(false);
         setIntro('vs');
@@ -333,7 +343,7 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
 
   return (
     <ErrorBoundary fallback={GameErrorFallback}>
-      <div className="wp-seigaiha puyo-vs max-w-7xl mx-auto px-3 py-3 sm:px-5 sm:py-4 rounded-3xl border-[3px] border-coffee-dark shadow-[0_6px_0_#3b2f2f]">
+      <div ref={frameRef} className="wp-seigaiha puyo-vs relative max-w-7xl mx-auto px-3 py-3 sm:px-5 sm:py-4 rounded-3xl border-[3px] border-coffee-dark shadow-[0_6px_0_#3b2f2f]">
         {/* 見出し：タイトル・つよさ・おと */}
         <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
           <h3 className="font-serif text-lg sm:text-2xl text-coffee-dark flex items-center gap-2">
@@ -461,8 +471,6 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
               </div>
             </div>
           </div>
-          {/* はじまりの演出：VS の絵に 3・2・1 を重ね、はじめ！ */}
-          <VsIntroOverlay step={intro} showVs={showVs} player={playerCharacter} cpu={character} />
         </div>
 
         <AttackBeamLayer beams={beams} />
@@ -470,6 +478,9 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
         <div className="mt-3 text-center">
           <KitanCredit url={FANWORKS_URL} />
         </div>
+
+        {/* はじまりの演出：黒い枠いっぱいに VS の絵、3・2・1 を重ね、はじめ！ */}
+        <VsIntroOverlay step={intro} showVs={showVs} player={playerCharacter} cpu={character} />
       </div>
     </ErrorBoundary>
   );

@@ -375,8 +375,27 @@
 /* ========================================
    対戦のはじまり（VsIntro.tsx）：自分 → 相手 → VS の順に1人ずつ出し、絵だけを VS_LEAD_MS 見せてから 3・2・1 を重ねて → はじめ！
    長さは --vs-ms（VS_LEAD_MS + COUNT_MS × 3 = 4100ms。VsIntro.tsx が入れる）
-   PC は左右に、スマホ（縦長）は上下に斜めに切って並べる。スマホ・タブレットは盤面でなく画面いっぱいに出す
+   PC は左右に、スマホ（縦長）は上下に斜めに切って並べる
    ======================================== */
+/* ゲームの黒い枠（.puyo-vs）いっぱいに重ねる。角は枠の rounded-3xl から枠線 3px を引いた丸み */
+.vs-intro {
+  position: absolute; inset: 0; z-index: 50;
+  pointer-events: none;
+  border-radius: calc(1.5rem - 3px);
+  overflow: hidden;
+  overflow: clip; /* hidden だと中の sticky が効かない。clip はスクロールの箱を作らない */
+  background: rgba(42, 12, 28, 0.18);
+}
+.vs-intro-dark { background: #120914; }
+/* 絵とカウントの舞台。スマホでは枠が画面より縦に長いので、高さは画面に見えている分（ヘッダーの下）までにし、
+   スクロールしても画面に残す。枠が画面に収まるときは枠いっぱい */
+.vs-stage {
+  position: sticky;
+  top: var(--header-offset, 88px);
+  height: min(100%, calc(100vh - var(--header-offset, 88px)));
+  height: min(100%, calc(100dvh - var(--header-offset, 88px)));
+  overflow: hidden;
+}
 .vs-splash {
   background: radial-gradient(ellipse at center, #3a1530, #120914 75%);
   animation: vs-splash-out var(--vs-ms, 4100ms) ease both;

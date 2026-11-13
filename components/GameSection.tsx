@@ -11,14 +11,12 @@ import { FrogPrincessMaze } from './frog-maze/FrogPrincessMaze';
 import { CatchTheBananaGameRefactored as CatchTheBananaGame } from './banana-game/CatchTheBananaGameRefactored';
 import { SITE_CONFIG } from '../constants';
 import type { GameDifficulty } from '../types/game';
+import { HEADER_OFFSET } from '../constants/layout';
 import { DEFAULT_OPPONENT_CHARACTER_ID, DEFAULT_PLAYER_CHARACTER_ID, characterById } from '../constants/cpuCharacters';
 import { CharacterPicker } from './game/CharacterPicker';
 import { unlockAudio } from '../utils/gameAudio';
 
 type GameMode = 'single' | 'nubatama-title' | 'vs-cpu' | 'player-select' | 'solo-select' | 'difficulty-select' | 'frog-maze' | 'frog-detail' | 'playing-single' | 'banana-game' | null;
-
-// 固定ヘッダー（Header.tsx の h-20 = 80px）＋ すき間 8px
-const HEADER_OFFSET = 88;
 
 export const GameSection: React.FC = () => {
   const [gameMode, setGameMode] = useState<GameMode>(null);
