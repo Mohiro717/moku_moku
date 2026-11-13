@@ -12,7 +12,8 @@ import './wapop.css';
 // タイトルは動画ではなくコードで組む（オーナー 11-13「キャラは咲耶のみ。鬼火とぬばたまは出したい。フワフワ上下運動をループ」
 // → 案3b「花札ポップ・踊る題字」を採用）。部品は components/game/title/。
 // 2回目からは OP と見本を飛ばしてタイトルから始める（見たかどうかはブラウザに覚えさせる）。
-// 「OPをみる」「あそびかた」でいつでも見直せる。
+// 「あそびかた」で見本をいつでも見直せる。おと・あそびかた・クレジット・権利表記は黒い枠の中の下の帯に入れる
+// （オーナー 11-13「黒い枠の下に出ているのが気になる。一体にしたい。もどる、OPをみるはいらない」）。
 const OP_VIDEO = `${import.meta.env.BASE_URL}video/nubatama_title.mp4`;
 const SEEN_KEY = 'nubatama-op-seen';
 
@@ -39,10 +40,13 @@ const FILL_FRAME = { '--tt-w': '100%', borderRadius: 0, boxShadow: 'none' } as u
 interface Props {
   onVsCpu: () => void;
   onSingle: () => void;
-  onBack: () => void;
 }
 
-export const NubatamaTitleScreen: React.FC<Props> = ({ onVsCpu, onSingle, onBack }) => {
+/** 下の帯の小さなボタン（案3b の生成り・墨） */
+const CHIP = 'rounded-full border-2 border-[#221a1f] bg-[#fff4dc] px-3 py-1 text-xs sm:text-[13px] font-serif text-[#221a1f] ' +
+  'shadow-[2px_2px_0_#2b2f6b] hover:brightness-105 active:translate-y-px disabled:opacity-50';
+
+export const NubatamaTitleScreen: React.FC<Props> = ({ onVsCpu, onSingle }) => {
   const [phase, setPhase] = useState<Phase>(() => (hasSeenOp() ? 'title' : 'op'));
   const [muted, setMutedState] = useState(isMuted);
   const [showCredits, setShowCredits] = useState(false);
@@ -79,7 +83,8 @@ export const NubatamaTitleScreen: React.FC<Props> = ({ onVsCpu, onSingle, onBack
   return (
     <div className="max-w-4xl mx-auto animate-fade-in-up">
       <style>{TITLE_CSS}</style>
-      <div className="relative overflow-hidden rounded-3xl border-[3px] border-coffee-dark shadow-[0_6px_0_#3b2f2f] bg-[#e04a36]">
+      <div className="overflow-hidden rounded-3xl border-[3px] border-coffee-dark shadow-[0_6px_0_#3b2f2f] bg-[#221a1f]">
+      <div className="relative bg-[#e04a36]">
         {/* タイトル（案3b）。OP の下で先に動かしておき、見本の背景にもなる。
             PC はボタンを画の右下（題字の下）に重ねる。スマホは字が小さくなるので画の下に出す */}
         <TitleHanafudaOdori
@@ -120,36 +125,31 @@ export const NubatamaTitleScreen: React.FC<Props> = ({ onVsCpu, onSingle, onBack
         {showCredits && <Credits onClose={() => setShowCredits(false)} />}
       </div>
 
-      {/* スマホ：画の中のボタンは字が小さく指で押しにくいので、画の下に並べる */}
-      <div className={`sm:hidden grid grid-cols-2 gap-3 mt-4 transition-opacity duration-300 ${phase === 'title' ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-        <button type="button" onClick={onVsCpu} className="wp-btn wp-btn-sakura w-full py-3 text-base">
-          CPUと たいせん
-        </button>
-        <button type="button" onClick={onSingle} className="wp-btn wp-btn-kinari w-full py-3 text-base">
-          ひとりで あそぶ
-        </button>
+      {/* 下の帯（黒い枠の一部）。スマホは画の中のボタンの字が小さく指で押しにくいので、ここに大きく並べる */}
+      <div className="px-3 py-2.5 sm:px-4 sm:py-2">
+        <div className={`sm:hidden grid grid-cols-2 gap-3 mb-2.5 transition-opacity duration-300 ${phase === 'title' ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+          <button type="button" onClick={onVsCpu} className="wp-btn wp-btn-sakura w-full py-3 text-base">
+            CPUと たいせん
+          </button>
+          <button type="button" onClick={onSingle} className="wp-btn wp-btn-kinari w-full py-3 text-base">
+            ひとりで あそぶ
+          </button>
+        </div>
+        <div className="flex flex-col-reverse sm:flex-row items-center justify-between gap-x-4 gap-y-2">
+          <KitanCredit url={FANWORKS_URL} className="text-[#fff4dc]/70 text-center sm:text-left leading-snug" />
+          <div className="flex shrink-0 items-center gap-2">
+            <button type="button" onClick={toggleSound} aria-pressed={!muted} className={CHIP}>
+              {muted ? '🔇 おと' : '🔊 おと'}
+            </button>
+            <button type="button" onClick={() => setPhase('demo')} disabled={phase === 'demo'} className={CHIP}>
+              あそびかた
+            </button>
+            <button type="button" onClick={() => setShowCredits(true)} className={CHIP}>
+              クレジット
+            </button>
+          </div>
+        </div>
       </div>
-
-      {/* 設定と見直しと権利表記 */}
-      <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
-        <button type="button" onClick={onBack} className="wp-btn wp-btn-kinari px-5 py-1.5 text-sm">
-          もどる
-        </button>
-        <button type="button" onClick={toggleSound} aria-pressed={!muted} className="wp-btn wp-btn-kinari px-4 py-1.5 text-sm">
-          {muted ? '🔇 おと' : '🔊 おと'}
-        </button>
-        <button type="button" onClick={() => setPhase('demo')} disabled={phase === 'demo'} className="wp-btn wp-btn-kinari px-4 py-1.5 text-sm">
-          あそびかた
-        </button>
-        <button type="button" onClick={() => setPhase('op')} disabled={phase === 'op'} className="wp-btn wp-btn-kinari px-4 py-1.5 text-sm">
-          OPをみる
-        </button>
-        <button type="button" onClick={() => setShowCredits(true)} className="wp-btn wp-btn-kinari px-4 py-1.5 text-sm">
-          クレジット
-        </button>
-      </div>
-      <div className="mt-2 flex justify-center">
-        <KitanCredit url={FANWORKS_URL} />
       </div>
     </div>
   );

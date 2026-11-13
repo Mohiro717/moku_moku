@@ -385,7 +385,6 @@ export const GameSection: React.FC = () => {
               <NubatamaTitleScreen
                 onVsCpu={() => setGameMode('player-select')}
                 onSingle={() => setGameMode('solo-select')}
-                onBack={() => setGameMode(null)}
               />
             </div>
           ) : gameMode === 'player-select' || gameMode === 'solo-select' ? (
