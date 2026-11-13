@@ -99,9 +99,9 @@ const Title: React.FC = () => (
   </div>
 );
 
-const Button: React.FC<{ label: string; y: number; primary?: boolean; delay: number }> = ({ label, y, primary, delay }) => (
+const Button: React.FC<{ label: string; y: number; primary?: boolean; delay: number; onClick: () => void }> = ({ label, y, primary, delay, onClick }) => (
   <PFloat x={TCX - 108} y={y} w={216} dur={2.8} amp={3} delay={delay} anim="soft" z={8}>
-    <button type="button" onClick={noop} className="tt-btn" style={{
+    <button type="button" onClick={onClick} className="tt-btn" style={{
       width: '100%', height: S(42), borderRadius: S(21), fontSize: S(17), letterSpacing: '.08em',
       ...(primary
         ? { background: SUMI, color: KINARI, border: `${S(2)} solid ${SUMI}`, boxShadow: `inset 0 0 0 ${S(2)} ${GOLD}, ${S(5)} ${S(5)} 0 ${AI}` }
@@ -113,10 +113,20 @@ const Button: React.FC<{ label: string; y: number; primary?: boolean; delay: num
   </PFloat>
 );
 
-export const TitleHanafudaOdori: React.FC = () => {
+type Props = {
+  onVsCpu?: () => void;
+  onSingle?: () => void;
+  /** ボタンを出すか（本番では OP・見本の間は出さない） */
+  showButtons?: boolean;
+  /** ボタン2つを包む要素の class（本番ではスマホで隠して画の下に出す） */
+  buttonsClassName?: string;
+  style?: React.CSSProperties;
+};
+
+export const TitleHanafudaOdori: React.FC<Props> = ({ onVsCpu = noop, onSingle = noop, showButtons = true, buttonsClassName, style }) => {
   const [ref, k] = useFrameK();
   return (
-    <div ref={ref} className="tt-frame" style={{ background: BENI }}>
+    <div ref={ref} className="tt-frame" style={{ background: BENI, ...style }}>
       <style>{POP_CSS}</style>
       <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true">
         <StickerFilter id="hfb-print" k={k} rim={3} rimColor={KINARI} shadow={{ dx: 8, dy: 7, color: AI, opacity: 0.9 }} />
@@ -145,8 +155,12 @@ export const TitleHanafudaOdori: React.FC = () => {
       <POnibi c="green" x={40} y={330} size={50} dur={2.3} amp={12} delay={1.4} z={6} anim="poyon" />
       <Kasumi x={-40} y={438} w={380} h={30} dur={8} amp={20} delay={2} z={7} />
       <Title />
-      <Button label="CPUと たいせん" y={338} primary delay={0} />
-      <Button label="ひとりで あそぶ" y={392} delay={0.4} />
+      {showButtons && (
+        <div className={buttonsClassName}>
+          <Button label="CPUと たいせん" y={338} primary delay={0} onClick={onVsCpu} />
+          <Button label="ひとりで あそぶ" y={392} delay={0.4} onClick={onSingle} />
+        </div>
+      )}
       <Grain id="hfb-grain" />
     </div>
   );
