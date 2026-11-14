@@ -20,11 +20,13 @@ interface PuyoPuyoGameProps {
   playerCharacterId: string;
   /** おしまいの「キャラをかえる」で、キャラえらびに戻る */
   onChangeCharacter?: () => void;
+  /** 見出しの「もどる」で、ゲームえらびに戻る */
+  onBack?: () => void;
 }
 
 const IDLE_SIDE = { isChaining: false, currentChainStep: 0 };
 
-export const PuyoPuyoGame: React.FC<PuyoPuyoGameProps> = ({ playerCharacterId, onChangeCharacter }) => {
+export const PuyoPuyoGame: React.FC<PuyoPuyoGameProps> = ({ playerCharacterId, onChangeCharacter, onBack }) => {
   const {
     gameState,
     startGame,
@@ -104,7 +106,7 @@ export const PuyoPuyoGame: React.FC<PuyoPuyoGameProps> = ({ playerCharacterId, o
             <HfTitle text="ぬばたま落とし" gold={[4]} className="text-xl sm:text-[1.75rem]" />
             <span className="hf-ink text-xs font-serif">ひとりで</span>
           </div>
-          {/* タグと おと のボタンは ひとかたまりで、入らなければ いっしょに次の行へ */}
+          {/* タグと おと・もどる のボタンは ひとかたまりで、入らなければ いっしょに次の行へ */}
           <div className="flex items-center gap-2 ml-auto whitespace-nowrap">
             <span className="hf-chip">のんびり れんさ</span>
             <button
@@ -116,6 +118,12 @@ export const PuyoPuyoGame: React.FC<PuyoPuyoGameProps> = ({ playerCharacterId, o
             >
               {muted ? '🔇 おと' : '🔊 おと'}
             </button>
+            {onBack && (
+              // ゲームえらびに戻る：枠の外にあったのを、見出しの小札へ（オーナー「一体にしたい」。ボタンは枠の外に出さない）
+              <button type="button" onClick={onBack} aria-label="ゲームえらびに もどる" className="hf-chip">
+                ← <span className="hidden sm:inline">ゲームえらびに </span>もどる
+              </button>
+            )}
           </div>
         </div>
 
@@ -123,8 +131,9 @@ export const PuyoPuyoGame: React.FC<PuyoPuyoGameProps> = ({ playerCharacterId, o
           <AllyCharacterPanel character={character} line={ally.line} />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
-          <div className="lg:col-span-1 order-2 lg:order-1">
+        {/* PC では横の札を盤面のすぐ横に寄せ、ふたつをまとめて真ん中に置く（4列のグリッドだと札と盤面のあいだが空いた。オーナー 11-14） */}
+        <div className="flex flex-col lg:flex-row lg:justify-center gap-6 items-stretch lg:items-start">
+          <div className="lg:w-[10.5rem] order-2 lg:order-1">
             <GameControls
               gameState={gameState}
               onPause={pauseGame}
@@ -132,7 +141,7 @@ export const PuyoPuyoGame: React.FC<PuyoPuyoGameProps> = ({ playerCharacterId, o
             />
           </div>
 
-          <div className="lg:col-span-3 order-1 lg:order-2 flex justify-center pb-2">
+          <div className="order-1 lg:order-2 flex justify-center pb-2">
             <TouchControls
               onMove={movePair}
               onRotateClockwise={rotateClockwise}

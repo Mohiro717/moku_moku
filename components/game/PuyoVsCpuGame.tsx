@@ -43,6 +43,8 @@ interface PuyoVsCpuGameProps {
   playerCharacterId: string;
   /** 「あいてをかえる」で相手えらびに戻る */
   onChangeOpponent?: () => void;
+  /** 見出しの「もどる」で、ゲームえらびに戻る */
+  onBack?: () => void;
 }
 
 // Utility functions
@@ -52,7 +54,7 @@ const getGameResult = (isGameOver: boolean, winner: string | null, player: 'play
   return 'lose';
 };
 
-// つぎ＝お守り（NextPiecePreview.tsx の NextTag）、とくてん＝生成りの札（案3b）
+// つぎ（NextPiecePreview.tsx の NextTag）・とくてんとも生成りの小札（案3b）
 const ScoreKoban: React.FC<{ score: number; accent?: boolean; className?: string }> = ({ score, accent = false, className = '' }) => (
   <div className={`hf-score ${className}`}>
     <div className="text-xs font-serif opacity-80">とくてん</div>
@@ -95,7 +97,7 @@ const SideInfo: React.FC<{ nextPair: PuyoPair | null; nextNextPair?: PuyoPair | 
   </div>
 );
 
-export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty = 'normal', characterId, playerCharacterId, onChangeOpponent }) => {
+export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty = 'normal', characterId, playerCharacterId, onChangeOpponent, onBack }) => {
   try {
     const {
       gameState,
@@ -341,8 +343,9 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
 
   return (
     <ErrorBoundary fallback={GameErrorFallback}>
-      <HfFrame ref={frameRef} className="puyo-vs max-w-7xl mx-auto px-3 py-3 sm:px-5 sm:py-4">
-        {/* 見出し：タイトル（案3b の題字。盤面の画面なので跳ねさせない）・つよさ・おと */}
+      {/* PC では枠を中身（盤面・まんなか・盤面）の幅に寄せる。max-w-7xl いっぱいだと左右に紅の余白が広く残った（オーナー 11-14） */}
+      <HfFrame ref={frameRef} className="puyo-vs w-full lg:w-fit max-w-7xl mx-auto px-3 py-3 sm:px-5 sm:py-4">
+        {/* 見出し：タイトル（案3b の題字。盤面の画面なので跳ねさせない）・つよさ・おと・もどる */}
         <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
           <HfTitle text="ぬばたま落とし" gold={[4]} className="text-xl sm:text-[1.75rem] pl-1" />
           <div className="flex items-center gap-2 ml-auto">
@@ -356,6 +359,12 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
             >
               {muted ? '🔇 おと' : '🔊 おと'}
             </button>
+            {onBack && (
+              // ゲームえらびに戻る：枠の外にあったのを、見出しの小札へ（オーナー「一体にしたい」。ボタンは枠の外に出さない）
+              <button type="button" onClick={onBack} aria-label="ゲームえらびに もどる" className="hf-chip">
+                ← <span className="hidden sm:inline">ゲームえらびに </span>もどる
+              </button>
+            )}
           </div>
         </div>
 

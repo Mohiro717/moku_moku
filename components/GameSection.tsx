@@ -476,7 +476,7 @@ export const GameSection: React.FC = () => {
           ) : (
             <div ref={playAreaRef} className={`${isPuyo ? 'wp-zone ' : ''}transition-all duration-500 animate-fade-in-up`}>
               {gameMode === 'playing-single' ? (
-                <PuyoPuyoGame playerCharacterId={playerCharacterId} onChangeCharacter={() => setGameMode('solo-select')} />
+                <PuyoPuyoGame playerCharacterId={playerCharacterId} onChangeCharacter={() => setGameMode('solo-select')} onBack={() => setGameMode(null)} />
               ) : gameMode === 'vs-cpu' ? (
                 <PuyoVsCpuGame
                   key={`vs-cpu-${selectedDifficulty}-${playerCharacterId}-${selectedCharacterId}`}
@@ -484,6 +484,7 @@ export const GameSection: React.FC = () => {
                   characterId={selectedCharacterId}
                   playerCharacterId={playerCharacterId}
                   onChangeOpponent={() => setGameMode('difficulty-select')}
+                  onBack={() => setGameMode(null)}
                 />
               ) : gameMode === 'frog-maze' ? (
                 <div className="w-full">
@@ -493,11 +494,8 @@ export const GameSection: React.FC = () => {
                 <CatchTheBananaGame />
               ) : null}
               
-              {isPuyo ? (
-                <button type="button" onClick={() => setGameMode(null)} className="hf-btn hf-btn-kinari hf-btn-sm mt-6 px-6 py-2 text-sm">
-                  ← ゲームえらびに もどる
-                </button>
-              ) : (
+              {/* ぬばたま落としの「もどる」は枠の中の見出しにある（PuyoVsCpuGame・PuyoPuyoGame の onBack）。ここはカエル・バナナだけ */}
+              {!isPuyo && (
                 <button
                   onClick={() => setGameMode(null)}
                   className="mt-6 py-2 px-4 bg-gradient-to-r from-coffee-light to-coffee-mid text-white rounded-xl font-serif shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200 hover:from-coffee-light/90 hover:to-coffee-mid/90"

@@ -132,8 +132,9 @@ export const TitleChainDemo: React.FC<Props> = ({ onDone }) => {
     };
   }, []);
 
+  // 幕は墨（11-14 まで生成り84%。うしろの絵と盤面がどちらも明るくて、盤面が立たなかった）
   return (
-    <div className="absolute inset-0 z-20 hf-veil flex flex-col items-center justify-center gap-[2%] p-[2%] animate-fade-in-up">
+    <div className="absolute inset-0 z-20 hf-veil-dark flex flex-col items-center justify-center gap-[2%] p-[2%] animate-fade-in-up">
       <FitBox>
         <div className="flex items-center gap-6">
           <DemoBoard label="あなた" grid={playerGrid} pair={pair} chainStep={chainStep} />

@@ -1,4 +1,4 @@
-/* ぬばたま落としの小さな動きと、案3b にそろえたあとも残した部品（判子・花びら・お守りの札・危険ライン）。
+/* ぬばたま落としの小さな動きと、案3b にそろえたあとも残した部品（判子・花びら・危険ライン）。
    画面の地・枠・ボタン・面は hanafuda.css（案3b。オーナー 11-14「他の画面全てを統一したい」）。
    旧「和ポップ」の地（青海波）・枠・ボタン・木の板・小判・絵巻は 11-14 に hanafuda.css へ置きかえて消した。 */
 
@@ -43,20 +43,6 @@
   from { opacity: 0; transform: scale(0.6); }
   to   { opacity: 1; transform: scale(1); }
 }
-
-/* つぎ＝お守りの札（NextPiecePreview.tsx の NextTag）。オーナーの生成画像を窓のふちで9分割する
-   （240×439 の画像で 上145・左右17・下39）。窓だけが伸びて、紐・青海波の縁は伸びない */
-.kf-omamori-wrap { filter: drop-shadow(0 3px 2px rgba(90, 58, 34, 0.35)); }
-.kf-omamori {
-  text-align: center;
-  color: #8a2a3a;
-  border-style: solid;
-  border-width: 60px 7px 16px;
-  border-image: var(--kf-img) 145 17 39 fill / 60px 7px 16px stretch;
-  padding: 4px 2px 2px;
-}
-.kf-omamori .kf-label { font-weight: 900; letter-spacing: 0.25em; }
-.kf-omamori .kf-window { background: transparent; border: 0; padding: 0 2px 2px; }
 
 /* 上端の危険ライン：朱の破線 */
 .wp-deadline {
