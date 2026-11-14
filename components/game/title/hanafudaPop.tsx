@@ -38,6 +38,7 @@ export const POP_CSS = `
 .tp-soft { animation: tp-soft var(--dur) infinite; animation-delay: var(--delay, 0s); }
 .tp-hop { animation: tp-hop var(--dur) infinite; animation-delay: var(--delay, 0s); transform-box: fill-box; transform-origin: 50% 100%; }
 .tp-spin { animation: tt-spin var(--dur) linear infinite; }
+.tp-glow .puyo-svg { filter: var(--glow); }
 `;
 
 /** 枠の幅 / 864。SVG フィルタの縁の太さを画面の大きさにそろえる（スマホで縁だけ太くならないように） */
@@ -103,16 +104,21 @@ export const PFloat: React.FC<{
   </div>
 );
 
-/** 鬼火。filter を渡せばステッカーの縁などに差し替えられる（渡さなければ色の光） */
+/**
+ * 鬼火。filter を渡せばステッカーの縁などに差し替えられる（浮く箱ごとにかかる）。
+ * 渡さなければ色の光を炎の絵にだけつける：光は1回だけ計算され、炎と一緒にゆらめく。
+ * 浮く箱ごと光らせると、ゆらめくたびにぼかしを計算し直す（オーナー 11-14 見本 A〜C から「B」。火の粉は光らない）
+ */
 export const POnibi: React.FC<{
   c: 'red' | 'blue' | 'green' | 'yellow'; x: number; y: number; size: number; dur: number; amp: number; delay?: number;
   z?: number; anim?: Anim; filter?: string; glow?: number;
 }> = ({ c, x, y, size, dur, amp, delay = 0, z, anim = 'bob', filter, glow = 0.8 }) => {
   const col = { red: '255,96,110', blue: '90,160,255', green: '70,220,130', yellow: '255,205,60' }[c];
-  const f = filter ?? `drop-shadow(0 0 ${S(size * 0.18 * glow)} rgba(${col},.85)) drop-shadow(0 0 ${S(size * 0.5 * glow)} rgba(${col},.45))`;
+  const light = `drop-shadow(0 0 ${S(size * 0.18 * glow)} rgba(${col},.85)) drop-shadow(0 0 ${S(size * 0.5 * glow)} rgba(${col},.45))`;
   return (
-    <PFloat x={x} y={y} dur={dur} amp={amp} delay={delay} rot={3} z={z} anim={anim} style={vars({ '--puyo-size': S(size), filter: f })}>
-      <Puyo color={c} idle />
+    <PFloat x={x} y={y} dur={dur} amp={amp} delay={delay} rot={3} z={z} anim={anim}
+      style={vars(filter ? { '--puyo-size': S(size), filter } : { '--puyo-size': S(size), '--glow': light })}>
+      {filter ? <Puyo color={c} idle /> : <div className="tp-glow"><Puyo color={c} idle /></div>}
     </PFloat>
   );
 };
