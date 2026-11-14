@@ -181,14 +181,20 @@ export const Kasumi: React.FC<{
 }> = ({ x, y, w, h = 30, dur, amp, delay = 0, z, fill = GOLD, dot = '#d4901c', edge = SUMI, edgeW = 2.2, style }) => (
   <div style={{ position: 'absolute', left: L(x), top: T(y), width: S(w), height: S(h), zIndex: z, ...style }}>
     <div className="tt-bobx" style={vars({ width: '100%', height: '100%', '--dur': `${dur}s`, '--amp': S(amp), '--delay': `${-delay}s` })}>
-      <svg viewBox={`0 0 ${w} ${h}`} style={{ display: 'block', width: '100%', height: '100%', overflow: 'visible' }}>
-        <path d={`M${h / 2} 0 H${w * 0.62} Q${w * 0.66} 0 ${w * 0.68} ${h * 0.3} H${w - h / 2} A${h / 2} ${h * 0.35} 0 0 1 ${w - h / 2} ${h} H${h / 2} A${h / 2} ${h / 2} 0 0 1 ${h / 2} 0 Z`}
-          fill={fill} stroke={edge} strokeWidth={edgeW} />
-        <path d={`M${h * 0.8} ${h * 0.62} H${w * 0.55}`} stroke={dot} strokeWidth="2" strokeLinecap="round" strokeDasharray="1 7" />
-      </svg>
+      <KasumiShape w={w} h={h} fill={fill} dot={dot} edge={edge} edgeW={edgeW} />
     </div>
   </div>
 );
+
+/** すやり霞の形だけ（動かない）。ほかの画面の飾りにも使う */
+export const KasumiShape: React.FC<{ w: number; h?: number; fill?: string; dot?: string; edge?: string; edgeW?: number }> =
+  ({ w, h = 30, fill = GOLD, dot = '#d4901c', edge = SUMI, edgeW = 2.2 }) => (
+    <svg viewBox={`0 0 ${w} ${h}`} style={{ display: 'block', width: '100%', height: '100%', overflow: 'visible' }} aria-hidden="true">
+      <path d={`M${h / 2} 0 H${w * 0.62} Q${w * 0.66} 0 ${w * 0.68} ${h * 0.3} H${w - h / 2} A${h / 2} ${h * 0.35} 0 0 1 ${w - h / 2} ${h} H${h / 2} A${h / 2} ${h / 2} 0 0 1 ${h / 2} 0 Z`}
+        fill={fill} stroke={edge} strokeWidth={edgeW} />
+      <path d={`M${h * 0.8} ${h * 0.62} H${w * 0.55}`} stroke={dot} strokeWidth="2" strokeLinecap="round" strokeDasharray="1 7" />
+    </svg>
+  );
 
 /** 桜の花（5弁）。cx, cy 中心、r 大きさ */
 export const Sakura: React.FC<{ cx: number; cy: number; r: number; fill?: string; stroke?: string; sw?: number }> =

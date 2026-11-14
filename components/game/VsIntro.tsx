@@ -122,7 +122,7 @@ const MOOD_BADGE: Partial<Record<Mood, string>> = {
 /** 名前の帯・台詞の欄の顔。様子に合わせて動く（puyoAnimations.css の .mood-*） */
 export const MoodIcon: React.FC<{ src: string; alt?: string; mood: Mood; className?: string; style?: React.CSSProperties }> = ({ src, alt = '', mood, className = '', style }) => (
   <span className={`mood-icon mood-${mood} relative inline-block shrink-0 ${className}`}>
-    <img src={src} alt={alt} className="mood-face w-full h-full rounded-full object-cover border-[3px] border-coffee-dark bg-[#131320]" style={style} />
+    <img src={src} alt={alt} className="mood-face w-full h-full rounded-full object-cover border-[3px] border-[#221a1f] bg-[#131320]" style={style} />
     {MOOD_BADGE[mood] && <span key={mood} className="mood-badge" aria-hidden="true">{MOOD_BADGE[mood]}</span>}
   </span>
 );

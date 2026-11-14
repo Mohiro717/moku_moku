@@ -1,11 +1,12 @@
 import React, { useMemo, useRef } from 'react';
 import { Puyo, dropDuration, LINK_RIGHT, LINK_DOWN, LINK_LEFT, LINK_UP } from './Puyo';
 import './wapop.css';
+import './hanafuda.css';
 import type { PuyoCell, PuyoColor, PuyoPair, Position, GameResult } from '../../types/game';
 
-// Constants for styling（和ポップの見た目は wapop.css）
+// Constants for styling（盤面の枠・幕は案3b の hanafuda.css、判子・花びらは wapop.css）
 const GAME_GRID_STYLES = {
-  container: 'wp-board relative p-3 sm:p-4',
+  container: 'hf-board relative p-3 sm:p-4',
   grid: 'relative grid gap-1 transition-opacity duration-300',
   cell: 'relative rounded-lg',
   pausedOpacity: 'opacity-30',
@@ -110,7 +111,7 @@ const useLandingTracker = (grid: PuyoCell[][], pairCells: Position[] | null): Ce
  * 隣の盤面（相手）の判子と高さがそろわない（11-12 オーナー「かち！、まけ…の高さのずれ」）
  */
 const Veil: React.FC<{ dark?: boolean; center: React.ReactNode; below?: React.ReactNode; children?: React.ReactNode }> = ({ dark = false, center, below, children }) => (
-  <div className={`absolute inset-0 z-30 rounded-[1rem] grid grid-rows-[minmax(0,1fr)_auto_minmax(0,1fr)] justify-items-center p-4 overflow-hidden ${dark ? 'wp-veil-dark' : 'wp-veil'}`}>
+  <div className={`absolute inset-0 z-30 rounded-[1rem] grid grid-rows-[minmax(0,1fr)_auto_minmax(0,1fr)] justify-items-center p-4 overflow-hidden ${dark ? 'hf-veil-dark' : 'hf-veil'}`}>
     {children}
     <div className="row-start-2 flex flex-col items-center gap-4">{center}</div>
     {below && <div className="row-start-3 self-start mt-4 w-full flex justify-center">{below}</div>}
@@ -143,7 +144,7 @@ const ResultOverlay: React.FC<{ kind: keyof typeof OVERLAY_TEXT; actions?: React
       dark={kind === 'lose'}
       center={<>
         <div className="wp-hanko wp-hanko-in px-4 py-2 text-3xl sm:px-5 sm:text-4xl whitespace-nowrap">{stamp}</div>
-        <div className={`font-serif text-sm ${kind === 'lose' ? 'text-white' : 'text-coffee-dark'}`}>{sub}</div>
+        <div className={`font-serif text-sm ${kind === 'lose' ? 'text-[#fff4dc]' : 'text-[#221a1f]'}`}>{sub}</div>
       </>}
       below={actions && <div className="relative flex flex-col items-stretch gap-2 w-full max-w-[13rem]">{actions}</div>}
     >
@@ -339,7 +340,7 @@ export const GameGrid: React.FC<GameGridProps> = ({
               </g>
               <g className="chain-text" fontSize="32" fontWeight="900" textAnchor="middle">
                 <text x="0" y="11" fill="#fff" stroke="#fff" strokeWidth="8" strokeLinejoin="round">{chainNumber}連鎖!</text>
-                <text x="0" y="11" fill={popupTier.fill} stroke="#3b2f2f" strokeWidth="1.4">{chainNumber}連鎖!</text>
+                <text x="0" y="11" fill={popupTier.fill} stroke="#221a1f" strokeWidth="1.4">{chainNumber}連鎖!</text>
               </g>
             </svg>
           </div>

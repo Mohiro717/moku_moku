@@ -14,6 +14,7 @@ import type { GameDifficulty } from '../types/game';
 import { HEADER_OFFSET } from '../constants/layout';
 import { DEFAULT_OPPONENT_CHARACTER_ID, DEFAULT_PLAYER_CHARACTER_ID, characterById } from '../constants/cpuCharacters';
 import { CharacterPicker } from './game/CharacterPicker';
+import { HfFrame, HfTitle } from './game/HanafudaUi';
 import { unlockAudio } from '../utils/gameAudio';
 
 type GameMode = 'single' | 'nubatama-title' | 'vs-cpu' | 'player-select' | 'solo-select' | 'difficulty-select' | 'frog-maze' | 'frog-detail' | 'playing-single' | 'banana-game' | null;
@@ -390,88 +391,92 @@ export const GameSection: React.FC = () => {
           ) : gameMode === 'player-select' || gameMode === 'solo-select' ? (
             // 自分のキャラえらび。CPU 対戦は 1/2（つぎに相手えらび）、ひとりであそぶは これだけで はじまる
             <div ref={playAreaRef} className="wp-zone transition-all duration-500 animate-fade-in-up">
-              <div className="wp-seigaiha rounded-3xl border-[3px] border-coffee-dark shadow-[0_6px_0_#3b2f2f] p-5 sm:p-7 max-w-2xl mx-auto">
-                {gameMode === 'player-select' && <p className="text-xs font-serif text-coffee-dark/60 mb-1">1 / 2</p>}
-                <h3 className="text-2xl font-serif text-coffee-dark mb-1">じぶんを えらぶ</h3>
-                <p className="text-xs font-serif text-coffee-dark/70 mb-4">
+              <HfFrame decor="lively" className="px-4 py-5 sm:p-7 max-w-2xl mx-auto">
+                <div className="flex items-center justify-center gap-3 mb-2">
+                  {gameMode === 'player-select' && <span className="hf-chip">1 / 2</span>}
+                  <HfTitle text="じぶんを えらぶ" hop className="text-[1.75rem] sm:text-4xl" />
+                </div>
+                <p className="hf-ink text-xs sm:text-sm font-serif mb-4 leading-relaxed">
                   {gameMode === 'player-select'
                     ? 'いっしょに たたかう 御霊を ひとり よぶ（だれを えらんでも つよさは おなじ）'
                     : 'いっしょに あそぶ 御霊を ひとり よぶ（よこで しゃべって、れんさで かけごえ）'}
                 </p>
 
-                <CharacterPicker selectedId={playerCharacterId} onSelect={setPlayerCharacterId} tone="sakura" />
+                <CharacterPicker selectedId={playerCharacterId} onSelect={setPlayerCharacterId} tone="me" />
 
-                <p className="text-coffee-dark mb-5 font-serif">
-                  <span className="wp-tag mr-2" style={{ background: 'var(--wp-sakura)', color: '#fff' }}>じぶん：{playerCharacter.name}</span>
-                  <span className="text-xs text-coffee-dark/70">{playerCharacter.tagline}</span>
+                <p className="mb-6 font-serif flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
+                  <span className="hf-chip hf-chip-sumi">じぶん：{playerCharacter.name}</span>
+                  <span className="hf-ink text-xs">{playerCharacter.tagline}</span>
                 </p>
 
-                <div className="flex flex-col gap-3">
+                <div className="flex flex-col items-center gap-4">
                   <button
                     type="button"
                     onClick={() => setGameMode(gameMode === 'player-select' ? 'difficulty-select' : 'playing-single')}
-                    className="wp-btn wp-btn-sakura w-full py-3 text-lg"
+                    className="hf-btn hf-btn-sumi hf-dot w-full max-w-xs py-3 text-lg"
                   >
                     {gameMode === 'player-select' ? 'つぎへ' : 'あそぶ！'}
                   </button>
-                  <button type="button" onClick={() => setGameMode('nubatama-title')} className="wp-btn wp-btn-kinari w-full py-2 text-sm">
+                  <button type="button" onClick={() => setGameMode('nubatama-title')} className="hf-btn hf-btn-kinari hf-dot w-full max-w-xs py-2 text-sm">
                     もどる
                   </button>
                 </div>
-              </div>
+              </HfFrame>
             </div>
           ) : gameMode === 'difficulty-select' ? (
             <div ref={playAreaRef} className="wp-zone transition-all duration-500 animate-fade-in-up">
-              <div className="wp-seigaiha rounded-3xl border-[3px] border-coffee-dark shadow-[0_6px_0_#3b2f2f] p-5 sm:p-7 max-w-2xl mx-auto">
-                <p className="text-xs font-serif text-coffee-dark/60 mb-1">2 / 2</p>
-                <h3 className="text-2xl font-serif text-coffee-dark mb-1">あいてを えらぶ</h3>
-                <p className="text-xs font-serif text-coffee-dark/70 mb-4">れんさで ぬばたまを おくって、あいての上まで うめたら かち</p>
+              <HfFrame decor="lively" className="px-4 py-5 sm:p-7 max-w-2xl mx-auto">
+                <div className="flex items-center justify-center gap-3 mb-2">
+                  <span className="hf-chip">2 / 2</span>
+                  <HfTitle text="あいてを えらぶ" hop className="text-[1.75rem] sm:text-4xl" />
+                </div>
+                <p className="hf-ink text-xs sm:text-sm font-serif mb-4 leading-relaxed">れんさで ぬばたまを おくって、あいての上まで うめたら かち</p>
 
                 {/* 相手：顔を並べて選ぶ。自分と同じキャラも選べる（同キャラ戦） */}
                 <CharacterPicker
                   selectedId={selectedCharacterId}
                   onSelect={setSelectedCharacterId}
-                  tone="yamabuki"
+                  tone="you"
                   markId={playerCharacterId}
                   markLabel="じぶん"
                 />
 
-                <p className="text-coffee-dark mb-5 font-serif flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
-                  <span className="wp-tag" style={{ background: 'var(--wp-sakura)', color: '#fff' }}>{playerCharacter.name}</span>
-                  <span>VS</span>
-                  <span className="wp-tag" style={{ background: 'var(--wp-yamabuki)' }}>{selectedCharacter.name}</span>
-                  <span className="text-xs text-coffee-dark/70">{selectedCharacter.tagline}</span>
+                <p className="mb-5 font-serif flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
+                  <span className="hf-chip hf-chip-beni">{playerCharacter.name}</span>
+                  <span className="hf-title text-lg">VS</span>
+                  <span className="hf-chip hf-chip-sumi">{selectedCharacter.name}</span>
+                  <span className="hf-ink text-xs">{selectedCharacter.tagline}</span>
                 </p>
 
                 {/* 強さ：相手とは別に選ぶ */}
-                <div className="grid grid-cols-3 gap-2 mb-6">
+                <div className="grid grid-cols-3 gap-3 mb-7 max-w-md mx-auto">
                   {(['easy', 'normal', 'hard'] as GameDifficulty[]).map(value => (
                     <button
                       key={value}
                       type="button"
                       onClick={() => setSelectedDifficulty(value)}
                       aria-pressed={selectedDifficulty === value}
-                      className={`wp-btn py-2 text-sm ${selectedDifficulty === value ? 'wp-btn-yamabuki' : 'wp-btn-kinari opacity-70'}`}
+                      className={`hf-btn hf-btn-sm py-2 text-sm ${selectedDifficulty === value ? 'hf-btn-sumi' : 'hf-btn-kinari'}`}
                     >
                       {DIFFICULTY_LABELS[value]}
                     </button>
                   ))}
                 </div>
 
-                <div className="flex flex-col gap-3">
-                  <button type="button" onClick={() => { unlockAudio(); setGameMode('vs-cpu'); }} className="wp-btn wp-btn-sakura w-full py-3 text-lg">
+                <div className="flex flex-col items-center gap-4">
+                  <button type="button" onClick={() => { unlockAudio(); setGameMode('vs-cpu'); }} className="hf-btn hf-btn-sumi hf-dot w-full max-w-xs py-3 text-lg">
                     たいせん する！
                   </button>
-                  <button type="button" onClick={() => setGameMode('player-select')} className="wp-btn wp-btn-kinari w-full py-2 text-sm">
+                  <button type="button" onClick={() => setGameMode('player-select')} className="hf-btn hf-btn-kinari hf-dot w-full max-w-xs py-2 text-sm">
                     もどる（じぶんを えらびなおす）
                   </button>
                 </div>
-              </div>
+              </HfFrame>
             </div>
           ) : (
             <div ref={playAreaRef} className={`${isPuyo ? 'wp-zone ' : ''}transition-all duration-500 animate-fade-in-up`}>
               {gameMode === 'playing-single' ? (
-                <PuyoPuyoGame playerCharacterId={playerCharacterId} onChangeCharacter={() => setGameMode('solo-select')} />
+                <PuyoPuyoGame playerCharacterId={playerCharacterId} onChangeCharacter={() => setGameMode('solo-select')} onBack={() => setGameMode(null)} />
               ) : gameMode === 'vs-cpu' ? (
                 <PuyoVsCpuGame
                   key={`vs-cpu-${selectedDifficulty}-${playerCharacterId}-${selectedCharacterId}`}
@@ -479,6 +484,7 @@ export const GameSection: React.FC = () => {
                   characterId={selectedCharacterId}
                   playerCharacterId={playerCharacterId}
                   onChangeOpponent={() => setGameMode('difficulty-select')}
+                  onBack={() => setGameMode(null)}
                 />
               ) : gameMode === 'frog-maze' ? (
                 <div className="w-full">
@@ -488,11 +494,8 @@ export const GameSection: React.FC = () => {
                 <CatchTheBananaGame />
               ) : null}
               
-              {isPuyo ? (
-                <button type="button" onClick={() => setGameMode(null)} className="wp-btn wp-btn-kinari mt-6 px-6 py-2 text-sm">
-                  ← ゲームえらびに もどる
-                </button>
-              ) : (
+              {/* ぬばたま落としの「もどる」は枠の中の見出しにある（PuyoVsCpuGame・PuyoPuyoGame の onBack）。ここはカエル・バナナだけ */}
+              {!isPuyo && (
                 <button
                   onClick={() => setGameMode(null)}
                   className="mt-6 py-2 px-4 bg-gradient-to-r from-coffee-light to-coffee-mid text-white rounded-xl font-serif shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200 hover:from-coffee-light/90 hover:to-coffee-mid/90"

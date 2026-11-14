@@ -6,6 +6,7 @@ import { TitleHanafudaOdori } from './title/TitleHanafudaOdori';
 import { TITLE_CSS } from './title/common';
 import { isMuted, setMuted, unlockAudio } from '../../utils/gameAudio';
 import './wapop.css';
+import './hanafuda.css';
 
 // ぬばたま落としのタイトル画面。流れは
 //   OP（H3 の T3・8秒・声つき）→ 見本れんさ（TitleChainDemo）→ タイトル（コードで組んだ案3b・ボタンつき）
@@ -43,9 +44,8 @@ interface Props {
   onSingle: () => void;
 }
 
-/** おと・あそびかた・クレジットの小さなボタン（案3b の生成り・墨） */
-const CHIP = 'rounded-full border-2 border-[#221a1f] bg-[#fff4dc] px-3 py-1 text-xs sm:text-[13px] font-serif text-[#221a1f] ' +
-  'shadow-[2px_2px_0_#2b2f6b] hover:brightness-105 active:translate-y-px disabled:opacity-50';
+/** おと・あそびかた・クレジットの小さなボタン（案3b の生成り・墨。ほかの画面と同じ hanafuda.css の .hf-chip） */
+const CHIP = 'hf-chip';
 
 /** 権利表記を絵の上に直に置くときの縁どり（墨）。金の霞や墨の丘の上でも読める */
 const OUTLINE = { textShadow: '1px 1px 0 #221a1f, -1px -1px 0 #221a1f, 1px -1px 0 #221a1f, -1px 1px 0 #221a1f, 0 0 3px #221a1f' };
@@ -148,10 +148,10 @@ export const NubatamaTitleScreen: React.FC<Props> = ({ onVsCpu, onSingle }) => {
       {/* スマホだけの下の帯（黒い枠の一部）。画が小さく、画の中だと字が読めず指で押しにくいので、ここに大きく並べる */}
       <div className="sm:hidden px-3 py-2.5">
         <div className={`sm:hidden grid grid-cols-2 gap-3 mb-2.5 transition-opacity duration-300 ${phase === 'title' ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-          <button type="button" onClick={onVsCpu} className="wp-btn wp-btn-sakura w-full py-3 text-base">
+          <button type="button" onClick={onVsCpu} className="hf-btn hf-btn-sumi hf-dot w-full py-3 px-2 text-sm !tracking-normal">
             CPUと たいせん
           </button>
-          <button type="button" onClick={onSingle} className="wp-btn wp-btn-kinari w-full py-3 text-base">
+          <button type="button" onClick={onSingle} className="hf-btn hf-btn-kinari hf-dot w-full py-3 px-2 text-sm !tracking-normal">
             ひとりで あそぶ
           </button>
         </div>
@@ -177,9 +177,9 @@ export const NubatamaTitleScreen: React.FC<Props> = ({ onVsCpu, onSingle }) => {
 
 /** 権利表記。公式と誤認させない（二次創作の掟）・声が公式の音声ではないことを明記する */
 const Credits: React.FC<{ onClose: () => void }> = ({ onClose }) => (
-  <div className="absolute inset-0 z-40 wp-veil flex items-center justify-center p-3 sm:p-6" onClick={onClose}>
+  <div className="absolute inset-0 z-40 bg-[#221a1f]/55 flex items-center justify-center p-3 sm:p-6" onClick={onClose}>
     <div
-      className="wp-card max-h-full overflow-y-auto p-4 sm:p-5 text-left text-[11px] sm:text-sm font-serif text-coffee-dark leading-relaxed space-y-2"
+      className="hf-panel max-h-full overflow-y-auto p-4 sm:p-5 text-left text-xs sm:text-sm font-serif leading-relaxed space-y-2"
       onClick={e => e.stopPropagation()}
       role="dialog"
       aria-label="クレジット"
@@ -202,7 +202,7 @@ const Credits: React.FC<{ onClose: () => void }> = ({ onClose }) => (
         　#月蝕綺譚
       </p>
       <div className="flex justify-center pt-1">
-        <button type="button" onClick={onClose} className="wp-btn wp-btn-kinari px-5 py-1.5 text-sm">
+        <button type="button" onClick={onClose} className="hf-btn hf-btn-sumi hf-btn-sm px-5 py-1.5 text-sm">
           とじる
         </button>
       </div>

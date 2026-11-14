@@ -72,7 +72,7 @@ export const OjamaNotice: React.FC<OjamaNoticeProps> = memo(({ count, ready = fa
                 <OjamaIcon kind={kind} />
               </span>
             ))}
-            <span className="ml-1 text-base font-bold font-serif text-coffee-dark">×{count}</span>
+            <span className="ml-1 text-base font-bold font-serif hf-ink">×{count}</span>
           </>
         )}
       </div>
