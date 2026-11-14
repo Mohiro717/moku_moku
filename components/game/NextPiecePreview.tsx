@@ -43,11 +43,25 @@ const OMAMORI_IMG = `url("${typeof document === 'undefined' ? OMAMORI_SRC : new 
  * 対戦の「つぎ」＝お守りの札（オーナー 11-12 が外のサービスで生成した画像。木札・漆・絵馬の3案のあと「d で決める」）。
  * 画像は wapop.css の .kf-omamori が窓のふちで9分割して貼る。紐と縁は伸ばさず、窓だけを中身に合わせて伸ばす
  */
-export const NextTag: React.FC<{ nextPair: PuyoPair | null; nextNextPair?: PuyoPair | null; className?: string }> = ({ nextPair, nextNextPair, className = '' }) => (
-  <div className={`kf-omamori-wrap ${className}`}>
-    <div className="kf-omamori" style={{ '--kf-img': OMAMORI_IMG } as React.CSSProperties}>
-      <div className="kf-label text-xs font-serif mb-1">つぎ</div>
-      <NextPiecePreview nextPair={nextPair} nextNextPair={nextNextPair} />
+export const NextTag: React.FC<{ nextPair: PuyoPair | null; nextNextPair?: PuyoPair | null; className?: string }> = ({ nextPair, nextNextPair, className = '' }) => {
+  // 試し（オーナー 11-14「予告鬼火の枠が赤いお守りだとくどい」）：?next=a|b|c|d で案3b の枠の4案を見比べる。決まったら1つに絞る
+  if (NEXT_TRIAL) {
+    return (
+      <div className={`nx nx-${NEXT_TRIAL} ${className}`}>
+        <div className="nx-label font-serif">つぎ</div>
+        <NextPiecePreview nextPair={nextPair} nextNextPair={nextNextPair} />
+      </div>
+    );
+  }
+  return (
+    <div className={`kf-omamori-wrap ${className}`}>
+      <div className="kf-omamori" style={{ '--kf-img': OMAMORI_IMG } as React.CSSProperties}>
+        <div className="kf-label text-xs font-serif mb-1">つぎ</div>
+        <NextPiecePreview nextPair={nextPair} nextNextPair={nextNextPair} />
+      </div>
     </div>
-  </div>
-);
+  );
+};
+
+const NEXT_TRIAL = typeof location === 'undefined' ? null
+  : (['a', 'b', 'c', 'd'] as const).find(k => new URLSearchParams(location.search).get('next') === k) ?? null;

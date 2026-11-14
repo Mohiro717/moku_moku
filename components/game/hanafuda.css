@@ -195,3 +195,20 @@ button.hf-chip:disabled { opacity: 0.5; cursor: default; }
 @media (prefers-reduced-motion: reduce) {
   .hf-poyon, .hf-hop .hf-title-ch { animation: none; }
 }
+
+/* ---- 試し：対戦の「つぎ」の枠 4案（?next=a|b|c|d。オーナー 11-14「赤いお守りだとくどい」）。決まったら1つに絞る ---- */
+.nx { text-align: center; color: var(--hf-sumi); }
+.nx .nx-label { font-size: 12px; line-height: 1; letter-spacing: 0.2em; margin-bottom: 4px; }
+.nx .kf-window { background: transparent; border: 0; padding: 2px; }
+/* A 生成りの小札：とくてんの札と同じ（墨の縁・藍の影） */
+.nx-a { background: var(--hf-kinari); border: 2.5px solid var(--hf-sumi); border-radius: 0.75rem; box-shadow: 3px 3px 0 var(--hf-ai); padding: 6px 4px 4px; }
+/* B 花札：生成りの札に墨の二重の縁、少し傾ける。名前は紅 */
+.nx-b { background: var(--hf-kinari); border: 2.5px solid var(--hf-sumi); border-radius: 6px; box-shadow: inset 0 0 0 3px var(--hf-kinari), inset 0 0 0 4.5px var(--hf-sumi), 4px 5px 0 var(--hf-ai); padding: 9px 6px 7px; rotate: -3deg; }
+.nx-b .nx-label { color: var(--hf-beni); }
+/* C 墨の札：主のボタンと同じ墨に金の内線。鬼火の光が映える */
+.nx-c { background: var(--hf-sumi); color: var(--hf-kinari); border: 2px solid var(--hf-sumi); border-radius: 0.75rem; box-shadow: inset 0 0 0 2px var(--hf-gold), 3px 3px 0 var(--hf-ai); padding: 7px 5px 5px; }
+.nx-c .nx-label { color: var(--hf-gold); }
+/* D 窓だけ：細い墨の縁の生成りの窓に、「つぎ」の札を縁にかける（影なしでいちばん静か） */
+.nx-d { position: relative; background: var(--hf-kinari); border: 2px solid var(--hf-sumi); border-radius: 0.75rem; padding: 14px 4px 4px; margin-top: 10px; }
+.nx-d .nx-label { position: absolute; left: 50%; top: 0; translate: -50% -55%; margin: 0; padding: 3px 8px; border-radius: 9999px;
+  background: var(--hf-sumi); color: var(--hf-kinari); font-size: 11px; letter-spacing: 0.15em; white-space: nowrap; }
