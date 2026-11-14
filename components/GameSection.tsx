@@ -14,6 +14,7 @@ import type { GameDifficulty } from '../types/game';
 import { HEADER_OFFSET } from '../constants/layout';
 import { DEFAULT_OPPONENT_CHARACTER_ID, DEFAULT_PLAYER_CHARACTER_ID, characterById } from '../constants/cpuCharacters';
 import { CharacterPicker } from './game/CharacterPicker';
+import { HfFrame, HfTitle } from './game/HanafudaUi';
 import { unlockAudio } from '../utils/gameAudio';
 
 type GameMode = 'single' | 'nubatama-title' | 'vs-cpu' | 'player-select' | 'solo-select' | 'difficulty-select' | 'frog-maze' | 'frog-detail' | 'playing-single' | 'banana-game' | null;
@@ -390,35 +391,37 @@ export const GameSection: React.FC = () => {
           ) : gameMode === 'player-select' || gameMode === 'solo-select' ? (
             // 自分のキャラえらび。CPU 対戦は 1/2（つぎに相手えらび）、ひとりであそぶは これだけで はじまる
             <div ref={playAreaRef} className="wp-zone transition-all duration-500 animate-fade-in-up">
-              <div className="wp-seigaiha rounded-3xl border-[3px] border-coffee-dark shadow-[0_6px_0_#3b2f2f] p-5 sm:p-7 max-w-2xl mx-auto">
-                {gameMode === 'player-select' && <p className="text-xs font-serif text-coffee-dark/60 mb-1">1 / 2</p>}
-                <h3 className="text-2xl font-serif text-coffee-dark mb-1">じぶんを えらぶ</h3>
-                <p className="text-xs font-serif text-coffee-dark/70 mb-4">
+              <HfFrame decor="lively" className="px-4 py-5 sm:p-7 max-w-2xl mx-auto">
+                <div className="flex items-center justify-center gap-3 mb-2">
+                  {gameMode === 'player-select' && <span className="hf-chip">1 / 2</span>}
+                  <HfTitle text="じぶんを えらぶ" hop className="text-[1.75rem] sm:text-4xl" />
+                </div>
+                <p className="hf-ink text-xs sm:text-sm font-serif mb-4 leading-relaxed">
                   {gameMode === 'player-select'
                     ? 'いっしょに たたかう 御霊を ひとり よぶ（だれを えらんでも つよさは おなじ）'
                     : 'いっしょに あそぶ 御霊を ひとり よぶ（よこで しゃべって、れんさで かけごえ）'}
                 </p>
 
-                <CharacterPicker selectedId={playerCharacterId} onSelect={setPlayerCharacterId} tone="sakura" />
+                <CharacterPicker selectedId={playerCharacterId} onSelect={setPlayerCharacterId} tone="me" />
 
-                <p className="text-coffee-dark mb-5 font-serif">
-                  <span className="wp-tag mr-2" style={{ background: 'var(--wp-sakura)', color: '#fff' }}>じぶん：{playerCharacter.name}</span>
-                  <span className="text-xs text-coffee-dark/70">{playerCharacter.tagline}</span>
+                <p className="mb-6 font-serif flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
+                  <span className="hf-chip hf-chip-sumi">じぶん：{playerCharacter.name}</span>
+                  <span className="hf-ink text-xs">{playerCharacter.tagline}</span>
                 </p>
 
-                <div className="flex flex-col gap-3">
+                <div className="flex flex-col items-center gap-4">
                   <button
                     type="button"
                     onClick={() => setGameMode(gameMode === 'player-select' ? 'difficulty-select' : 'playing-single')}
-                    className="wp-btn wp-btn-sakura w-full py-3 text-lg"
+                    className="hf-btn hf-btn-sumi hf-dot w-full max-w-xs py-3 text-lg"
                   >
                     {gameMode === 'player-select' ? 'つぎへ' : 'あそぶ！'}
                   </button>
-                  <button type="button" onClick={() => setGameMode('nubatama-title')} className="wp-btn wp-btn-kinari w-full py-2 text-sm">
+                  <button type="button" onClick={() => setGameMode('nubatama-title')} className="hf-btn hf-btn-kinari hf-dot w-full max-w-xs py-2 text-sm">
                     もどる
                   </button>
                 </div>
-              </div>
+              </HfFrame>
             </div>
           ) : gameMode === 'difficulty-select' ? (
             <div ref={playAreaRef} className="wp-zone transition-all duration-500 animate-fade-in-up">
@@ -431,7 +434,7 @@ export const GameSection: React.FC = () => {
                 <CharacterPicker
                   selectedId={selectedCharacterId}
                   onSelect={setSelectedCharacterId}
-                  tone="yamabuki"
+                  tone="you"
                   markId={playerCharacterId}
                   markLabel="じぶん"
                 />

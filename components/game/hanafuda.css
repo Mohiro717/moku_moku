@@ -1,0 +1,196 @@
+/* ぬばたま落としの画面の見た目（案3b「花札ポップ・踊る題字」にそろえる。オーナー 11-14「他の画面全てを統一したい」）。
+   正本は title/hanafudaPop.tsx と title/TitleHanafudaOdori.tsx。色は5色だけ：紅・生成り・墨・金・藍。
+   重い SVG フィルタや画面いっぱいの動きは置かない（6ec3061・c009596 の軽量化を守る）。
+   地の紙の粒は、タイトルの Grain と同じ雑音を小さな画像にして敷き詰める（描くのは1回だけ） */
+
+:root {
+  --hf-beni: #e04a36;
+  --hf-kinari: #fff4dc;
+  --hf-sumi: #221a1f;
+  --hf-gold: #f2c14e;
+  --hf-ai: #2b2f6b;
+}
+
+/* 外枠と紅の地（タイトルの外枠と同じ墨の縁・影） */
+.hf-frame {
+  position: relative;
+  isolation: isolate;
+  border: 3px solid #3b2f2f;
+  border-radius: 1.5rem;
+  box-shadow: 0 6px 0 #3b2f2f;
+  color: var(--hf-kinari);
+  background-color: var(--hf-beni);
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .45  0 0 0 0 .35  0 0 0 0 .3  0 0 0 -1.6 1.25'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23g)' opacity='.14'/%3E%3C/svg%3E"),
+    repeating-linear-gradient(180deg, rgba(255, 255, 255, 0.035) 0 6px, transparent 6px 20px),
+    radial-gradient(ellipse 90% 80% at 32% 40%, #f0613f 0%, var(--hf-beni) 60%, #bf3328 100%);
+  background-blend-mode: multiply, normal, normal;
+}
+/* 飾り（札・霞）は地の上・中身の後ろ（枠が isolation: isolate なので -1 は枠の外へ抜けない）。
+   はみ出した札は飾りの層だけで切る（枠そのものは切らない＝対戦の演出は枠からはみ出せる） */
+.hf-decos { position: absolute; inset: 0; overflow: hidden; border-radius: inherit; pointer-events: none; z-index: -1; }
+.hf-deco { position: absolute; }
+
+/* 見出し：Potta One・生成りの字・墨の太い縁・藍のずらし影（題字と同じ組み方） */
+.hf-title {
+  font-family: 'Potta One', sans-serif;
+  font-weight: 400;
+  color: var(--hf-kinari);
+  line-height: 1.15;
+  letter-spacing: 0.02em;
+  -webkit-text-stroke: 0.2em var(--hf-sumi);
+  paint-order: stroke fill;
+  filter: drop-shadow(0.07em 0.08em 0 var(--hf-ai));
+}
+.hf-title-ch { display: inline-block; }
+.hf-title-gold { color: var(--hf-gold); }
+
+/* 紅の地に直に置く小さな字：生成りに墨の縁どり（タイトルの権利表記と同じ） */
+.hf-ink {
+  color: var(--hf-kinari);
+  text-shadow: 1px 1px 0 var(--hf-sumi), -1px -1px 0 var(--hf-sumi), 1px -1px 0 var(--hf-sumi), -1px 1px 0 var(--hf-sumi), 0 0 3px var(--hf-sumi);
+}
+
+/* 生成りの面：墨の縁・藍の影（タイトルの「ひとりで あそぶ」と同じ） */
+.hf-panel {
+  background: var(--hf-kinari);
+  color: var(--hf-sumi);
+  border: 2.5px solid var(--hf-sumi);
+  border-radius: 1rem;
+  box-shadow: 5px 5px 0 var(--hf-ai);
+}
+
+/* ボタン：Mochiy Pop One。墨の地に金の内線（主）／生成りの地に墨の縁（二番手）。どちらも藍の影 */
+.hf-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6em;
+  font-family: 'Mochiy Pop One', sans-serif;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+  border-radius: 9999px;
+  cursor: pointer;
+  user-select: none;
+  transition: transform 80ms ease-out, box-shadow 80ms ease-out, filter 120ms;
+  --hf-sh: 5px;
+}
+.hf-btn-sumi {
+  background: var(--hf-sumi);
+  color: var(--hf-kinari);
+  border: 2px solid var(--hf-sumi);
+  box-shadow: inset 0 0 0 2px var(--hf-gold), var(--hf-sh) var(--hf-sh) 0 var(--hf-ai);
+}
+.hf-btn-kinari {
+  background: var(--hf-kinari);
+  color: var(--hf-sumi);
+  border: 2.5px solid var(--hf-sumi);
+  box-shadow: var(--hf-sh) var(--hf-sh) 0 var(--hf-ai);
+}
+.hf-btn-sm { --hf-sh: 3px; letter-spacing: 0.04em; }
+.hf-btn:hover { filter: brightness(1.06); transform: translateY(-1px); }
+.hf-btn:active { transform: translate(2px, 2px); }
+.hf-btn-sumi:active { box-shadow: inset 0 0 0 2px var(--hf-gold), 1px 1px 0 var(--hf-ai); }
+.hf-btn-kinari:active { box-shadow: 1px 1px 0 var(--hf-ai); }
+.hf-btn:disabled { opacity: 0.5; cursor: default; transform: none; filter: none; }
+.hf-btn:focus-visible, .hf-chip:focus-visible { outline: 3px dashed var(--hf-gold); outline-offset: 3px; }
+/* 字の前の丸（タイトルのボタンと同じ）：主は金、二番手は紅 */
+.hf-dot::before {
+  content: "";
+  flex: none;
+  width: 0.5em;
+  height: 0.5em;
+  border-radius: 50%;
+  background: var(--hf-beni);
+}
+.hf-btn-sumi.hf-dot::before { background: var(--hf-gold); }
+
+/* 小さな札（タイトルの「おと・あそびかた・クレジット」と同じ） */
+.hf-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3em;
+  border-radius: 9999px;
+  border: 2px solid var(--hf-sumi);
+  background: var(--hf-kinari);
+  color: var(--hf-sumi);
+  padding: 0.2rem 0.75rem;
+  font-family: 'Mochiy Pop One', sans-serif;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  white-space: nowrap;
+  box-shadow: 2px 2px 0 var(--hf-ai);
+}
+@media (min-width: 640px) { .hf-chip { font-size: 13px; } }
+button.hf-chip { cursor: pointer; }
+button.hf-chip:hover { filter: brightness(1.05); }
+button.hf-chip:active { transform: translateY(1px); }
+button.hf-chip:disabled { opacity: 0.5; cursor: default; }
+.hf-chip-sumi { background: var(--hf-sumi); color: var(--hf-kinari); box-shadow: inset 0 0 0 1.5px var(--hf-gold), 2px 2px 0 var(--hf-ai); }
+.hf-chip-beni { background: var(--hf-beni); color: var(--hf-kinari); }
+
+/* 盤面：中は和紙のまま（鬼火が見やすい）。外に金の輪・墨の線・藍のずらし影 */
+.hf-board {
+  background-color: #fffaf0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='69.28' viewBox='0 0 40 69.28'%3E%3Cg fill='none' stroke='%23f0dcc0' stroke-width='1'%3E%3Cpath d='M20 0v23.09M0 11.55l20 11.54 20-11.54M0 11.55v23.09M40 11.55v23.09M0 34.64l20-11.55 20 11.55M20 23.09l-20 34.64M20 23.09l20 34.64M0 34.64l40 0M20 46.19v23.09M0 57.73l20 11.55 20-11.55M0 57.73l20-11.54 20 11.54'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 40px 69.28px;
+  border: 4px solid var(--hf-sumi);
+  border-radius: 1.25rem;
+  box-shadow: 0 0 0 4px var(--hf-gold), 0 0 0 7px var(--hf-sumi), 7px 8px 0 7px var(--hf-ai);
+}
+
+/* 盤面にかぶせる幕（ひとやすみ・かち）と、暗い幕（まけ） */
+.hf-veil { background: rgba(255, 244, 220, 0.84); }
+.hf-veil-dark { background: rgba(34, 26, 31, 0.66); }
+
+/* ふきだし・台詞の面 */
+.hf-bubble {
+  background: var(--hf-kinari);
+  color: var(--hf-sumi);
+  border: 2.5px solid var(--hf-sumi);
+  border-radius: 1rem;
+  box-shadow: 3px 3px 0 var(--hf-ai);
+}
+
+/* 名前の帯：自分は墨に金の内線、相手は生成り */
+.hf-band {
+  border-radius: 9999px;
+  border: 2.5px solid var(--hf-sumi);
+  font-family: 'Mochiy Pop One', sans-serif;
+  box-shadow: 3px 3px 0 var(--hf-ai);
+}
+.hf-band-me { background: var(--hf-sumi); color: var(--hf-kinari); box-shadow: inset 0 0 0 2px var(--hf-gold), 3px 3px 0 var(--hf-ai); }
+.hf-band-you { background: var(--hf-kinari); color: var(--hf-sumi); }
+
+/* とくてん：生成りの小さな札 */
+.hf-score {
+  text-align: center;
+  padding: 0.35rem 0.25rem 0.4rem;
+  background: var(--hf-kinari);
+  color: var(--hf-sumi);
+  border: 2.5px solid var(--hf-sumi);
+  border-radius: 0.6rem;
+  box-shadow: 3px 3px 0 var(--hf-ai);
+}
+
+/* 飾りの札の「ぽよん」（タイトルの tp-poyon と同じ形）。小さな札だけに使い、盤面の画面では動かさない */
+@keyframes hf-poyon {
+  0% { translate: 0 0; scale: 1.07 .92; animation-timing-function: cubic-bezier(.3,0,.3,1); }
+  9% { translate: 0 0; scale: .96 1.05; animation-timing-function: cubic-bezier(.2,.6,.35,1); }
+  46% { translate: 0 -7px; scale: 1 1; animation-timing-function: cubic-bezier(.6,0,.8,.45); }
+  88% { translate: 0 0; scale: 1 1; animation-timing-function: ease-out; }
+  94%, 100% { translate: 0 0; scale: 1.07 .92; }
+}
+.hf-poyon { animation: hf-poyon var(--dur, 2.6s) infinite; animation-delay: var(--delay, 0s); transform-origin: 50% 100%; }
+/* 見出しの字が1字ずつ跳ねる（タイトルの tp-hop と同じ形） */
+@keyframes hf-hop {
+  0%, 56%, 100% { translate: 0 0; scale: 1 1; }
+  6% { translate: 0 0; scale: 1.1 .88; animation-timing-function: cubic-bezier(.2,.7,.4,1); }
+  22% { translate: 0 -0.22em; scale: .94 1.07; animation-timing-function: cubic-bezier(.6,0,.85,.4); }
+  36% { translate: 0 0; scale: 1.12 .86; animation-timing-function: ease-out; }
+  44% { translate: 0 0; scale: .97 1.03; }
+}
+.hf-hop .hf-title-ch { animation: hf-hop 2.6s infinite; transform-origin: 50% 100%; }
+@media (prefers-reduced-motion: reduce) {
+  .hf-poyon, .hf-hop .hf-title-ch { animation: none; }
+}

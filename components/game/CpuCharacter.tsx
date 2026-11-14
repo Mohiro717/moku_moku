@@ -10,8 +10,8 @@ interface PanelProps {
   mood?: Mood;
 }
 
-// 相手の台詞＝絵巻（左右に木の軸、和紙の地。wapop.css の .wp-emaki）
-const PANEL_CLASS = 'wp-emaki flex items-center gap-3 px-3 py-2';
+// 相手の台詞＝生成りの面に墨の縁・藍の影（案3b。hanafuda.css の .hf-bubble）
+const PANEL_CLASS = 'hf-bubble flex items-center gap-3 px-3 py-2';
 
 /** CPU 盤面の上に置く、相手キャラの顔・名前・台詞 */
 export const CpuCharacterPanel = React.forwardRef<HTMLDivElement, PanelProps>(({ character, line, mood }, ref) => (
@@ -24,16 +24,16 @@ export const CpuCharacterPanel = React.forwardRef<HTMLDivElement, PanelProps>(({
         alt={character.name}
         width={64}
         height={64}
-        className="w-16 h-16 shrink-0 rounded-full object-cover border-[3px] border-coffee-dark"
-        style={{ boxShadow: '0 0 0 3px var(--wp-sakura)' }}
+        className="w-16 h-16 shrink-0 rounded-full object-cover border-[3px] border-[#221a1f]"
+        style={{ boxShadow: '0 0 0 3px #2b2f6b' }}
       />
     )}
     <div className="min-w-0 flex-1 text-left">
       <div className="flex items-baseline gap-2">
-        <span className="font-serif text-lg text-coffee-dark">{character.name}</span>
-        <span className="text-xs text-coffee-dark/60">{character.tagline}</span>
+        <span className="font-serif text-lg">{character.name}</span>
+        <span className="text-xs opacity-75">{character.tagline}</span>
       </div>
-      <p key={line} className="mt-1 text-sm leading-snug font-serif text-coffee-dark animate-fade-in-up">
+      <p key={line} className="mt-1 text-sm leading-snug font-serif animate-fade-in-up">
         「{line}」
       </p>
     </div>
@@ -41,9 +41,9 @@ export const CpuCharacterPanel = React.forwardRef<HTMLDivElement, PanelProps>(({
 ));
 CpuCharacterPanel.displayName = 'CpuCharacterPanel';
 
-/** スマホ・タブレット用：自分の側（あるじどのの味方）の顔と台詞。相手の絵巻より小さく、桜色の地 */
+/** スマホ・タブレット用：自分の側（あるじどのの味方）の顔と台詞。相手より小さく、名前は紅 */
 export const AllyCharacterPanel: React.FC<PanelProps> = ({ character, line, mood }) => (
-  <div className="flex items-center gap-2 px-2 py-1 rounded-2xl border-[3px] border-coffee-dark bg-[#fde7ee] shadow-[0_3px_0_#3b2f2f]">
+  <div className="hf-bubble flex items-center gap-2 px-2 py-1">
     {mood ? (
       <MoodIcon src={character.icon} alt={character.name} mood={mood} className="w-12 h-12" />
     ) : (
@@ -52,16 +52,16 @@ export const AllyCharacterPanel: React.FC<PanelProps> = ({ character, line, mood
         alt={character.name}
         width={40}
         height={40}
-        className="w-10 h-10 shrink-0 rounded-full object-cover border-[3px] border-coffee-dark bg-[#131320]"
+        className="w-10 h-10 shrink-0 rounded-full object-cover border-[3px] border-[#221a1f] bg-[#131320]"
       />
     )}
-    <p key={line} className="min-w-0 flex-1 text-left text-xs leading-snug font-serif text-coffee-dark animate-fade-in-up">
-      <span className="mr-1 text-coffee-dark/70">{character.name}</span>「{line}」
+    <p key={line} className="min-w-0 flex-1 text-left text-xs leading-snug font-serif animate-fade-in-up">
+      <span className="mr-1 text-[#e04a36]">{character.name}</span>「{line}」
     </p>
   </div>
 );
 
-/** 大連鎖で盤面に重ねる必殺カットイン。盤面の枠（.wp-board）をぴったり覆うので、角の丸みも枠と同じにする。side を渡すと、どちらの側のカットインか札を出す（同キャラ戦で見分けるため） */
+/** 大連鎖で盤面に重ねる必殺カットイン。盤面の枠（.hf-board）をぴったり覆うので、角の丸みも枠と同じにする。side を渡すと、どちらの側のカットインか札を出す（同キャラ戦で見分けるため） */
 export const CpuCutinOverlay: React.FC<{ cutin: CpuCutin | null; name: string; side?: 'player' | 'cpu' }> = ({ cutin, name, side }) => {
   if (!cutin) return null;
   return (
@@ -76,8 +76,7 @@ export const CpuCutinOverlay: React.FC<{ cutin: CpuCutin | null; name: string; s
       />
       {side && (
         <span
-          className={`cutin-dim wp-tag absolute top-2 ${side === 'player' ? 'left-2' : 'right-2'}`}
-          style={{ background: side === 'player' ? 'var(--wp-sakura)' : 'var(--wp-washi)', color: side === 'player' ? '#fff' : undefined }}
+          className={`cutin-dim hf-chip absolute top-2 ${side === 'player' ? 'hf-chip-beni left-2' : 'right-2'}`}
         >
           {side === 'player' ? 'じぶん' : 'あいて'}
         </span>
