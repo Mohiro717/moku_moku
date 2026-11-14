@@ -64,9 +64,19 @@ const knockOutWhite = (img: ImageData) => {
 
 const smooth = (t: number) => (t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t));
 
-export const SakuyaFlutter: React.FC<{ src: string; regions?: FlutterRegion[]; debug?: boolean; style?: React.CSSProperties; className?: string }> =
-  ({ src, regions = SAKUYA_REGIONS, debug = false, style, className }) => {
+export const SakuyaFlutter: React.FC<{
+  src: string; regions?: FlutterRegion[]; debug?: boolean; style?: React.CSSProperties; className?: string;
+  /** 止める（OP 動画の下に隠れている間など）。外すと続きから動く */
+  paused?: boolean;
+}> =
+  ({ src, regions = SAKUYA_REGIONS, debug = false, style, className, paused = false }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
+    const pausedRef = useRef(paused);
+    const kickRef = useRef(() => {});
+    useEffect(() => {
+      pausedRef.current = paused;
+      kickRef.current();
+    }, [paused]);
     // 表示の大きさが変わったら描き直す（48px 刻み。細かい揺れでは描き直さない）
     const [sizeKey, setSizeKey] = useState(0);
     useEffect(() => {
@@ -111,12 +121,18 @@ export const SakuyaFlutter: React.FC<{ src: string; regions?: FlutterRegion[]; d
         knockOutWhite(base);
         const src8 = base.data;
 
-        // 揺れる画素を前もって選び、場所ごとの重み・付け根からの距離を覚えておく
+        // 揺れる画素を前もって選び、場所ごとの重み・付け根からの距離を覚えておく。
+        // 毎フレームの計算で物を作らないよう、平たい配列に詰める（画素 k の分は from[k]〜from[k+1]）
         const idx: number[] = [];
-        const per: { r: number; wgt: number; s: number }[][] = [];
+        const from: number[] = [0];
+        const regOf: number[] = [];
+        const coef: number[] = []; // 揺れの大きさ（画素）× 重み
+        const phase: number[] = []; // 2π × 付け根からの距離 / 波長
+        const wsum: number[] = []; // デバッグ表示用の重みの和
+        let x0 = w, y0 = h, x1 = -1, y1 = -1;
         for (let y = 0; y < h; y++) {
           for (let x = 0; x < w; x++) {
-            const list: { r: number; wgt: number; s: number }[] = [];
+            let sum = 0;
             regions.forEach((g, r) => {
               const ex = (x / w - g.cx) / g.rx, ey = (y / h - g.cy) / g.ry;
               const e = ex * ex + ey * ey;
@@ -126,11 +142,20 @@ export const SakuyaFlutter: React.FC<{ src: string; regions?: FlutterRegion[]; d
               const t = ((x / w - g.ax) * vx + (y / h - g.ay) * vy) / len2; // 付け根0 → 先1
               const lever = Math.pow(Math.max(0, Math.min(1, t)), 1.4);
               const wgt = smooth(1 - e) * lever;
-              if (wgt > 0.002) list.push({ r, wgt, s: t });
+              if (wgt <= 0.002) return;
+              regOf.push(r);
+              coef.push(g.amp * w * wgt);
+              phase.push(2 * Math.PI * (t / g.wave));
+              sum += wgt;
             });
-            if (list.length) {
+            if (regOf.length > from[from.length - 1]) {
               idx.push(y * w + x);
-              per.push(list);
+              from.push(regOf.length);
+              wsum.push(sum);
+              if (x < x0) x0 = x;
+              if (x > x1) x1 = x;
+              if (y < y0) y0 = y;
+              if (y > y1) y1 = y;
             }
           }
         }
@@ -140,46 +165,66 @@ export const SakuyaFlutter: React.FC<{ src: string; regions?: FlutterRegion[]; d
         o8.set(src8);
         if (debug) {
           // 揺れる範囲を色で見せる（位置合わせ用）
-          idx.forEach((p, k) => { const a = Math.min(1, per[k].reduce((m, q) => m + q.wgt, 0)); o8[p * 4] = 255 * a + o8[p * 4] * (1 - a); o8[p * 4 + 3] = Math.max(o8[p * 4 + 3], 120 * a); });
+          idx.forEach((p, k) => { const a = Math.min(1, wsum[k]); o8[p * 4] = 255 * a + o8[p * 4] * (1 - a); o8[p * 4 + 3] = Math.max(o8[p * 4 + 3], 120 * a); });
           ctx.putImageData(out, 0, 0);
           return;
         }
+        // 揺れない画素は最初に1回だけ描いておき、毎フレームは揺れる範囲の箱だけ書き換える
+        ctx.putImageData(out, 0, 0);
+        const dirty = x1 < 0 ? null : { x: x0, y: y0, w: x1 - x0 + 1, h: y1 - y0 + 1 };
 
-        const sample = (fx: number, fy: number, j: number) => {
-          // 双線形で読む（外は透明）
-          const x0 = Math.floor(fx), y0 = Math.floor(fy);
-          const tx = fx - x0, ty = fy - y0;
-          let acc = 0;
-          for (let c = 0; c < 4; c++) {
-            const pick = (xx: number, yy: number) => (xx < 0 || yy < 0 || xx >= w || yy >= h ? 0 : src8[(yy * w + xx) * 4 + c]);
-            const top = pick(x0, y0) * (1 - tx) + pick(x0 + 1, y0) * tx;
-            const bot = pick(x0, y0 + 1) * (1 - tx) + pick(x0 + 1, y0 + 1) * tx;
-            acc = top * (1 - ty) + bot * ty;
-            o8[j + c] = acc;
-          }
-        };
-
+        const nReg = regions.length;
+        const ang = new Float64Array(nReg);
+        const isX = regions.map(g => g.axis === 'x');
         const t0 = performance.now();
         const frame = (now: number) => {
-          if (!alive) return;
+          raf = 0;
+          if (!alive || !running()) return;
           const t = (now - t0) / 1000;
+          for (let r = 0; r < nReg; r++) ang[r] = 2 * Math.PI * (t / regions[r].period);
           for (let k = 0; k < idx.length; k++) {
             const p = idx[k];
             let dx = 0, dy = 0;
-            for (const q of per[k]) {
-              const g = regions[q.r];
-              const d = g.amp * w * q.wgt * Math.sin(2 * Math.PI * (q.s / g.wave - t / g.period));
-              if (g.axis === 'x') dx += d; else dy += d;
+            for (let e = from[k]; e < from[k + 1]; e++) {
+              const r = regOf[e];
+              // sin(2π(s/wave − t/period)) を、付け根からの位相と時刻の角に分けて計算する（同じ値）
+              const d = coef[e] * Math.sin(phase[e] - ang[r]);
+              if (isX[r]) dx += d; else dy += d;
             }
+            // 双線形で読む（外は透明）
             const x = p % w, y = (p - x) / w;
-            sample(x - dx, y - dy, p * 4);
+            const fx = x - dx, fy = y - dy;
+            const xa = Math.floor(fx), ya = Math.floor(fy);
+            const tx = fx - xa, ty = fy - ya;
+            const inX0 = xa >= 0 && xa < w, inX1 = xa + 1 >= 0 && xa + 1 < w;
+            const inY0 = ya >= 0 && ya < h, inY1 = ya + 1 >= 0 && ya + 1 < h;
+            const i00 = (ya * w + xa) * 4, i10 = i00 + 4, i01 = i00 + w * 4, i11 = i01 + 4;
+            const j = p * 4;
+            for (let c = 0; c < 4; c++) {
+              const v00 = inX0 && inY0 ? src8[i00 + c] : 0, v10 = inX1 && inY0 ? src8[i10 + c] : 0;
+              const v01 = inX0 && inY1 ? src8[i01 + c] : 0, v11 = inX1 && inY1 ? src8[i11 + c] : 0;
+              const top = v00 * (1 - tx) + v10 * tx;
+              const bot = v01 * (1 - tx) + v11 * tx;
+              o8[j + c] = top * (1 - ty) + bot * ty;
+            }
           }
-          ctx.putImageData(out, 0, 0);
+          if (dirty) ctx.putImageData(out, 0, 0, dirty.x, dirty.y, dirty.w, dirty.h);
           raf = requestAnimationFrame(frame);
         };
-        raf = requestAnimationFrame(frame);
+        kick = () => { if (alive && !raf && running()) raf = requestAnimationFrame(frame); };
+        kick();
       };
-      return () => { alive = false; cancelAnimationFrame(raf); };
+      // 画面の外に出たら止め、入ったら続きから動かす（CSS の動きを止める仕組みは、この JavaScript の動きには効かない）
+      let visible = true;
+      const running = () => visible && !pausedRef.current;
+      let kick = () => {};
+      kickRef.current = () => kick();
+      const io = typeof IntersectionObserver === 'undefined' ? null : new IntersectionObserver(([e]) => {
+        visible = e.isIntersecting;
+        kick();
+      }, { rootMargin: '200px 0px' });
+      if (io && canvasRef.current) io.observe(canvasRef.current);
+      return () => { alive = false; cancelAnimationFrame(raf); io?.disconnect(); kickRef.current = () => {}; };
     }, [src, regions, debug, sizeKey]);
 
     return <canvas ref={canvasRef} className={className} style={{ display: 'block', width: '100%', ...style }} aria-label="咲耶" />;
