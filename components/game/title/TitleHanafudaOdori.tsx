@@ -2,7 +2,7 @@ import React from 'react';
 import { S, vars, noop, SAKUYA_SRC } from './common';
 import { SakuyaFlutter } from '../SakuyaFlutter';
 import {
-  AI, BENI, GOLD, KINARI, POP_CSS, SUMI, Fuda, Grain, Kasumi, PFloat, PNuba, POnibi, PopGlyphs, StickerFilter, Susuki, makeHill,
+  AI, BENI, GOLD, KINARI, POP_CSS, SUMI, Fuda, Grain, Kasumi, PFloat, PNuba, POnibi, PopGlyphLayers, StickerFilter, SusukiLayers, makeHill,
   useFrameK, type FudaKind, type PG
 } from './hanafudaPop';
 
@@ -42,11 +42,14 @@ const Moon: React.FC = () => (
   </PFloat>
 );
 
+/** 墨の丘とすすき。すすきは1本ずつの層で揺らす（SVG の中で揺らすと、揺れのたびに丘ごと描き直す） */
 const Hill: React.FC = () => (
-  <svg viewBox="0 0 864 480" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 5, pointerEvents: 'none' }} aria-hidden="true">
-    <path d="M0 404 C140 360 300 366 440 408 C520 430 570 456 590 480 H0 Z" fill={SUMI} />
-    <Susuki hill={hill} from={10} to={430} skip={[170, 330]} />
-  </svg>
+  <div style={{ position: 'absolute', inset: 0, zIndex: 5, pointerEvents: 'none' }} aria-hidden="true">
+    <svg viewBox="0 0 864 480" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}>
+      <path d="M0 404 C140 360 300 366 440 408 C520 430 570 456 590 480 H0 Z" fill={SUMI} />
+    </svg>
+    <SusukiLayers hill={hill} from={10} to={430} skip={[170, 330]} />
+  </div>
 );
 
 /** 背景にばらまく傾いた花札。ぽよんと弾みながら少し揺れる */
@@ -80,17 +83,22 @@ const TITLE: PG[] = [
   ], TCX, 202, 4)
 ];
 
+/** 題字は字×段ごとの層で跳ねさせ（PopGlyphLayers）、副題と金の点線だけを SVG に残す（題字より上に重なる順も元のまま） */
 const Title: React.FC = () => (
   <div style={{ position: 'absolute', inset: 0, zIndex: 6, pointerEvents: 'none' }}>
     <div className="tt-bob" style={vars({ position: 'absolute', inset: 0, '--dur': '4.6s', '--amp': S(5), '--delay': '-1s' })}>
-      <svg viewBox="0 0 864 480" style={{ width: '100%', height: '100%', overflow: 'visible' }} role="img" aria-label="ぬばたま落とし">
+      <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true">
         <defs>
           <linearGradient id="hfb-gold" x1="0" y1="0" x2="0" y2="1">
             <stop offset=".1" stopColor="#ffe9a6" /><stop offset=".9" stopColor="#f0a51a" />
           </linearGradient>
         </defs>
-        <PopGlyphs glyphs={TITLE} font="'Potta One', sans-serif" fill={KINARI}
+      </svg>
+      <div role="img" aria-label="ぬばたま落とし" style={{ position: 'absolute', inset: 0 }}>
+        <PopGlyphLayers glyphs={TITLE} font="'Potta One', sans-serif" fill={KINARI}
           layers={[{ color: SUMI, width: 16 }]} shadow={{ dx: 6, dy: 7, color: AI }} />
+      </div>
+      <svg viewBox="0 0 864 480" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', overflow: 'visible' }} aria-hidden="true">
         <text x={TCX} y="290" textAnchor="middle" dominantBaseline="central" fontFamily="'Potta One', sans-serif" fontSize="14"
           letterSpacing="4" fill={KINARI} stroke={SUMI} strokeWidth="3.5" style={{ paintOrder: 'stroke fill' }}>NUBATAMA OTOSHI</text>
         <path d={`M${TCX - 150} 290 h40 M${TCX + 110} 290 h40`} stroke={GOLD} strokeWidth="2" strokeLinecap="round" strokeDasharray="1 7" />
@@ -121,12 +129,14 @@ type Props = {
   /** ボタン2つを包む要素の class（本番ではスマホで隠して画の下に出す） */
   buttonsClassName?: string;
   style?: React.CSSProperties;
+  /** 画が隠れている間（OP 動画の下）は全部の動きを止める。外すと続きから動く */
+  paused?: boolean;
 };
 
-export const TitleHanafudaOdori: React.FC<Props> = ({ onVsCpu = noop, onSingle = noop, showButtons = true, buttonsClassName, style }) => {
+export const TitleHanafudaOdori: React.FC<Props> = ({ onVsCpu = noop, onSingle = noop, showButtons = true, buttonsClassName, style, paused = false }) => {
   const [ref, k] = useFrameK();
   return (
-    <div ref={ref} className="tt-frame" style={{ background: BENI, ...style }}>
+    <div ref={ref} className={`tt-frame${paused ? ' tt-paused' : ''}`} style={{ background: BENI, ...style }}>
       <style>{POP_CSS}</style>
       <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true">
         <StickerFilter id="hfb-print" k={k} rim={3} rimColor={KINARI} shadow={{ dx: 8, dy: 7, color: AI, opacity: 0.9 }} />
@@ -144,7 +154,7 @@ export const TitleHanafudaOdori: React.FC<Props> = ({ onVsCpu = noop, onSingle =
       <PNuba x={26} y={250} size={46} dur={3.2} amp={9} delay={2.2} z={2} anim="soft" />
       <PFloat x={122} y={8} w={280} dur={3.4} amp={12} z={3} anim="soft">
         <div style={{ position: 'relative' }}>
-          <SakuyaFlutter src={SAKUYA_SRC} style={{ filter: 'url(#hfb-print)' }} />
+          <SakuyaFlutter src={SAKUYA_SRC} style={{ filter: 'url(#hfb-print)' }} paused={paused} />
           <div style={{ position: 'absolute', left: '3%', top: '10%' }}>
             <POnibi c="red" x={0} y={0} size={56} dur={1.9} amp={8} anim="poyon" />
           </div>

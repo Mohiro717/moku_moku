@@ -48,6 +48,8 @@ export const TITLE_CSS = `
   font-family: 'Mochiy Pop One', sans-serif; transition: transform 80ms ease-out, filter 120ms; }
 .tt-btn:hover { filter: brightness(1.06); transform: translateY(-1px); }
 .tt-btn:active { transform: translateY(2px); }
+/* 隠れている間（OP 動画の下）は動きを止め、出たら続きから動かす */
+.tt-paused * { animation-play-state: paused !important; }
 @media (prefers-reduced-motion: reduce) { .tt-frame * { animation: none !important; } }
 `;
 

@@ -233,7 +233,7 @@ const CRACK_RED = '#d6303e';
  * ふちは夜気へにじむ（点々の墨と頭の墨の巻き）。ツヤの白・口・虹彩のある目は描かない（正典の禁止）。
  * variant は 0〜1 の乱数。ひびの形と左右をこれで決める。
  */
-export const Nubatama: React.FC<{ variant?: number; blinkDelay?: string }> = ({ variant = 0, blinkDelay }) => {
+export const Nubatama: React.FC<{ variant?: number; blinkDelay?: string; eyes?: boolean }> = ({ variant = 0, blinkDelay, eyes = true }) => {
   const crack = NUBATAMA_CRACKS[Math.floor(variant * NUBATAMA_CRACKS.length) % NUBATAMA_CRACKS.length];
   const flip = variant * 10 % 1 >= 0.5;
   return (
@@ -245,13 +245,28 @@ export const Nubatama: React.FC<{ variant?: number; blinkDelay?: string }> = ({ 
       <circle cx="12.8" cy="3.6" r=".7" fill="#141326" opacity=".8" />
       <use href="#puyo-body" fill="url(#puyo-g-ojama)" />
       <path d={crack} stroke={CRACK_RED} strokeWidth=".9" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity=".9" />
-      <g className="nubatama-eye" style={blinkDelay ? { animationDelay: blinkDelay } : undefined}>
-        <circle cx="14.6" cy="23" r="2.1" fill={CRACK_RED} />
-        <circle cx="25.4" cy="23" r="2.1" fill={CRACK_RED} />
-      </g>
+      {eyes && <g className="nubatama-eye" style={blinkDelay ? { animationDelay: blinkDelay } : undefined}><NubatamaEyes /></g>}
     </g>
   );
 };
+
+/** ぬばたまの紅い眼ふたつ（左右対称なので、ひびの左右の反転は効かない） */
+const NubatamaEyes: React.FC = () => (
+  <>
+    <circle cx="14.6" cy="23" r="2.1" fill={CRACK_RED} />
+    <circle cx="25.4" cy="23" r="2.1" fill={CRACK_RED} />
+  </>
+);
+
+/**
+ * 盤面のぬばたまの眼だけを、体の SVG の上に重ねた HTML の層でまばたきさせる。
+ * SVG の中でまばたくと、そのたびににじみ（ぼかし）ごと体を描き直す。支点は眼ふたつの箱の中央 (20, 23) で、元と同じ
+ */
+const NubatamaBlink: React.FC<{ delay: string }> = ({ delay }) => (
+  <div className="nubatama-eye" style={{ position: 'absolute', inset: 0, transformOrigin: '50% 57.5%', animationDelay: delay }}>
+    <svg className="w-full h-full overflow-visible" viewBox="0 0 40 40" aria-hidden="true"><NubatamaEyes /></svg>
+  </div>
+);
 
 /**
  * 月見積み：ぬばたまが月見団子のように3段に積み重なったもの（正典の変種「積むほど強い」）。
@@ -394,10 +409,10 @@ export const Puyo: React.FC<PuyoProps> = memo(({
         <div className={`w-full h-full ${landed ? 'puyo-squash' : ''}`} style={dropStyle}>
           {/* 体の動き（呼吸・ゆらめき・光る・消える）は SVG ではなくこの div に付ける。
               HTML の要素の transform / opacity / filter の動きは合成だけで済み、SVG を毎フレーム描き直さない */}
-          <div className={`w-full h-full ${stateClass}`} style={bodyStyle}>
+          <div className={`relative w-full h-full ${stateClass}`} style={bodyStyle}>
           <svg className="puyo-svg w-full h-full overflow-visible" viewBox="0 0 40 40">
             {color === 'ojama' ? (
-              <Nubatama variant={phase} blinkDelay={`${(-phase * 6).toFixed(2)}s`} />
+              <Nubatama variant={phase} eyes={false} />
             ) : ACTIVE_SKIN !== 'e' ? (
               <PieceSkin skin={ACTIVE_SKIN} color={color} />
             ) : (
@@ -415,6 +430,7 @@ export const Puyo: React.FC<PuyoProps> = memo(({
               </>
             )}
           </svg>
+          {color === 'ojama' && <NubatamaBlink delay={`${(-phase * 6).toFixed(2)}s`} />}
           </div>
           {/* 火の粉：炎の上から2粒、ゆっくり昇って消える。HTML の層で動かす */}
           {flicker && SPARKS.map((s, i) => (

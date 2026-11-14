@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Puyo } from '../Puyo';
 import { L, S, T, rand, vars, type Layer } from './common';
 
@@ -142,32 +142,72 @@ export const makeHill = (p0: number[], p1: number[], p2: number[], p3: number[])
   return best;
 };
 
-/** すすき（SVG の中に置く）。skip の x 範囲は空ける */
-export const Susuki: React.FC<{
+type SusukiProps = {
   hill: (x: number) => number; from: number; to: number; step?: number; sc?: number; skip?: [number, number];
   stem?: string; ear?: string; seed?: number;
-}> = ({ hill, from, to, step = 17, sc = 1, skip, stem = '#f1d58e', ear = KINARI, seed = 0 }) => {
-  const n = Math.floor((to - from) / step);
-  const blades = Array.from({ length: n }, (_, i) => {
+};
+
+/** すすきの1本ずつの根元・高さ・傾き。skip の x 範囲は空ける */
+const susukiBlades = ({ hill, from, to, step = 17, sc = 1, skip, seed = 0 }: SusukiProps) =>
+  Array.from({ length: Math.floor((to - from) / step) }, (_, i) => {
     const bx = from + i * step + rand(i + seed) * step * 0.6;
     const by = hill(bx) + 8 * sc;
     const h = (46 + rand(i + 40 + seed) * 52) * sc;
     const lean = (8 + rand(i + 80 + seed) * 22) * sc;
     return { bx, by, h, lean, ear: i % 3 !== 1, i };
   }).filter(b => b.bx < to && !(skip && b.bx > skip[0] && b.bx < skip[1]));
+
+type Blade = ReturnType<typeof susukiBlades>[number];
+
+/** 1本の茎と穂（864 枠の座標のまま描く） */
+const BladePaths: React.FC<{ b: Blade; sc: number; stem: string; ear: string }> = ({ b, sc, stem, ear }) => {
+  const tx = b.bx + b.lean, ty = b.by - b.h;
   return (
     <>
-      {blades.map(b => {
-        const tx = b.bx + b.lean, ty = b.by - b.h;
+      <path d={`M${b.bx} ${b.by} Q${b.bx + b.lean * 0.1} ${b.by - b.h * 0.6} ${tx} ${ty}`} stroke={stem} strokeWidth={2 * sc} fill="none" strokeLinecap="round" />
+      {b.ear && [0, 1, 2, 3].map(k => (
+        <path key={k} d={`M${tx} ${ty} q${(4 + k * 3) * sc} ${(2 + k * 4) * sc} ${(8 + k * 2) * sc} ${(12 + k * 5) * sc}`} stroke={ear}
+          strokeWidth={2.2 * sc} fill="none" strokeLinecap="round" opacity=".95" />
+      ))}
+    </>
+  );
+};
+
+const swayVars = (b: Blade) => ({ '--rot': `${2 + (b.i % 3)}deg`, '--dur': `${4.5 + (b.i % 4) * 0.6}s`, '--delay': `${-b.i * 0.45}s` });
+
+/** すすき（SVG の中に置く）。揺れは SVG の中で動くので、揺れるたびに SVG 全体を描き直す。案3b は SusukiLayers を使う */
+export const Susuki: React.FC<SusukiProps> = props => {
+  const { sc = 1, stem = '#f1d58e', ear = KINARI } = props;
+  return (
+    <>
+      {susukiBlades(props).map(b => (
+        <g key={b.i} className="tt-sway" style={vars({ transformBox: 'view-box', transformOrigin: `${b.bx}px ${b.by}px`, ...swayVars(b) })}>
+          <BladePaths b={b} sc={sc} stem={stem} ear={ear} />
+        </g>
+      ))}
+    </>
+  );
+};
+
+/**
+ * Susuki と同じ絵を、1本ずつ HTML の層に分けて揺らす（枠の直下に置く。SVG の中には置けない）。
+ * 層ごとの回転は GPU が受け持つので、揺れのたびに丘や他の穂を描き直さない。重なり順は Susuki と同じ（後の穂が上）
+ */
+export const SusukiLayers: React.FC<SusukiProps> = props => {
+  const { sc = 1, stem = '#f1d58e', ear = KINARI } = props;
+  return (
+    <>
+      {susukiBlades(props).map(b => {
+        // 1本を囲む箱（穂の先は右下へ最大 14・27 張り出す。はみ出しても overflow で描ける）
+        const x0 = b.bx - 4 * sc, y0 = b.by - b.h - 4 * sc;
+        const w = b.lean + 22 * sc, h = b.h + 8 * sc;
         return (
-          <g key={b.i} className="tt-sway" style={vars({ transformBox: 'view-box', transformOrigin: `${b.bx}px ${b.by}px`,
-            '--rot': `${2 + (b.i % 3)}deg`, '--dur': `${4.5 + (b.i % 4) * 0.6}s`, '--delay': `${-b.i * 0.45}s` })}>
-            <path d={`M${b.bx} ${b.by} Q${b.bx + b.lean * 0.1} ${b.by - b.h * 0.6} ${tx} ${ty}`} stroke={stem} strokeWidth={2 * sc} fill="none" strokeLinecap="round" />
-            {b.ear && [0, 1, 2, 3].map(k => (
-              <path key={k} d={`M${tx} ${ty} q${(4 + k * 3) * sc} ${(2 + k * 4) * sc} ${(8 + k * 2) * sc} ${(12 + k * 5) * sc}`} stroke={ear}
-                strokeWidth={2.2 * sc} fill="none" strokeLinecap="round" opacity=".95" />
-            ))}
-          </g>
+          <div key={b.i} className="tt-sway" style={vars({ position: 'absolute', left: L(x0), top: T(y0), width: S(w), height: S(h),
+            transformOrigin: `${S(b.bx - x0)} ${S(b.by - y0)}`, ...swayVars(b) })}>
+            <svg viewBox={`${x0} ${y0} ${w} ${h}`} style={{ display: 'block', width: '100%', height: '100%', overflow: 'visible' }} aria-hidden="true">
+              <BladePaths b={b} sc={sc} stem={stem} ear={ear} />
+            </svg>
+          </div>
         );
       })}
     </>
@@ -273,6 +313,67 @@ export const PopGlyphs: React.FC<{
       {layers.map((l, k) => glyphs.map((g, i) => wrap(g, `l${k}-${i}`,
         <text {...common} fontSize={g.size} fill={l.color} stroke={l.color} strokeWidth={l.width}>{g.ch}</text>)))}
       {glyphs.map((g, i) => wrap(g, `f${i}`, <text {...common} fontSize={g.size} fill={g.fill ?? fill}>{g.ch}</text>))}
+    </>
+  );
+};
+
+type Box = { x: number; y: number; width: number; height: number };
+
+/**
+ * PopGlyphs と同じ絵を、字×段（影・縁・塗り）ごとの HTML の層に分けて跳ねさせる（枠の直下に置く）。
+ * 重なり順は PopGlyphs と同じ「全字の影 → 全字の縁 → 全字の塗り」。跳ねの支点も同じ（各段の文字の箱の下の中央）。
+ * 層ごとの動きは GPU が受け持つので、1字跳ねるたびに題字全体を描き直さない
+ */
+export const PopGlyphLayers: React.FC<{
+  glyphs: PG[]; font: string; fill: string; layers: Layer[]; shadow?: { dx: number; dy: number; color: string };
+}> = ({ glyphs, font, fill, layers, shadow }) => {
+  // 支点を出すため、塗りの文字の箱（線を含まない）を測る。字体が読み込まれたら測り直す
+  const fillRefs = useRef<(SVGTextElement | null)[]>([]);
+  const [boxes, setBoxes] = useState<(Box | null)[]>([]);
+  useLayoutEffect(() => {
+    let alive = true;
+    const measure = () => {
+      if (!alive) return;
+      setBoxes(fillRefs.current.map(t => {
+        if (!t) return null;
+        const b = t.getBBox();
+        return { x: b.x, y: b.y, width: b.width, height: b.height };
+      }));
+    };
+    measure();
+    document.fonts?.ready.then(measure);
+    return () => { alive = false; };
+  }, [glyphs, font]);
+
+  const common = { fontFamily: font, textAnchor: 'middle' as const, dominantBaseline: 'central' as const,
+    strokeLinejoin: 'round' as const, strokeLinecap: 'round' as const };
+  /** 1字1段の層。(ox, oy) は段の中の文字のずれ（影だけ dx, dy） */
+  const layer = (g: PG, i: number, key: string, ox: number, oy: number, node: React.ReactNode) => {
+    const b = boxes[i];
+    const px = (b ? b.x + b.width / 2 : 0) + ox, py = (b ? b.y + b.height : g.size / 2) + oy;
+    const half = g.size / 2;
+    const svg = (
+      <svg viewBox={`${-half} ${-half} ${g.size} ${g.size}`} aria-hidden="true"
+        style={{ position: 'absolute', left: S(-half), top: S(-half), width: S(g.size), height: S(g.size), overflow: 'visible' }}>{node}</svg>
+    );
+    return (
+      <div key={key} style={{ position: 'absolute', left: L(g.x), top: T(g.y), width: 0, height: 0, rotate: g.rot ? `${g.rot}deg` : undefined }}>
+        {g.hop ? (
+          <div className="tp-hop" style={vars({ position: 'absolute', left: 0, top: 0, transformOrigin: `${S(px)} ${S(py)}`,
+            '--dur': `${g.hop.dur}s`, '--amp': S(g.hop.amp), '--delay': `${-g.hop.delay}s` })}>{svg}</div>
+        ) : svg}
+      </div>
+    );
+  };
+  const outer = layers[0];
+  return (
+    <>
+      {shadow && outer && glyphs.map((g, i) => layer(g, i, `s${i}`, shadow.dx, shadow.dy,
+        <text {...common} fontSize={g.size} x={shadow.dx} y={shadow.dy} fill={g.shadow ?? shadow.color} stroke={g.shadow ?? shadow.color} strokeWidth={outer.width}>{g.ch}</text>))}
+      {layers.map((l, k) => glyphs.map((g, i) => layer(g, i, `l${k}-${i}`, 0, 0,
+        <text {...common} fontSize={g.size} fill={l.color} stroke={l.color} strokeWidth={l.width}>{g.ch}</text>)))}
+      {glyphs.map((g, i) => layer(g, i, `f${i}`, 0, 0,
+        <text ref={el => { fillRefs.current[i] = el; }} {...common} fontSize={g.size} fill={g.fill ?? fill}>{g.ch}</text>))}
     </>
   );
 };
