@@ -133,18 +133,18 @@ export const TitleChainDemo: React.FC<Props> = ({ onDone }) => {
   }, []);
 
   return (
-    <div className="absolute inset-0 z-20 wp-veil flex flex-col items-center justify-center gap-[2%] p-[2%] animate-fade-in-up">
+    <div className="absolute inset-0 z-20 hf-veil flex flex-col items-center justify-center gap-[2%] p-[2%] animate-fade-in-up">
       <FitBox>
         <div className="flex items-center gap-6">
           <DemoBoard label="あなた" grid={playerGrid} pair={pair} chainStep={chainStep} />
-          <div className={`text-5xl text-[#e5598a] transition-all duration-500 ${beam ? 'opacity-100 translate-x-3 scale-125' : 'opacity-30'}`} aria-hidden="true">
+          <div className={`text-5xl text-[#e04a36] transition-all duration-500 ${beam ? 'opacity-100 translate-x-3 scale-125' : 'opacity-30'}`} aria-hidden="true">
             ➜
           </div>
           <DemoBoard label="あいて" grid={rivalGrid} pair={null} chainStep={0} />
         </div>
       </FitBox>
       {/* 字幕は盤面の下（上だと、スマホで右上の「とばす」と重なる） */}
-      <div key={caption} className="wp-tag text-[11px] sm:text-base px-3 py-1 wp-pop-in whitespace-nowrap">
+      <div key={caption} className="hf-chip hf-chip-sumi text-xs sm:text-base !px-4 !py-1 wp-pop-in">
         {CAPTIONS[caption]}
       </div>
     </div>
@@ -186,7 +186,7 @@ const FitBox: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
 const DemoBoard: React.FC<{ label: string; grid: PuyoCell[][]; pair: PuyoPair | null; chainStep: number }> = ({ label, grid, pair, chainStep }) => (
   <div className="flex flex-col items-center gap-2">
-    <span className="wp-tag text-sm px-3 py-0.5">{label}</span>
+    <span className="hf-chip text-sm">{label}</span>
     <div className="w-[260px]">
       <GameGrid grid={grid} currentPair={pair} getPairPositions={getPairPositions} isGameOver={false} chainStep={chainStep} />
     </div>

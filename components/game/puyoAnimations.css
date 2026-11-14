@@ -418,9 +418,10 @@
   border-radius: calc(1.5rem - 3px);
   overflow: hidden;
   overflow: clip; /* hidden だと中の sticky が効かない。clip はスクロールの箱を作らない */
-  background: rgba(42, 12, 28, 0.18);
+  background: rgba(34, 26, 31, 0.18);
 }
-.vs-intro-dark { background: #120914; }
+/* VS の幕は案3b の墨と藍（オーナー 11-14「他の画面全てを統一したい」） */
+.vs-intro-dark { background: #221a1f; }
 /* 絵とカウントの舞台。スマホでは枠が画面より縦に長いので、高さは画面に見えている分（ヘッダーの下）までにし、
    スクロールしても画面に残す。枠が画面に収まるときは枠いっぱい */
 .vs-stage {
@@ -431,7 +432,7 @@
   overflow: hidden;
 }
 .vs-splash {
-  background: radial-gradient(ellipse at center, #3a1530, #120914 75%);
+  background: radial-gradient(ellipse at center, #2b2f6b, #221a1f 75%);
   animation: vs-splash-out var(--vs-ms, 4100ms) ease both;
 }
 @keyframes vs-splash-out {
@@ -451,7 +452,7 @@
 /* 斜めの切れ目に桜色の光 */
 .vs-slash {
   position: absolute; inset: 0;
-  background: linear-gradient(100deg, transparent calc(50% - 5px), #fff calc(50% - 2px), var(--wp-sakura, #f79ab7) 50%, #fff calc(50% + 2px), transparent calc(50% + 5px));
+  background: linear-gradient(100deg, transparent calc(50% - 5px), #fff4dc calc(50% - 2px), #f2c14e 50%, #fff4dc calc(50% + 2px), transparent calc(50% + 5px));
   animation: vs-flash var(--vs-ms, 4100ms) ease both;
 }
 @keyframes vs-flash {
@@ -461,13 +462,13 @@
 }
 .vs-mark {
   position: absolute; left: 50%; top: 50%;
-  font-family: 'Mochiy Pop One', sans-serif;
+  font-family: 'Potta One', sans-serif;
   font-size: clamp(3rem, 9vw, 6rem);
   line-height: 1;
-  color: #ffe066;
-  -webkit-text-stroke: 3px #7a1030;
+  color: #f2c14e;
+  -webkit-text-stroke: 0.16em #221a1f;
   paint-order: stroke fill;
-  text-shadow: 0 6px 0 #7a1030, 0 0 24px #ff4f9a;
+  text-shadow: 0.07em 0.08em 0 #2b2f6b;
   animation: vs-stamp var(--vs-ms, 4100ms) ease-out both;
 }
 /* VS は2人がそろってから押す。真ん中のカウントとぶつからないよう、切れ目の少し上に */
@@ -485,25 +486,25 @@
   .vs-art { width: 100%; height: 56%; }
   .vs-half-a .vs-art { top: 0; }
   .vs-half-b .vs-art { top: auto; bottom: 0; }
-  .vs-slash { background: linear-gradient(-6deg, transparent calc(50% - 5px), #fff calc(50% - 2px), var(--wp-sakura, #f79ab7) 50%, #fff calc(50% + 2px), transparent calc(50% + 5px)); }
+  .vs-slash { background: linear-gradient(-6deg, transparent calc(50% - 5px), #fff4dc calc(50% - 2px), #f2c14e 50%, #fff4dc calc(50% + 2px), transparent calc(50% + 5px)); }
 }
 @keyframes vs-in-top { from { transform: translateY(-100%); } to { transform: translateY(0); } }
 @keyframes vs-in-bottom { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
 /* 3・2・1・はじめ！ */
 .vs-count {
-  font-family: 'Mochiy Pop One', sans-serif;
+  font-family: 'Potta One', sans-serif;
   font-size: clamp(5rem, 16vw, 9rem);
   line-height: 1;
-  color: #fff;
-  -webkit-text-stroke: 4px #3b2f2f;
+  color: #fff4dc;
+  -webkit-text-stroke: 0.14em #221a1f;
   paint-order: stroke fill;
-  text-shadow: 0 8px 0 #3b2f2f, 0 0 30px rgba(247, 154, 183, 0.9);
+  text-shadow: 0.06em 0.07em 0 #2b2f6b;
   animation: vs-count 800ms cubic-bezier(0.2, 1.4, 0.4, 1) both;
 }
 /* VS の絵の上では、数字を少し小さく、VS の下に */
 .vs-count-on-vs { font-size: clamp(4rem, 12vw, 7rem); transform-origin: center; margin-top: clamp(4rem, 12vw, 7rem); }
-.vs-count-go { color: #ffe066; font-size: clamp(3rem, 10vw, 6rem); -webkit-text-stroke-color: #7a1030; text-shadow: 0 8px 0 #7a1030, 0 0 30px #ff4f9a; animation-duration: 900ms; }
+.vs-count-go { color: #f2c14e; font-size: clamp(3rem, 10vw, 6rem); animation-duration: 900ms; }
 @keyframes vs-count {
   0% { opacity: 0; transform: scale(2.2); }
   25% { opacity: 1; transform: scale(1); }

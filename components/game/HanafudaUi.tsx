@@ -11,7 +11,7 @@ type Spot = { k: FudaKind; w: number; tilt: number; left?: string; right?: strin
 const CORNERS: Spot[] = [
   { k: 'ura', w: 44, tilt: -16, left: '-12px', top: '34%', d: 0 },
   { k: 'tan', w: 46, tilt: 12, right: '-8px', top: '-12px', d: 0.7 },
-  { k: 'sakura', w: 50, tilt: -11, left: '-6px', bottom: '-18px', d: 1.3 },
+  { k: 'sakura', w: 50, tilt: -11, left: '-8px', bottom: '-34px', d: 1.3 },
   { k: 'kiku', w: 46, tilt: 14, right: '-10px', bottom: '36px', d: 0.4 }
 ];
 
@@ -31,7 +31,7 @@ export const HfFrame = React.forwardRef<HTMLDivElement, {
           </div>
         </div>
       ))}
-      <div className="hf-deco" style={{ left: '-40px', bottom: '10px', width: 220, height: 22 }}>
+      <div className="hf-deco" style={{ left: '-40px', bottom: '-6px', width: 220, height: 22 }}>
         <KasumiShape w={220} h={22} />
       </div>
     </div>

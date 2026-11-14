@@ -46,7 +46,7 @@ export const CharacterPicker: React.FC<Props> = ({ selectedId, onSelect, tone = 
               />
               <span className={`mt-1.5 text-xs font-serif whitespace-nowrap px-1.5 rounded-full ${selected ? 'hf-chip-sumi' : 'text-[#221a1f]'}`}>{c.name}</span>
               {markId === c.id && markLabel && (
-                <span className="absolute -top-1 -left-1 hf-chip hf-chip-beni !px-1.5 !py-0 !text-[11px]">{markLabel}</span>
+                <span className="absolute -top-1 -left-1 hf-chip hf-chip-beni !px-1.5 !py-0 !text-xs">{markLabel}</span>
               )}
             </button>
           );

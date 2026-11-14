@@ -55,7 +55,7 @@ const getGameResult = (isGameOver: boolean, winner: string | null, player: 'play
 // つぎ＝お守り（NextPiecePreview.tsx の NextTag）、とくてん＝生成りの札（案3b）
 const ScoreKoban: React.FC<{ score: number; accent?: boolean; className?: string }> = ({ score, accent = false, className = '' }) => (
   <div className={`hf-score ${className}`}>
-    <div className="text-[11px] font-serif opacity-80">とくてん</div>
+    <div className="text-xs font-serif opacity-80">とくてん</div>
     <div className={`font-serif text-sm sm:text-base tabular-nums leading-tight ${accent ? 'text-[#e04a36]' : ''}`}>{score.toLocaleString()}</div>
   </div>
 );
@@ -471,7 +471,7 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
         <AttackBeamLayer beams={beams} />
 
         <div className="mt-3 text-center">
-          <KitanCredit url={FANWORKS_URL} className="mt-2 hf-ink" />
+          <KitanCredit url={FANWORKS_URL} />
         </div>
 
         {/* はじまりの演出：黒い枠いっぱいに VS の絵、3・2・1 を重ね、はじめ！ */}

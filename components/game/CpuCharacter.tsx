@@ -86,8 +86,8 @@ export const CpuCutinOverlay: React.FC<{ cutin: CpuCutin | null; name: string; s
 };
 
 /** 二次創作であることの表示（掟: 公式と誤認させない） */
-export const KitanCredit: React.FC<{ url: string; className?: string }> = ({ url, className = 'mt-2 text-coffee-dark/60' }) => (
-  <p className={`text-[11px] ${className}`}>
+export const KitanCredit: React.FC<{ url: string; className?: string }> = ({ url, className = 'mt-2 hf-ink' }) => (
+  <p className={`text-xs ${className}`}>
     キャラクター：
     <a href={url} target="_blank" rel="noopener noreferrer" className="underline">
       『月蝕綺譚 -Luna Occulta-』

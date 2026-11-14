@@ -340,7 +340,7 @@ export const GameGrid: React.FC<GameGridProps> = ({
               </g>
               <g className="chain-text" fontSize="32" fontWeight="900" textAnchor="middle">
                 <text x="0" y="11" fill="#fff" stroke="#fff" strokeWidth="8" strokeLinejoin="round">{chainNumber}連鎖!</text>
-                <text x="0" y="11" fill={popupTier.fill} stroke="#3b2f2f" strokeWidth="1.4">{chainNumber}連鎖!</text>
+                <text x="0" y="11" fill={popupTier.fill} stroke="#221a1f" strokeWidth="1.4">{chainNumber}連鎖!</text>
               </g>
             </svg>
           </div>

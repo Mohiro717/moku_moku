@@ -40,7 +40,8 @@
   letter-spacing: 0.02em;
   -webkit-text-stroke: 0.2em var(--hf-sumi);
   paint-order: stroke fill;
-  filter: drop-shadow(0.07em 0.08em 0 var(--hf-ai));
+  /* 影は filter でなく text-shadow（字が跳ねても毎フレーム描き直さない）。縁の外まで影が出るよう太らせて重ねる */
+  text-shadow: 0.07em 0.08em 0 var(--hf-ai), 0.17em 0.08em 0 var(--hf-ai), 0.07em 0.18em 0 var(--hf-ai), 0.15em 0.16em 0 var(--hf-ai);
 }
 .hf-title-ch { display: inline-block; }
 .hf-title-gold { color: var(--hf-gold); }
