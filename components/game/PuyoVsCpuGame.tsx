@@ -63,11 +63,14 @@ const ScoreKoban: React.FC<{ score: number; accent?: boolean; className?: string
   </div>
 );
 
-/** lg 以上：盤面の枠の下端に出すとくてん（本家と同じく8桁）。盤は宵闇なので、自分は金・相手は月白。
- *  勝ち負けの幕（月白）の上にも出るので、墨の縁どり（hf-num）で どちらの地でも読めるようにする */
-const BoardScore: React.FC<{ score: number; accent?: boolean }> = ({ score, accent = false }) => (
+/** lg 以上：盤面の枠の下端に出すとくてん（本家と同じく8桁）。
+ *  宵闇の盤と墨の幕（まけ）の上では、自分は金・相手は月白（墨の縁どり hf-num つき）。
+ *  月白の幕（かち・ひとやすみ・はじめる）の上では、月白の面と同じく自分は紅・相手は宵闇の字にする
+ *  （11-16 オーナー「2つとも直して」：月白の幕の上の月白の字は、縁どりだけでは はっきり読めなかった） */
+const BoardScore: React.FC<{ score: number; accent?: boolean; onLight?: boolean }> = ({ score, accent = false, onLight = false }) => (
   // 幕（z-30）がかかっても本家と同じく常に見えるように、幕より上に置く
-  <div className={`hidden lg:block relative z-40 mt-2 -mb-1 text-center font-serif text-2xl leading-none tabular-nums tracking-wider hf-num ${accent ? 'text-[#f0ce7e]' : 'text-[#e8e4d8]'}`}>
+  <div className={`hidden lg:block relative z-40 mt-2 -mb-1 text-center font-serif text-2xl leading-none tabular-nums tracking-wider ${
+    onLight ? (accent ? 'text-[#c93a2e]' : 'text-[#131320]') : `hf-num ${accent ? 'text-[#f0ce7e]' : 'text-[#e8e4d8]'}`}`}>
     {String(score).padStart(8, '0')}
   </div>
 );
@@ -321,6 +324,14 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
     </div>
   ) : undefined;
 
+  // 盤に月白の幕がかかっているか（GameGrid の renderOverlay と同じ順：ひとやすみ → かち → まけ → はじめる）
+  const onLightVeil = (side: 'player' | 'cpu') => {
+    if (gameState.isPaused) return true;
+    const result = getGameResult(gameState.isGameOver, gameState.winner, side);
+    if (result) return result === 'win';
+    return side === 'player' && !!startPrompt;
+  };
+
   const resultActions = gameState.isGameOver ? (
     <>
       <button type="button" onClick={handleRestart} className="hf-btn hf-btn-main hf-dot py-2.5 text-base">もういちど</button>
@@ -426,7 +437,7 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
                   chainStep={gameState.player.currentChainStep}
                   startPrompt={startPrompt}
                   actions={resultActions}
-                  footer={<BoardScore score={gameState.player.score} accent />}
+                  footer={<BoardScore score={gameState.player.score} accent onLight={onLightVeil('player')} />}
                 />
               </TouchControls>
               {/* 必殺カットインは揺れる盤面の枠（この div）の中に置く。外に置くと、連鎖の揺れで
@@ -472,7 +483,7 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
                 isPaused={gameState.isPaused}
                 gameResult={getGameResult(gameState.isGameOver, gameState.winner, 'cpu')}
                 chainStep={gameState.cpu.currentChainStep}
-                footer={<BoardScore score={gameState.cpu.score} />}
+                footer={<BoardScore score={gameState.cpu.score} onLight={onLightVeil('cpu')} />}
               />
               <div className="hidden lg:block pointer-events-none absolute inset-0 z-20">
                 <CpuCutinOverlay cutin={cutin} name={character.name} side="cpu" />
