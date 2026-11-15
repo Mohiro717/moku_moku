@@ -6,15 +6,15 @@ import './hanafuda.css';
 interface Props {
   selectedId: string;
   onSelect: (id: string) => void;
-  /** 選んだ顔の輪の色（自分＝紅、相手＝藍）。どちらを選んでいる画面か目で分かるように */
+  /** 選んだ顔の輪の色（自分＝紅、相手＝金泥）。どちらを選んでいる画面か目で分かるように */
   tone?: 'me' | 'you';
   /** ほかの画面で選んだキャラに付ける小さな札（例：自分のキャラに「じぶん」） */
   markId?: string;
   markLabel?: string;
 }
 
-// 案3b の色。選んだ顔は色の輪と藍の影、名前は墨の札（金の内線）
-const RING = { me: '#e04a36', you: '#2b2f6b' };
+// 色調 B。選んだ顔は色の輪と墨の影、名前は墨の札（金の内線）。相手の輪は 11-15 まで藍（色調 B に藍が無いので金泥に）
+const RING = { me: '#c93a2e', you: '#d9a94c' };
 
 /** ぬばたま落とし：16人の顔を並べて1人を選ぶ（自分えらび・相手えらびで使う） */
 export const CharacterPicker: React.FC<Props> = ({ selectedId, onSelect, tone = 'me', markId, markLabel }) => {
@@ -41,10 +41,10 @@ export const CharacterPicker: React.FC<Props> = ({ selectedId, onSelect, tone = 
                 width={56}
                 height={56}
                 loading="lazy"
-                className="w-14 h-14 rounded-full object-cover bg-[#131320] border-[2.5px] border-[#221a1f]"
-                style={selected ? { boxShadow: `0 0 0 3px ${RING[tone]}, 0 0 0 5px #221a1f, 4px 5px 0 5px #2b2f6b` } : undefined}
+                className="w-14 h-14 rounded-full object-cover bg-[#131320] border-[2.5px] border-[#0b0b12]"
+                style={selected ? { boxShadow: `0 0 0 3px ${RING[tone]}, 0 0 0 5px #0b0b12, 4px 5px 0 5px #0b0b12` } : undefined}
               />
-              <span className={`mt-1.5 text-xs font-serif whitespace-nowrap px-1.5 rounded-full ${selected ? 'hf-chip-sumi' : 'text-[#221a1f]'}`}>{c.name}</span>
+              <span className={`mt-1.5 text-xs font-serif whitespace-nowrap px-1.5 rounded-full ${selected ? 'hf-chip-sumi' : 'text-[#131320]'}`}>{c.name}</span>
               {markId === c.id && markLabel && (
                 <span className="absolute -top-1 -left-1 hf-chip hf-chip-beni !px-1.5 !py-0 !text-xs">{markLabel}</span>
               )}

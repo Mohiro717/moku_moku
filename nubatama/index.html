@@ -15,10 +15,10 @@
     <meta property="og:image:alt" content="ぬばたま落とし タイトル画面">
     <meta property="og:url" content="%NUBATAMA_SITE_URL%/">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="theme-color" content="#221a1f">
+    <meta name="theme-color" content="#131320">
     <meta name="robots" content="index, follow">
     <!-- タブとホーム画面のアイコン：ぬばたまと月（ゲームの部品で描いた原画は brand.html、作り直しは scripts/nubatama-brand.ps1）。
-         OGP 画像はタイトル案3bの画面。%NUBATAMA_SITE_URL% はビルドのとき vite.config.ts が公開先の URL に置き換える -->
+         OGP 画像はタイトル案3b（色調 B「夜の花札」）の画面。%NUBATAMA_SITE_URL% はビルドのとき vite.config.ts が公開先の URL に置き換える -->
     <link rel="icon" type="image/png" sizes="32x32" href="./images/nubatama/icon-32.png">
     <link rel="icon" type="image/png" sizes="192x192" href="./images/nubatama/icon-192.png">
     <link rel="apple-touch-icon" sizes="180x180" href="./images/nubatama/apple-touch-icon.png">
@@ -139,8 +139,8 @@
         }
     </style>
 </head>
-<!-- ページの地は藍と墨の夜（タイトルの紅の枠が浮くように）。月蝕綺譚のトンマナ「ベースは藍黒の闇」にも合わせる -->
-<body class="text-coffee-dark font-sans overflow-x-hidden" style="background: radial-gradient(ellipse at 50% 0%, #3a3f86 0%, #2b2f6b 38%, #221a1f 100%) fixed #221a1f;">
+<!-- ページの地は宵闇より一段深い夜（色調 B「夜の花札」。枠の宵闇と墨の縁が浮くように）。月蝕綺譚のトンマナ「ベースは藍黒の闇」・純黒にしない -->
+<body class="text-coffee-dark font-sans overflow-x-hidden" style="background: radial-gradient(ellipse at 50% 0%, #1b1b2e 0%, #131320 45%, #0c0c14 100%) fixed #0c0c14;">
     <div id="root"></div>
     <script type="module" src="./main.tsx"></script>
 </body>

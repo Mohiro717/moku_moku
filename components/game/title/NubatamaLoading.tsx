@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { TITLE_CSS, vars } from './common';
-import { AI, BENI, GOLD, KINARI, POP_CSS, SUMI, PNuba, POnibi, PopGlyphLayers, type PG } from './hanafudaPop';
+import { BENI, GEPPAKU, GOLD, POP_CSS, SUMI, YOI, YOI_DEEP, YOI_LIGHT, PNuba, POnibi, PopGlyphLayers, type PG } from './hanafudaPop';
 
 // ぬばたま落とし単独サイトの読み込み画面（オーナー 11-15「読み込み画面等全てを、月蝕奇譚のオマージュ作品
-// ぬばたま落としのイメージに統一」）。色はタイトル案3bの5色（紅・生成り・墨・金・藍）、題字も案3bと同じ書体と縁どり。
+// ぬばたま落としのイメージに統一」）。色はタイトル案3bと同じ色調 B「夜の花札」（地は宵闇・月は金・題字は月白に紅の影）、題字も案3bと同じ書体と縁どり。
 // 月にかかった墨の影が、読み込みが進むほど右へ抜けていく（月蝕が明ける）。月のまわりの金の環が満ちる。
 // 月蝕綺譚のトンマナ「読み込み中: 細い蝕環がゆっくり満ちる」に倣う。
 // 進み方はもくもくハウスの LoadingScreen と同じ（40ms ごとに 2%、100% で 0.3 秒おいて閉じる）。
@@ -14,7 +14,7 @@ const RING = MOON.r + 18;
 const TITLE: PG[] = (() => {
   const chars = [
     { ch: 'ぬ', size: 58, adv: 60 }, { ch: 'ば', size: 58, adv: 60 }, { ch: 'た', size: 58, adv: 60 }, { ch: 'ま', size: 58, adv: 62 },
-    { ch: '落', size: 84, adv: 86, fill: 'url(#nbl-gold)' }, { ch: 'と', size: 68, adv: 66 }, { ch: 'し', size: 68, adv: 60 }
+    { ch: '落', size: 84, adv: 86, fill: GOLD }, { ch: 'と', size: 68, adv: 66 }, { ch: 'し', size: 68, adv: 60 }
   ];
   const total = chars.reduce((a, c) => a + c.adv, 0);
   let x = MOON.cx - total / 2;
@@ -34,7 +34,7 @@ const EclipseMoon: React.FC<{ p: number }> = ({ p }) => {
     <svg viewBox="0 0 864 480" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', overflow: 'visible' }} aria-hidden="true">
       <defs>
         <radialGradient id="nbl-moon" cx=".45" cy=".4" r=".65">
-          <stop offset="0" stopColor="#fffaf0" /><stop offset="1" stopColor={KINARI} />
+          <stop offset="0" stopColor="#f8e4b0" /><stop offset="1" stopColor={GOLD} />
         </radialGradient>
         <clipPath id="nbl-moon-clip"><circle cx={MOON.cx} cy={MOON.cy} r={MOON.r} /></clipPath>
       </defs>
@@ -44,7 +44,8 @@ const EclipseMoon: React.FC<{ p: number }> = ({ p }) => {
         style={{ transition: 'stroke-dasharray 120ms linear' }} />
       <circle cx={MOON.cx} cy={MOON.cy} r={MOON.r} fill="url(#nbl-moon)" />
       <g clipPath="url(#nbl-moon-clip)">
-        <circle cx={shadowX} cy={MOON.cy - 6} r={MOON.r + 4} fill={SUMI} fillOpacity=".93" style={{ transition: 'cx 120ms linear' }} />
+        {/* 影は地の宵闇で、ふちに紅（見本 B の月蝕） */}
+        <circle cx={shadowX} cy={MOON.cy - 6} r={MOON.r + 4} fill={YOI} fillOpacity=".96" stroke={BENI} strokeWidth="3" style={{ transition: 'cx 120ms linear' }} />
       </g>
       <circle cx={MOON.cx} cy={MOON.cy} r={MOON.r} fill="none" stroke={SUMI} strokeWidth="3" />
     </svg>
@@ -72,17 +73,10 @@ export const NubatamaLoading: React.FC<Props> = ({ onComplete }) => {
   return (
     <div role="status" aria-label={`ぬばたま落とし よみこみちゅう ${p}%`} style={{
       position: 'fixed', inset: 0, zIndex: 50, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-      background: `repeating-linear-gradient(to bottom, rgba(255,255,255,.035) 0 6px, transparent 6px 20px), radial-gradient(ellipse at 50% 40%, #f0613f 0%, ${BENI} 55%, #bf3328 100%)`,
+      background: `repeating-linear-gradient(to bottom, rgba(255,255,255,.035) 0 6px, transparent 6px 20px), radial-gradient(ellipse at 50% 40%, ${YOI_LIGHT} 0%, ${YOI} 55%, ${YOI_DEEP} 100%)`,
       opacity: leaving ? 0 : 1, transition: 'opacity 400ms ease-out'
     }}>
       <style>{TITLE_CSS}{POP_CSS}</style>
-      <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true">
-        <defs>
-          <linearGradient id="nbl-gold" x1="0" y1="0" x2="0" y2="1">
-            <stop offset=".1" stopColor="#ffe9a6" /><stop offset=".9" stopColor="#f0a51a" />
-          </linearGradient>
-        </defs>
-      </svg>
 
       <div className="tt-frame" style={vars({ '--tt-w': 'min(720px, 96vw)', borderRadius: 0, boxShadow: 'none', overflow: 'visible' })}>
         <EclipseMoon p={p} />
@@ -93,15 +87,15 @@ export const NubatamaLoading: React.FC<Props> = ({ onComplete }) => {
         <PNuba x={150} y={126} size={42} dur={3.2} amp={8} delay={2.2} z={2} anim="soft" />
         <PNuba x={668} y={128} size={48} dur={3} amp={9} delay={1.1} rot={-4} z={2} anim="soft" />
         <div role="img" aria-label="ぬばたま落とし" style={{ position: 'absolute', inset: 0, zIndex: 3 }}>
-          <PopGlyphLayers glyphs={TITLE} font="'Potta One', sans-serif" fill={KINARI}
-            layers={[{ color: SUMI, width: 14 }]} shadow={{ dx: 5, dy: 6, color: AI }} />
+          <PopGlyphLayers glyphs={TITLE} font="'Potta One', sans-serif" fill={GEPPAKU}
+            layers={[{ color: SUMI, width: 14 }]} shadow={{ dx: 5, dy: 6, color: BENI }} />
         </div>
       </div>
 
       <div style={{
         marginTop: 'clamp(4px, 2vw, 18px)', display: 'flex', alignItems: 'center', gap: '.6em',
-        padding: '.45em 1.3em', borderRadius: 999, background: SUMI, color: KINARI,
-        border: `2px solid ${SUMI}`, boxShadow: `inset 0 0 0 2px ${GOLD}, 4px 4px 0 ${AI}`,
+        padding: '.45em 1.3em', borderRadius: 999, background: SUMI, color: GEPPAKU,
+        border: `2px solid ${SUMI}`, boxShadow: `inset 0 0 0 2px ${GOLD}, 4px 4px 0 ${BENI}`,
         fontFamily: "'Potta One', sans-serif", fontSize: 'clamp(13px, 2.4vw, 17px)', letterSpacing: '.08em'
       }}>
         <span style={{ width: 8, height: 8, borderRadius: '50%', background: GOLD }} />

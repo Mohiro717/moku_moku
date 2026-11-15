@@ -24,8 +24,8 @@ export const CpuCharacterPanel = React.forwardRef<HTMLDivElement, PanelProps>(({
         alt={character.name}
         width={64}
         height={64}
-        className="w-16 h-16 shrink-0 rounded-full object-cover border-[3px] border-[#221a1f]"
-        style={{ boxShadow: '0 0 0 3px #2b2f6b' }}
+        className="w-16 h-16 shrink-0 rounded-full object-cover border-[3px] border-[#0b0b12]"
+        style={{ boxShadow: '0 0 0 3px #d9a94c' }}
       />
     )}
     <div className="min-w-0 flex-1 text-left">
@@ -52,11 +52,11 @@ export const AllyCharacterPanel: React.FC<PanelProps> = ({ character, line, mood
         alt={character.name}
         width={40}
         height={40}
-        className="w-10 h-10 shrink-0 rounded-full object-cover border-[3px] border-[#221a1f] bg-[#131320]"
+        className="w-10 h-10 shrink-0 rounded-full object-cover border-[3px] border-[#0b0b12] bg-[#131320]"
       />
     )}
     <p key={line} className="min-w-0 flex-1 text-left text-xs leading-snug font-serif animate-fade-in-up">
-      <span className="mr-1 text-[#e04a36]">{character.name}</span>「{line}」
+      <span className="mr-1 text-[#c93a2e]">{character.name}</span>「{line}」
     </p>
   </div>
 );

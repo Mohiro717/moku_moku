@@ -46,11 +46,11 @@ interface Props {
   onSingle: () => void;
 }
 
-/** おと・あそびかた・クレジットの小さなボタン（案3b の生成り・墨。ほかの画面と同じ hanafuda.css の .hf-chip） */
+/** おと・あそびかた・クレジットの小さなボタン（月白・墨。ほかの画面と同じ hanafuda.css の .hf-chip） */
 const CHIP = 'hf-chip';
 
 /** 権利表記を絵の上に直に置くときの縁どり（墨）。金の霞や墨の丘の上でも読める */
-const OUTLINE = { textShadow: '1px 1px 0 #221a1f, -1px -1px 0 #221a1f, 1px -1px 0 #221a1f, -1px 1px 0 #221a1f, 0 0 3px #221a1f' };
+const OUTLINE = { textShadow: '1px 1px 0 #0b0b12, -1px -1px 0 #0b0b12, 1px -1px 0 #0b0b12, -1px 1px 0 #0b0b12, 0 0 3px #0b0b12' };
 
 
 export const NubatamaTitleScreen: React.FC<Props> = ({ onVsCpu, onSingle }) => {
@@ -90,8 +90,9 @@ export const NubatamaTitleScreen: React.FC<Props> = ({ onVsCpu, onSingle }) => {
   return (
     <div className="max-w-4xl mx-auto animate-fade-in-up">
       <style>{TITLE_CSS}</style>
-      <div className="overflow-hidden rounded-3xl border-[3px] border-coffee-dark shadow-[0_6px_0_#3b2f2f] bg-[#221a1f]">
-      <div className="relative bg-[#e04a36]">
+      {/* 色調 B「夜の花札」（オーナー 11-15）：外枠は墨、スマホの下の帯は宵闇の深いところ、画の下地は宵闇 */}
+      <div className="overflow-hidden rounded-3xl border-[3px] border-[#0b0b12] shadow-[0_6px_0_#0b0b12] bg-[#131320]">
+      <div className="relative bg-[#1b1b2e]">
         {/* タイトル（案3b）。OP の下で先に動かしておき、見本の背景にもなる。
             PC はボタンを画の右下（題字の下）に重ねる。スマホは字が小さくなるので画の下に出す */}
         <TitleHanafudaOdori
@@ -113,7 +114,7 @@ export const NubatamaTitleScreen: React.FC<Props> = ({ onVsCpu, onSingle }) => {
             preload="auto"
             onEnded={() => setPhase('demo')}
             onClick={toTitle}
-            className="absolute inset-0 z-10 block w-full h-full cursor-pointer bg-[#efe3cf]"
+            className="absolute inset-0 z-10 block w-full h-full cursor-pointer bg-[#131320]"
             aria-label="ぬばたま落とし オープニング"
           />
         )}
@@ -141,7 +142,7 @@ export const NubatamaTitleScreen: React.FC<Props> = ({ onVsCpu, onSingle }) => {
               {IS_STANDALONE && <FullscreenChip className={CHIP} />}
             </div>
             <div className="hidden sm:block absolute z-20 left-[1.6%] bottom-[1.2%]" style={OUTLINE}>
-              <KitanCredit url={FANWORKS_URL} className="text-[#fff4dc]" />
+              <KitanCredit url={FANWORKS_URL} className="text-[#e8e4d8]" />
             </div>
           </>
         )}
@@ -152,15 +153,15 @@ export const NubatamaTitleScreen: React.FC<Props> = ({ onVsCpu, onSingle }) => {
       {/* スマホだけの下の帯（黒い枠の一部）。画が小さく、画の中だと字が読めず指で押しにくいので、ここに大きく並べる */}
       <div className="sm:hidden px-3 py-2.5">
         <div className={`sm:hidden grid grid-cols-2 gap-3 mb-2.5 transition-opacity duration-300 ${phase === 'title' ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-          <button type="button" onClick={onVsCpu} className="hf-btn hf-btn-sumi hf-dot w-full py-3 px-2 text-sm !tracking-normal">
+          <button type="button" onClick={onVsCpu} className="hf-btn hf-btn-main hf-dot w-full py-3 px-2 text-sm !tracking-normal">
             CPUと たいせん
           </button>
-          <button type="button" onClick={onSingle} className="hf-btn hf-btn-kinari hf-dot w-full py-3 px-2 text-sm !tracking-normal">
+          <button type="button" onClick={onSingle} className="hf-btn hf-btn-sub hf-dot w-full py-3 px-2 text-sm !tracking-normal">
             ひとりで あそぶ
           </button>
         </div>
         <div className="flex flex-col-reverse sm:flex-row items-center justify-between gap-x-4 gap-y-2">
-          <KitanCredit url={FANWORKS_URL} className="text-[#fff4dc]/70 text-center sm:text-left leading-snug" />
+          <KitanCredit url={FANWORKS_URL} className="text-[#e8e4d8]/75 text-center sm:text-left leading-snug" />
           <div className="flex shrink-0 flex-wrap items-center justify-center gap-2">
             <button type="button" onClick={toggleSound} aria-pressed={!muted} className={CHIP}>
               {muted ? '🔇 おと' : '🔊 おと'}
@@ -182,7 +183,7 @@ export const NubatamaTitleScreen: React.FC<Props> = ({ onVsCpu, onSingle }) => {
 
 /** 権利表記。公式と誤認させない（二次創作の掟）・声が公式の音声ではないことを明記する */
 const Credits: React.FC<{ onClose: () => void }> = ({ onClose }) => (
-  <div className="absolute inset-0 z-40 bg-[#221a1f]/55 flex items-center justify-center p-3 sm:p-6" onClick={onClose}>
+  <div className="absolute inset-0 z-40 bg-[#0b0b12]/60 flex items-center justify-center p-3 sm:p-6" onClick={onClose}>
     <div
       className="hf-panel max-h-full overflow-y-auto p-4 sm:p-5 text-left text-xs sm:text-sm font-serif leading-relaxed space-y-2"
       onClick={e => e.stopPropagation()}
@@ -207,7 +208,7 @@ const Credits: React.FC<{ onClose: () => void }> = ({ onClose }) => (
         　#月蝕綺譚
       </p>
       <div className="flex justify-center pt-1">
-        <button type="button" onClick={onClose} className="hf-btn hf-btn-sumi hf-btn-sm px-5 py-1.5 text-sm">
+        <button type="button" onClick={onClose} className="hf-btn hf-btn-main hf-btn-sm px-5 py-1.5 text-sm">
           とじる
         </button>
       </div>

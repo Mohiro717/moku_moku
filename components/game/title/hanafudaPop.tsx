@@ -2,14 +2,33 @@ import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Puyo } from '../Puyo';
 import { L, S, T, rand, vars, type Layer } from './common';
 
-// 案3「花札ポップ」を土台にしたポップ版（3a・3b・3c）の共通部品。案3（TitleHanafuda.tsx）には手を入れず、ここに写して使う。
+// 案3「花札ポップ」を土台にしたポップ版（3a・3b・3c）の共通部品。11-15 から色は色調 B「夜の花札」（下の定数）。案3（TitleHanafuda.tsx）には手を入れず、ここに写して使う。
 // 座標は 864×480 の枠の画素。ぬばたまは丸いまま（つぶし・伸ばしは鬼火・札・文字だけにかけ、ぬばたまは上下の移動だけ）。
 
-export const BENI = '#e04a36';
-export const KINARI = '#fff4dc';
-export const SUMI = '#221a1f';
-export const GOLD = '#f2c14e';
-export const AI = '#2b2f6b';
+// 色調 B「夜の花札」（オーナー 11-15。OP を「月蝕綺譚のダーク＋ぬばたま落としのポップ」に →「全体の色調も調整の必要がある」
+// → 見本 A〜C から「B」）。地は宵闇、花札・太い墨の縁・ずらし影のポップな組み方は残す。紅は面に使わず、主ボタンと影だけ。
+// 月蝕綺譚の正典の禁止：明るい赤の面・白/生成りの地・彩度の高いピンク・紫→青のグラデ・純黒（黒には藍を混ぜる）
+/** 宵闇（地） */
+export const YOI = '#1b1b2e';
+/** 宵闇の深いところ（地の外側・盤・月白の面の上の字） */
+export const YOI_DEEP = '#131320';
+/** 宵闇の明るいところ（地の中心の放射） */
+export const YOI_LIGHT = '#24243c';
+/** 蝕紅（主ボタン・影・小さな差し色だけ。面には使わない） */
+export const BENI = '#c93a2e';
+/** 月白（題字の字・二番手ボタン・パネル・札の面） */
+export const GEPPAKU = '#e8e4d8';
+/** 墨（太い縁・ボタンの影）。純黒にせず藍を混ぜる */
+export const SUMI = '#0b0b12';
+/** 金（「落」・点数・月） */
+export const GOLD = '#f0ce7e';
+/** 金泥（小見出し・副題） */
+export const KINDEI = '#d9a94c';
+/** 暗紫（盤の青海波の線・ぬばたまのにじみ） */
+export const ANSHI = '#8e6b9e';
+
+/** 色調 B の前の5色（案3「花札ポップ」の紅・生成り・墨・金・藍）。見比べ用の案3a・3c（title-float-preview）だけが使う */
+export const POP3 = { BENI: '#e04a36', KINARI: '#fff4dc', SUMI: '#221a1f', GOLD: '#f2c14e', AI: '#2b2f6b' } as const;
 /** 鬼火4色（塗り・濃い影） */
 export const ONI = {
   red: ['#ff5f6e', '#c9283c'], blue: ['#4d9bff', '#1f5fc4'], green: ['#2fcf78', '#138a49'], yellow: ['#ffc93c', '#d48f00']
@@ -107,12 +126,13 @@ export const PFloat: React.FC<{
 /**
  * 鬼火。filter を渡せばステッカーの縁などに差し替えられる（浮く箱ごとにかかる）。
  * 渡さなければ色の光を炎の絵にだけつける：光は1回だけ計算され、炎と一緒にゆらめく。
- * 浮く箱ごと光らせると、ゆらめくたびにぼかしを計算し直す（オーナー 11-14 見本 A〜C から「B」。火の粉は光らない）
+ * 浮く箱ごと光らせると、ゆらめくたびにぼかしを計算し直す（オーナー 11-14 見本 A〜C から「B」。火の粉は光らない）。
+ * 光の広さ glow の既定は、色調 B（暗い地）で 0.8 → 1 に強めた（暗い地のほうが光のにじみが効く）
  */
 export const POnibi: React.FC<{
   c: 'red' | 'blue' | 'green' | 'yellow'; x: number; y: number; size: number; dur: number; amp: number; delay?: number;
   z?: number; anim?: Anim; filter?: string; glow?: number;
-}> = ({ c, x, y, size, dur, amp, delay = 0, z, anim = 'bob', filter, glow = 0.8 }) => {
+}> = ({ c, x, y, size, dur, amp, delay = 0, z, anim = 'bob', filter, glow = 1 }) => {
   const col = { red: '255,96,110', blue: '90,160,255', green: '70,220,130', yellow: '255,205,60' }[c];
   const light = `drop-shadow(0 0 ${S(size * 0.18 * glow)} rgba(${col},.85)) drop-shadow(0 0 ${S(size * 0.5 * glow)} rgba(${col},.45))`;
   return (
@@ -183,7 +203,7 @@ const swayVars = (b: Blade) => ({ '--rot': `${2 + (b.i % 3)}deg`, '--dur': `${4.
 
 /** すすき（SVG の中に置く）。揺れは SVG の中で動くので、揺れるたびに SVG 全体を描き直す。案3b は SusukiLayers を使う */
 export const Susuki: React.FC<SusukiProps> = props => {
-  const { sc = 1, stem = '#f1d58e', ear = KINARI } = props;
+  const { sc = 1, stem = '#f1d58e', ear = GEPPAKU } = props;
   return (
     <>
       {susukiBlades(props).map(b => (
@@ -200,7 +220,7 @@ export const Susuki: React.FC<SusukiProps> = props => {
  * 層ごとの回転は GPU が受け持つので、揺れのたびに丘や他の穂を描き直さない。重なり順は Susuki と同じ（後の穂が上）
  */
 export const SusukiLayers: React.FC<SusukiProps> = props => {
-  const { sc = 1, stem = '#f1d58e', ear = KINARI } = props;
+  const { sc = 1, stem = '#f1d58e', ear = GEPPAKU } = props;
   return (
     <>
       {susukiBlades(props).map(b => {
@@ -224,7 +244,7 @@ export const SusukiLayers: React.FC<SusukiProps> = props => {
 export const Kasumi: React.FC<{
   x: number; y: number; w: number; h?: number; dur: number; amp: number; delay?: number; z?: number;
   fill?: string; dot?: string; edge?: string; edgeW?: number; style?: React.CSSProperties;
-}> = ({ x, y, w, h = 30, dur, amp, delay = 0, z, fill = GOLD, dot = '#d4901c', edge = SUMI, edgeW = 2.2, style }) => (
+}> = ({ x, y, w, h = 30, dur, amp, delay = 0, z, fill = GOLD, dot = KINDEI, edge = SUMI, edgeW = 2.2, style }) => (
   <div style={{ position: 'absolute', left: L(x), top: T(y), width: S(w), height: S(h), zIndex: z, ...style }}>
     <div className="tt-bobx" style={vars({ width: '100%', height: '100%', '--dur': `${dur}s`, '--amp': S(amp), '--delay': `${-delay}s` })}>
       <KasumiShape w={w} h={h} fill={fill} dot={dot} edge={edge} edgeW={edgeW} />
@@ -234,7 +254,7 @@ export const Kasumi: React.FC<{
 
 /** すやり霞の形だけ（動かない）。ほかの画面の飾りにも使う */
 export const KasumiShape: React.FC<{ w: number; h?: number; fill?: string; dot?: string; edge?: string; edgeW?: number }> =
-  ({ w, h = 30, fill = GOLD, dot = '#d4901c', edge = SUMI, edgeW = 2.2 }) => (
+  ({ w, h = 30, fill = GOLD, dot = KINDEI, edge = SUMI, edgeW = 2.2 }) => (
     <svg viewBox={`0 0 ${w} ${h}`} style={{ display: 'block', width: '100%', height: '100%', overflow: 'visible' }} aria-hidden="true">
       <path d={`M${h / 2} 0 H${w * 0.62} Q${w * 0.66} 0 ${w * 0.68} ${h * 0.3} H${w - h / 2} A${h / 2} ${h * 0.35} 0 0 1 ${w - h / 2} ${h} H${h / 2} A${h / 2} ${h / 2} 0 0 1 ${h / 2} 0 Z`}
         fill={fill} stroke={edge} strokeWidth={edgeW} />
@@ -256,20 +276,20 @@ export const Sakura: React.FC<{ cx: number; cy: number; r: number; fill?: string
 
 export type FudaKind = 'moon' | 'tan' | 'sakura' | 'ura' | 'kiku';
 
-/** 小さな花札（60×92）。縁は墨、内側に生成りの縁 */
-export const Fuda: React.FC<{ kind: FudaKind; shadow?: string; accent?: string }> = ({ kind, shadow = AI, accent = BENI }) => (
+/** 小さな花札（60×92）。縁は墨、内側に月白の縁。ずらし影は墨（色調 B） */
+export const Fuda: React.FC<{ kind: FudaKind; shadow?: string; accent?: string }> = ({ kind, shadow = SUMI, accent = BENI }) => (
   <svg viewBox="-4 -4 72 102" style={{ display: 'block', width: '100%', overflow: 'visible' }} aria-hidden="true">
     <rect x="4" y="5" width="60" height="92" rx="6" fill={shadow} />
-    <rect width="60" height="92" rx="6" fill={kind === 'ura' ? accent : KINARI} stroke={SUMI} strokeWidth="2.4" />
+    <rect width="60" height="92" rx="6" fill={kind === 'ura' ? accent : GEPPAKU} stroke={SUMI} strokeWidth="2.4" />
     {kind === 'ura' && <>
       <rect x="6" y="6" width="48" height="80" rx="3" fill="none" stroke={SUMI} strokeWidth="1.6" />
       <rect x="10" y="10" width="40" height="72" rx="2" fill="none" stroke={GOLD} strokeWidth="1.4" strokeDasharray="1 4" strokeLinecap="round" />
     </>}
-    {kind !== 'ura' && <rect x="5" y="5" width="50" height="82" rx="3" fill={kind === 'moon' ? accent : kind === 'kiku' ? '#ffe9b0' : '#fff9ee'} />}
+    {kind !== 'ura' && <rect x="5" y="5" width="50" height="82" rx="3" fill={kind === 'moon' ? accent : kind === 'kiku' ? '#f1e0b0' : '#f3f0e7'} />}
     {kind === 'moon' && <>
-      <circle cx="30" cy="34" r="18" fill={KINARI} />
+      <circle cx="30" cy="34" r="18" fill={GEPPAKU} />
       <path d="M5 66 C20 56 40 58 55 68 V87 H5 Z" fill={SUMI} />
-      {[12, 22, 34, 46].map((x, i) => <path key={i} d={`M${x} 64 q3 -10 ${7 - i} -18`} stroke={KINARI} strokeWidth="1.4" fill="none" strokeLinecap="round" />)}
+      {[12, 22, 34, 46].map((x, i) => <path key={i} d={`M${x} 64 q3 -10 ${7 - i} -18`} stroke={GEPPAKU} strokeWidth="1.4" fill="none" strokeLinecap="round" />)}
     </>}
     {kind === 'tan' && <>
       <path d="M9 14 Q20 8 30 18" stroke={SUMI} strokeWidth="2" fill="none" />

@@ -77,11 +77,11 @@ export const NubatamaGame: React.FC<NubatamaGameProps> = ({ onExit }) => {
             <button
               type="button"
               onClick={() => setScreen(screen === 'player-select' ? 'difficulty-select' : 'playing-single')}
-              className="hf-btn hf-btn-sumi hf-dot w-full max-w-xs py-3 text-lg"
+              className="hf-btn hf-btn-main hf-dot w-full max-w-xs py-3 text-lg"
             >
               {screen === 'player-select' ? 'つぎへ' : 'あそぶ！'}
             </button>
-            <button type="button" onClick={() => setScreen('title')} className="hf-btn hf-btn-kinari hf-dot w-full max-w-xs py-2 text-sm">
+            <button type="button" onClick={() => setScreen('title')} className="hf-btn hf-btn-sub hf-dot w-full max-w-xs py-2 text-sm">
               もどる
             </button>
           </div>
@@ -124,7 +124,7 @@ export const NubatamaGame: React.FC<NubatamaGameProps> = ({ onExit }) => {
                 type="button"
                 onClick={() => setSelectedDifficulty(value)}
                 aria-pressed={selectedDifficulty === value}
-                className={`hf-btn hf-btn-sm py-2 text-sm ${selectedDifficulty === value ? 'hf-btn-sumi' : 'hf-btn-kinari'}`}
+                className={`hf-btn hf-btn-sm py-2 text-sm ${selectedDifficulty === value ? 'hf-btn-main' : 'hf-btn-sub'}`}
               >
                 {DIFFICULTY_LABELS[value]}
               </button>
@@ -132,10 +132,10 @@ export const NubatamaGame: React.FC<NubatamaGameProps> = ({ onExit }) => {
           </div>
 
           <div className="flex flex-col items-center gap-4">
-            <button type="button" onClick={() => { unlockAudio(); setScreen('vs-cpu'); }} className="hf-btn hf-btn-sumi hf-dot w-full max-w-xs py-3 text-lg">
+            <button type="button" onClick={() => { unlockAudio(); setScreen('vs-cpu'); }} className="hf-btn hf-btn-main hf-dot w-full max-w-xs py-3 text-lg">
               たいせん する！
             </button>
-            <button type="button" onClick={() => setScreen('player-select')} className="hf-btn hf-btn-kinari hf-dot w-full max-w-xs py-2 text-sm">
+            <button type="button" onClick={() => setScreen('player-select')} className="hf-btn hf-btn-sub hf-dot w-full max-w-xs py-2 text-sm">
               もどる（じぶんを えらびなおす）
             </button>
           </div>

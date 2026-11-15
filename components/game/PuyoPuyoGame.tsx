@@ -77,12 +77,12 @@ export const PuyoPuyoGame: React.FC<PuyoPuyoGameProps> = ({ playerCharacterId, o
   // 盤面に重ねるボタン：はじまる前・ひとやすみ・おしまいのとき、目線の先で押せるように
   const startPrompt = !gameState.isPlaying && !gameState.isGameOver ? (
     <div className="wp-pop-in flex flex-col items-center gap-3">
-      <button type="button" onClick={handleStart} className="hf-btn hf-btn-sumi hf-dot px-8 py-3 text-xl">はじめる</button>
+      <button type="button" onClick={handleStart} className="hf-btn hf-btn-main hf-dot px-8 py-3 text-xl">はじめる</button>
       {/* スマホではキーボードの説明でなく指の説明を出す（対戦の画面と同じ文） */}
-      <div className="hidden sm:block text-xs text-[#221a1f]/80 font-serif text-center leading-relaxed">
+      <div className="hidden sm:block text-xs text-[#131320]/80 font-serif text-center leading-relaxed">
         ←→ うごかす　Z / X まわす<br />↓ はやく　Space おとす
       </div>
-      <div className="sm:hidden text-xs text-[#221a1f]/80 font-serif text-center leading-relaxed">
+      <div className="sm:hidden text-xs text-[#131320]/80 font-serif text-center leading-relaxed">
         なぞって うごかす<br />タップ まわす　下にはじく おとす
       </div>
     </div>
@@ -90,13 +90,13 @@ export const PuyoPuyoGame: React.FC<PuyoPuyoGameProps> = ({ playerCharacterId, o
 
   const actions = gameState.isGameOver ? (
     <>
-      <button type="button" onClick={handleStart} className="hf-btn hf-btn-sumi hf-dot py-2.5 text-base">もういちど</button>
+      <button type="button" onClick={handleStart} className="hf-btn hf-btn-main hf-dot py-2.5 text-base">もういちど</button>
       {onChangeCharacter && (
-        <button type="button" onClick={onChangeCharacter} className="hf-btn hf-btn-kinari hf-dot py-2 text-sm">キャラをかえる</button>
+        <button type="button" onClick={onChangeCharacter} className="hf-btn hf-btn-sub hf-dot py-2 text-sm">キャラをかえる</button>
       )}
     </>
   ) : gameState.isPaused ? (
-    <button type="button" onClick={pauseGame} className="hf-btn hf-btn-sumi hf-dot py-2.5 text-base">つづける</button>
+    <button type="button" onClick={pauseGame} className="hf-btn hf-btn-main hf-dot py-2.5 text-base">つづける</button>
   ) : null;
 
   return (

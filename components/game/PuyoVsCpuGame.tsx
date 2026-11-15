@@ -55,18 +55,19 @@ const getGameResult = (isGameOver: boolean, winner: string | null, player: 'play
   return 'lose';
 };
 
-// つぎ（NextPiecePreview.tsx の NextTag）・とくてんとも生成りの小札（案3b）
+// つぎ（NextPiecePreview.tsx の NextTag）・とくてんとも月白の小札（色調 B）
 const ScoreKoban: React.FC<{ score: number; accent?: boolean; className?: string }> = ({ score, accent = false, className = '' }) => (
   <div className={`hf-score ${className}`}>
     <div className="text-xs font-serif opacity-80">とくてん</div>
-    <div className={`font-serif text-sm sm:text-base tabular-nums leading-tight ${accent ? 'text-[#e04a36]' : ''}`}>{score.toLocaleString()}</div>
+    <div className={`font-serif text-sm sm:text-base tabular-nums leading-tight ${accent ? 'text-[#c93a2e]' : ''}`}>{score.toLocaleString()}</div>
   </div>
 );
 
-/** lg 以上：盤面の枠の下端に出すとくてん（本家と同じく8桁） */
+/** lg 以上：盤面の枠の下端に出すとくてん（本家と同じく8桁）。盤は宵闇なので、自分は金・相手は月白。
+ *  勝ち負けの幕（月白）の上にも出るので、墨の縁どり（hf-num）で どちらの地でも読めるようにする */
 const BoardScore: React.FC<{ score: number; accent?: boolean }> = ({ score, accent = false }) => (
   // 幕（z-30）がかかっても本家と同じく常に見えるように、幕より上に置く
-  <div className={`hidden lg:block relative z-40 mt-2 -mb-1 text-center font-serif text-2xl leading-none tabular-nums tracking-wider ${accent ? 'text-[#e04a36]' : 'text-[#221a1f]'}`}>
+  <div className={`hidden lg:block relative z-40 mt-2 -mb-1 text-center font-serif text-2xl leading-none tabular-nums tracking-wider hf-num ${accent ? 'text-[#f0ce7e]' : 'text-[#e8e4d8]'}`}>
     {String(score).padStart(8, '0')}
   </div>
 );
@@ -310,11 +311,11 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
   // はじまりは自動（VS → カウント）。演出が無いのに止まっているとき（ふだんは無い）だけ出す
   const startPrompt = !gameState.isPlaying && !gameState.isGameOver && intro === null ? (
     <div className="wp-pop-in flex flex-col items-center gap-3">
-      <button type="button" onClick={handleStart} className="hf-btn hf-btn-sumi hf-dot px-8 py-3 text-xl">はじめる</button>
-      <div className="hidden sm:block text-xs text-[#221a1f]/80 font-serif text-center leading-relaxed">
+      <button type="button" onClick={handleStart} className="hf-btn hf-btn-main hf-dot px-8 py-3 text-xl">はじめる</button>
+      <div className="hidden sm:block text-xs text-[#131320]/80 font-serif text-center leading-relaxed">
         ←→ うごかす　Z / X まわす<br />↓ はやく　Space おとす
       </div>
-      <div className="sm:hidden text-xs text-[#221a1f]/80 font-serif text-center leading-relaxed">
+      <div className="sm:hidden text-xs text-[#131320]/80 font-serif text-center leading-relaxed">
         なぞって うごかす<br />タップ まわす　下にはじく おとす
       </div>
     </div>
@@ -322,21 +323,21 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
 
   const resultActions = gameState.isGameOver ? (
     <>
-      <button type="button" onClick={handleRestart} className="hf-btn hf-btn-sumi hf-dot py-2.5 text-base">もういちど</button>
+      <button type="button" onClick={handleRestart} className="hf-btn hf-btn-main hf-dot py-2.5 text-base">もういちど</button>
       {onChangeOpponent && (
-        <button type="button" onClick={onChangeOpponent} className="hf-btn hf-btn-kinari hf-dot py-2 text-sm">あいてをかえる</button>
+        <button type="button" onClick={onChangeOpponent} className="hf-btn hf-btn-sub hf-dot py-2 text-sm">あいてをかえる</button>
       )}
     </>
   ) : gameState.isPaused ? (
-    <button type="button" onClick={handlePause} className="hf-btn hf-btn-sumi hf-dot py-2.5 text-base">つづける</button>
+    <button type="button" onClick={handlePause} className="hf-btn hf-btn-main hf-dot py-2.5 text-base">つづける</button>
   ) : null;
 
   const controlButtons = (
     <>
-      <button type="button" onClick={handlePause} disabled={!inMatch} className="hf-btn hf-btn-kinari hf-btn-sm py-1.5 text-xs sm:text-sm">
+      <button type="button" onClick={handlePause} disabled={!inMatch} className="hf-btn hf-btn-sub hf-btn-sm py-1.5 text-xs sm:text-sm">
         {gameState.isPaused ? 'つづける' : 'ひとやすみ'}
       </button>
-      <button type="button" onClick={handleRestart} className="hf-btn hf-btn-kinari hf-btn-sm py-1.5 text-xs sm:text-sm">
+      <button type="button" onClick={handleRestart} className="hf-btn hf-btn-sub hf-btn-sm py-1.5 text-xs sm:text-sm">
         やりなおす
       </button>
     </>
@@ -344,7 +345,7 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
 
   return (
     <ErrorBoundary fallback={GameErrorFallback}>
-      {/* PC では枠を中身（盤面・まんなか・盤面）の幅に寄せる。max-w-7xl いっぱいだと左右に紅の余白が広く残った（オーナー 11-14） */}
+      {/* PC では枠を中身（盤面・まんなか・盤面）の幅に寄せる。max-w-7xl いっぱいだと左右に地の余白が広く残った（オーナー 11-14） */}
       <HfFrame ref={frameRef} className="puyo-vs w-full lg:w-fit max-w-7xl mx-auto px-3 py-3 sm:px-5 sm:py-4">
         {/* 見出し：タイトル（案3b の題字。盤面の画面なので跳ねさせない）・つよさ・おと・もどる */}
         <div className="flex flex-wrap items-center justify-between gap-2 mb-3">

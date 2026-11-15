@@ -144,7 +144,7 @@ const ResultOverlay: React.FC<{ kind: keyof typeof OVERLAY_TEXT; actions?: React
       dark={kind === 'lose'}
       center={<>
         <div className="wp-hanko wp-hanko-in px-4 py-2 text-3xl sm:px-5 sm:text-4xl whitespace-nowrap">{stamp}</div>
-        <div className={`font-serif text-sm ${kind === 'lose' ? 'text-[#fff4dc]' : 'text-[#221a1f]'}`}>{sub}</div>
+        <div className={`font-serif text-sm ${kind === 'lose' ? 'text-[#e8e4d8]' : 'text-[#131320]'}`}>{sub}</div>
       </>}
       below={actions && <div className="relative flex flex-col items-stretch gap-2 w-full max-w-[13rem]">{actions}</div>}
     >
@@ -340,7 +340,7 @@ export const GameGrid: React.FC<GameGridProps> = ({
               </g>
               <g className="chain-text" fontSize="32" fontWeight="900" textAnchor="middle">
                 <text x="0" y="11" fill="#fff" stroke="#fff" strokeWidth="8" strokeLinejoin="round">{chainNumber}連鎖!</text>
-                <text x="0" y="11" fill={popupTier.fill} stroke="#221a1f" strokeWidth="1.4">{chainNumber}連鎖!</text>
+                <text x="0" y="11" fill={popupTier.fill} stroke="#0b0b12" strokeWidth="1.4">{chainNumber}連鎖!</text>
               </g>
             </svg>
           </div>

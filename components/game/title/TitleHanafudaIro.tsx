@@ -3,8 +3,11 @@ import { L, S, T, vars, noop } from './common';
 import { SAKUYA_SRC } from './common';
 import { SakuyaFlutter } from '../SakuyaFlutter';
 import {
-  AI, ONI, POP_CSS, SUMI, Grain, Kasumi, PFloat, PNuba, POnibi, PopGlyphs, StickerFilter, Susuki, makeHill, useFrameK, type PG
+  ONI, POP3, POP_CSS, Grain, Kasumi, PFloat, PNuba, POnibi, PopGlyphs, StickerFilter, Susuki, makeHill, useFrameK, type PG
 } from './hanafudaPop';
+
+// 見比べ用の案。色は色調 B の前の5色のまま（共通部品の霞・すすきは色調 B になる）
+const { AI, SUMI } = POP3;
 
 // 案3a「花札ポップ・色」：案3の構図（芒に月・右の縦書き・金の霞・すすき）はそのまま。
 // ポップにしたのは色。紅の空を明るい朱に上げ、月のまわりに鬼火4色の輪、霞を鬼火4色に塗り分けた。

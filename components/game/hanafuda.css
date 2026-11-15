@@ -1,29 +1,35 @@
 /* ぬばたま落としの画面の見た目（案3b「花札ポップ・踊る題字」にそろえる。オーナー 11-14「他の画面全てを統一したい」）。
-   正本は title/hanafudaPop.tsx と title/TitleHanafudaOdori.tsx。色は5色だけ：紅・生成り・墨・金・藍。
+   正本は title/hanafudaPop.tsx と title/TitleHanafudaOdori.tsx。色は 11-15 から色調 B「夜の花札」（オーナーが見本 A〜C から「B」）：
+   地は宵闇、花札・太い墨の縁・ずらし影は残す。紅は面に使わず主ボタンと影だけ。パネル・二番手ボタンは月白の地に宵闇の字。
+   下の :root は hanafudaPop.tsx の定数と同じ値（変えるときは両方）。
    重い SVG フィルタや画面いっぱいの動きは置かない（6ec3061・c009596 の軽量化を守る）。
    地の紙の粒は、タイトルの Grain と同じ雑音を小さな画像にして敷き詰める（描くのは1回だけ） */
 
 :root {
-  --hf-beni: #e04a36;
-  --hf-kinari: #fff4dc;
-  --hf-sumi: #221a1f;
-  --hf-gold: #f2c14e;
-  --hf-ai: #2b2f6b;
+  --hf-yoi: #1b1b2e;        /* 宵闇（地） */
+  --hf-yoi-deep: #131320;   /* 地の外側・盤・月白の面の上の字 */
+  --hf-yoi-light: #24243c;  /* 地の中心の明るみ */
+  --hf-beni: #c93a2e;       /* 蝕紅（主ボタン・影だけ） */
+  --hf-geppaku: #e8e4d8;    /* 月白（題字・パネル・二番手ボタン） */
+  --hf-sumi: #0b0b12;       /* 墨（太い縁・ボタンの影。藍を混ぜた黒） */
+  --hf-gold: #f0ce7e;       /* 金（「落」・点数） */
+  --hf-kindei: #d9a94c;     /* 金泥（小見出し） */
+  --hf-anshi: #8e6b9e;      /* 暗紫（盤の線） */
 }
 
-/* 外枠と紅の地（タイトルの外枠と同じ墨の縁・影） */
+/* 外枠と宵闇の地（タイトルの外枠と同じ墨の縁・影） */
 .hf-frame {
   position: relative;
   isolation: isolate;
-  border: 3px solid #3b2f2f;
+  border: 3px solid var(--hf-sumi);
   border-radius: 1.5rem;
-  box-shadow: 0 6px 0 #3b2f2f;
-  color: var(--hf-kinari);
-  background-color: var(--hf-beni);
+  box-shadow: 0 6px 0 var(--hf-sumi);
+  color: var(--hf-geppaku);
+  background-color: var(--hf-yoi);
   background-image:
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .45  0 0 0 0 .35  0 0 0 0 .3  0 0 0 -1.6 1.25'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23g)' opacity='.14'/%3E%3C/svg%3E"),
     repeating-linear-gradient(180deg, rgba(255, 255, 255, 0.035) 0 6px, transparent 6px 20px),
-    radial-gradient(ellipse 90% 80% at 32% 40%, #f0613f 0%, var(--hf-beni) 60%, #bf3328 100%);
+    radial-gradient(ellipse 90% 80% at 30% 35%, var(--hf-yoi-light) 0%, var(--hf-yoi) 55%, var(--hf-yoi-deep) 100%);
   background-blend-mode: multiply, normal, normal;
 }
 /* 飾り（札・霞）は地の上・中身の後ろ（枠が isolation: isolate なので -1 は枠の外へ抜けない）。
@@ -31,37 +37,48 @@
 .hf-decos { position: absolute; inset: 0; overflow: hidden; border-radius: inherit; pointer-events: none; z-index: -1; }
 .hf-deco { position: absolute; }
 
-/* 見出し：Potta One・生成りの字・墨の太い縁・藍のずらし影（題字と同じ組み方） */
+/* 見出し：Potta One・月白の字・墨の太い縁・紅のずらし影（題字と同じ組み方） */
 .hf-title {
   font-family: 'Potta One', sans-serif;
   font-weight: 400;
-  color: var(--hf-kinari);
+  color: var(--hf-geppaku);
   line-height: 1.15;
   letter-spacing: 0.02em;
   -webkit-text-stroke: 0.2em var(--hf-sumi);
   paint-order: stroke fill;
-  /* 影は filter でなく text-shadow（字が跳ねても毎フレーム描き直さない）。縁の外まで影が出るよう太らせて重ねる */
-  text-shadow: 0.07em 0.08em 0 var(--hf-ai), 0.17em 0.08em 0 var(--hf-ai), 0.07em 0.18em 0 var(--hf-ai), 0.15em 0.16em 0 var(--hf-ai);
+  /* 影は filter でなく text-shadow（字が跳ねても毎フレーム描き直さない）。
+     Chrome は text-shadow を縁（-webkit-text-stroke）の上に描くので、影が縁を塗りつぶす。藍の影では縁と見分けがつかなかったが、
+     紅の影（色調 B）では縁が紅に化けた（11-15）。先に墨の輪（縁と同じ 0.1em）を影で描いて縁を取り戻し、その外に紅を出す */
+  text-shadow:
+    0.1em 0 0 var(--hf-sumi), -0.1em 0 0 var(--hf-sumi), 0 0.1em 0 var(--hf-sumi), 0 -0.1em 0 var(--hf-sumi),
+    0.07em 0.07em 0 var(--hf-sumi), -0.07em 0.07em 0 var(--hf-sumi), 0.07em -0.07em 0 var(--hf-sumi), -0.07em -0.07em 0 var(--hf-sumi),
+    0.18em 0.09em 0 var(--hf-beni), 0.08em 0.19em 0 var(--hf-beni), 0.15em 0.16em 0 var(--hf-beni);
 }
 .hf-title-ch { display: inline-block; }
 .hf-title-gold { color: var(--hf-gold); }
 
-/* 紅の地に直に置く小さな字：生成りに墨の縁どり（タイトルの権利表記と同じ） */
+/* 宵闇の地に直に置く小さな字：月白に墨の縁どり（タイトルの権利表記と同じ） */
 .hf-ink {
-  color: var(--hf-kinari);
+  color: var(--hf-geppaku);
   text-shadow: 1px 1px 0 var(--hf-sumi), -1px -1px 0 var(--hf-sumi), 1px -1px 0 var(--hf-sumi), -1px 1px 0 var(--hf-sumi), 0 0 3px var(--hf-sumi);
 }
 
-/* 生成りの面：墨の縁・藍の影（タイトルの「ひとりで あそぶ」と同じ） */
-.hf-panel {
-  background: var(--hf-kinari);
-  color: var(--hf-sumi);
-  border: 2.5px solid var(--hf-sumi);
-  border-radius: 1rem;
-  box-shadow: 5px 5px 0 var(--hf-ai);
+/* 盤の下の とくてん（金・月白の字）に墨の縁どり。宵闇の盤の上でも、勝ち負けの月白の幕の上でも読める */
+.hf-num {
+  text-shadow: 1.5px 1.5px 0 var(--hf-sumi), -1.5px -1.5px 0 var(--hf-sumi), 1.5px -1.5px 0 var(--hf-sumi), -1.5px 1.5px 0 var(--hf-sumi),
+    1.5px 0 0 var(--hf-sumi), -1.5px 0 0 var(--hf-sumi), 0 1.5px 0 var(--hf-sumi), 0 -1.5px 0 var(--hf-sumi);
 }
 
-/* ボタン：Mochiy Pop One。墨の地に金の内線（主）／生成りの地に墨の縁（二番手）。どちらも藍の影 */
+/* 月白の面：宵闇の字・墨の縁・紅の影 */
+.hf-panel {
+  background: var(--hf-geppaku);
+  color: var(--hf-yoi-deep);
+  border: 2.5px solid var(--hf-sumi);
+  border-radius: 1rem;
+  box-shadow: 5px 5px 0 var(--hf-beni);
+}
+
+/* ボタン：Mochiy Pop One。紅の地に白い字（主）／月白の地に宵闇の字（二番手）。どちらも墨の縁と墨の影 */
 .hf-btn {
   display: inline-flex;
   align-items: center;
@@ -76,35 +93,34 @@
   transition: transform 80ms ease-out, box-shadow 80ms ease-out, filter 120ms;
   --hf-sh: 5px;
 }
-.hf-btn-sumi {
-  background: var(--hf-sumi);
-  color: var(--hf-kinari);
-  border: 2px solid var(--hf-sumi);
-  box-shadow: inset 0 0 0 2px var(--hf-gold), var(--hf-sh) var(--hf-sh) 0 var(--hf-ai);
-}
-.hf-btn-kinari {
-  background: var(--hf-kinari);
-  color: var(--hf-sumi);
+.hf-btn-main {
+  background: var(--hf-beni);
+  color: #fff;
   border: 2.5px solid var(--hf-sumi);
-  box-shadow: var(--hf-sh) var(--hf-sh) 0 var(--hf-ai);
+  box-shadow: var(--hf-sh) var(--hf-sh) 0 var(--hf-sumi);
+}
+.hf-btn-sub {
+  background: var(--hf-geppaku);
+  color: var(--hf-yoi-deep);
+  border: 2.5px solid var(--hf-sumi);
+  box-shadow: var(--hf-sh) var(--hf-sh) 0 var(--hf-sumi);
 }
 .hf-btn-sm { --hf-sh: 3px; letter-spacing: 0.04em; }
 .hf-btn:hover { filter: brightness(1.06); transform: translateY(-1px); }
 .hf-btn:active { transform: translate(2px, 2px); }
-.hf-btn-sumi:active { box-shadow: inset 0 0 0 2px var(--hf-gold), 1px 1px 0 var(--hf-ai); }
-.hf-btn-kinari:active { box-shadow: 1px 1px 0 var(--hf-ai); }
-/* 押せないとき：半透明にすると紅の地が透けるので、生成りの地のまま字と縁を薄くし、影を消す（オーナー 11-14） */
+.hf-btn-main:active, .hf-btn-sub:active { box-shadow: 1px 1px 0 var(--hf-sumi); }
+/* 押せないとき：半透明にすると地が透けるので、月白の地のまま字と縁を薄くし、影を消す（オーナー 11-14） */
 .hf-btn:disabled {
-  background: var(--hf-kinari);
-  color: rgba(34, 26, 31, 0.38);
-  border-color: rgba(34, 26, 31, 0.38);
+  background: var(--hf-geppaku);
+  color: rgba(19, 19, 32, 0.38);
+  border-color: rgba(19, 19, 32, 0.38);
   box-shadow: none;
   cursor: default;
   transform: none;
   filter: none;
 }
 .hf-btn:focus-visible, .hf-chip:focus-visible { outline: 3px dashed var(--hf-gold); outline-offset: 3px; }
-/* 字の前の丸（タイトルのボタンと同じ）：主は金、二番手は紅 */
+/* 字の前の丸（タイトルのボタンと同じ）：主（紅の地）は金、二番手は紅 */
 .hf-dot::before {
   content: "";
   flex: none;
@@ -113,7 +129,7 @@
   border-radius: 50%;
   background: var(--hf-beni);
 }
-.hf-btn-sumi.hf-dot::before { background: var(--hf-gold); }
+.hf-btn-main.hf-dot::before { background: var(--hf-gold); }
 
 /* 小さな札（タイトルの「おと・あそびかた・クレジット」と同じ） */
 .hf-chip {
@@ -122,65 +138,65 @@
   gap: 0.3em;
   border-radius: 9999px;
   border: 2px solid var(--hf-sumi);
-  background: var(--hf-kinari);
-  color: var(--hf-sumi);
+  background: var(--hf-geppaku);
+  color: var(--hf-yoi-deep);
   padding: 0.2rem 0.75rem;
   font-family: 'Mochiy Pop One', sans-serif;
   font-size: 0.75rem;
   line-height: 1.4;
   white-space: nowrap;
-  box-shadow: 2px 2px 0 var(--hf-ai);
+  box-shadow: 2px 2px 0 var(--hf-sumi);
 }
 @media (min-width: 640px) { .hf-chip { font-size: 13px; } }
 button.hf-chip { cursor: pointer; }
 button.hf-chip:hover { filter: brightness(1.05); }
 button.hf-chip:active { transform: translateY(1px); }
 button.hf-chip:disabled { opacity: 0.5; cursor: default; }
-.hf-chip-sumi { background: var(--hf-sumi); color: var(--hf-kinari); box-shadow: inset 0 0 0 1.5px var(--hf-gold), 2px 2px 0 var(--hf-ai); }
-.hf-chip-beni { background: var(--hf-beni); color: var(--hf-kinari); }
+.hf-chip-sumi { background: var(--hf-sumi); color: var(--hf-geppaku); box-shadow: inset 0 0 0 1.5px var(--hf-gold), 2px 2px 0 var(--hf-sumi); }
+.hf-chip-beni { background: var(--hf-beni); color: #fff; }
 
-/* 盤面：中は和紙のまま（鬼火が見やすい）。外に金の輪・墨の線・藍のずらし影 */
+/* 盤面：中は宵闇に暗紫の細い線（暗い地で鬼火の光が効く）。外に金の輪・墨の線・紅のずらし影 */
 .hf-board {
-  background-color: #fffaf0;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='69.28' viewBox='0 0 40 69.28'%3E%3Cg fill='none' stroke='%23f0dcc0' stroke-width='1'%3E%3Cpath d='M20 0v23.09M0 11.55l20 11.54 20-11.54M0 11.55v23.09M40 11.55v23.09M0 34.64l20-11.55 20 11.55M20 23.09l-20 34.64M20 23.09l20 34.64M0 34.64l40 0M20 46.19v23.09M0 57.73l20 11.55 20-11.55M0 57.73l20-11.54 20 11.54'/%3E%3C/g%3E%3C/svg%3E");
+  background-color: var(--hf-yoi-deep);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='69.28' viewBox='0 0 40 69.28'%3E%3Cg fill='none' stroke='%238e6b9e' stroke-opacity='.28' stroke-width='1'%3E%3Cpath d='M20 0v23.09M0 11.55l20 11.54 20-11.54M0 11.55v23.09M40 11.55v23.09M0 34.64l20-11.55 20 11.55M20 23.09l-20 34.64M20 23.09l20 34.64M0 34.64l40 0M20 46.19v23.09M0 57.73l20 11.55 20-11.55M0 57.73l20-11.54 20 11.54'/%3E%3C/g%3E%3C/svg%3E");
   background-size: 40px 69.28px;
   border: 4px solid var(--hf-sumi);
   border-radius: 1.25rem;
-  box-shadow: 0 0 0 4px var(--hf-gold), 0 0 0 7px var(--hf-sumi), 7px 8px 0 7px var(--hf-ai);
+  box-shadow: 0 0 0 4px var(--hf-gold), 0 0 0 7px var(--hf-sumi), 7px 8px 0 7px var(--hf-beni);
 }
 
-/* 盤面にかぶせる幕（ひとやすみ・かち）と、暗い幕（まけ） */
-.hf-veil { background: rgba(255, 244, 220, 0.84); }
-.hf-veil-dark { background: rgba(34, 26, 31, 0.66); }
+/* 盤面にかぶせる幕（ひとやすみ・かち＝月白）と、暗い幕（まけ＝墨） */
+.hf-veil { background: rgba(232, 228, 216, 0.86); }
+.hf-veil-dark { background: rgba(11, 11, 18, 0.7); }
 
-/* ふきだし・台詞の面 */
+/* ふきだし・台詞の面（月白の面と同じ） */
 .hf-bubble {
-  background: var(--hf-kinari);
-  color: var(--hf-sumi);
+  background: var(--hf-geppaku);
+  color: var(--hf-yoi-deep);
   border: 2.5px solid var(--hf-sumi);
   border-radius: 1rem;
-  box-shadow: 3px 3px 0 var(--hf-ai);
+  box-shadow: 3px 3px 0 var(--hf-beni);
 }
 
-/* 名前の帯：自分は墨に金の内線、相手は生成り */
+/* 名前の帯：自分は墨に金の内線、相手は月白 */
 .hf-band {
   border-radius: 9999px;
   border: 2.5px solid var(--hf-sumi);
   font-family: 'Mochiy Pop One', sans-serif;
-  box-shadow: 3px 3px 0 var(--hf-ai);
+  box-shadow: 3px 3px 0 var(--hf-beni);
 }
-.hf-band-me { background: var(--hf-sumi); color: var(--hf-kinari); box-shadow: inset 0 0 0 2px var(--hf-gold), 3px 3px 0 var(--hf-ai); }
-.hf-band-you { background: var(--hf-kinari); color: var(--hf-sumi); }
+.hf-band-me { background: var(--hf-sumi); color: var(--hf-geppaku); box-shadow: inset 0 0 0 2px var(--hf-gold), 3px 3px 0 var(--hf-beni); }
+.hf-band-you { background: var(--hf-geppaku); color: var(--hf-yoi-deep); }
 
-/* とくてん：生成りの小さな札 */
+/* とくてん：月白の小さな札 */
 .hf-score {
   text-align: center;
   padding: 0.35rem 0.25rem 0.4rem;
-  background: var(--hf-kinari);
-  color: var(--hf-sumi);
+  background: var(--hf-geppaku);
+  color: var(--hf-yoi-deep);
   border: 2.5px solid var(--hf-sumi);
   border-radius: 0.6rem;
-  box-shadow: 3px 3px 0 var(--hf-ai);
+  box-shadow: 3px 3px 0 var(--hf-beni);
 }
 
 /* 飾りの札の「ぽよん」（タイトルの tp-poyon と同じ形）。小さな札だけに使い、盤面の画面では動かさない */
@@ -205,9 +221,9 @@ button.hf-chip:disabled { opacity: 0.5; cursor: default; }
   .hf-poyon, .hf-hop .hf-title-ch { animation: none; }
 }
 
-/* 対戦の「つぎ」：生成りの小札（とくてんの札と同じ墨の縁・藍の影）。NextPiecePreview.tsx の NextTag
+/* 対戦の「つぎ」：月白の小札（とくてんの札と同じ墨の縁・紅の影）。NextPiecePreview.tsx の NextTag
    オーナー 11-14「予告鬼火の枠が赤いお守りだとくどい」で4案を比べて A に決めた */
-.nx { text-align: center; color: var(--hf-sumi); background: var(--hf-kinari); border: 2.5px solid var(--hf-sumi); border-radius: 0.75rem; box-shadow: 3px 3px 0 var(--hf-ai); padding: 6px 4px 4px; }
+.nx { text-align: center; color: var(--hf-yoi-deep); background: var(--hf-geppaku); border: 2.5px solid var(--hf-sumi); border-radius: 0.75rem; box-shadow: 3px 3px 0 var(--hf-beni); padding: 6px 4px 4px; }
 .nx .nx-label { font-size: 12px; line-height: 1; letter-spacing: 0.2em; margin-bottom: 4px; }
 .nx .kf-window { background: transparent; border: 0; padding: 2px; }
 
