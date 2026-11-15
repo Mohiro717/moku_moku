@@ -251,7 +251,8 @@ export const Nubatama: React.FC<{ variant?: number; blinkDelay?: string; eyes?: 
       <circle cx="26.6" cy="1.9" r=".9" fill="#141326" />
       <circle cx="12.8" cy="3.6" r=".7" fill="#141326" opacity=".8" />
       <use href="#puyo-body" fill="url(#puyo-g-ojama)" />
-      <use href="#puyo-body" fill="none" stroke={NB_RIM} strokeWidth="1.3" />
+      {/* 縁の色と太さは --nb-rim / --nb-rim-w で替えられる（アイコンの大きな絵では細く淡くする。nubatama/brand.tsx） */}
+      <use href="#puyo-body" fill="none" style={{ stroke: `var(--nb-rim, ${NB_RIM})`, strokeWidth: 'var(--nb-rim-w, 1.3)' }} />
       <path d={crack} stroke={CRACK_RED} strokeWidth=".9" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity=".9" />
       {eyes && <g className="nubatama-eye" style={blinkDelay ? { animationDelay: blinkDelay } : undefined}><NubatamaEyes /></g>}
     </g>

@@ -8,7 +8,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&family=Potta+One&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
-  <style>html, body { margin: 0; padding: 0; background: transparent; overflow: hidden; }</style>
+  <style>html, body { margin: 0; padding: 0; background: transparent; overflow: hidden; }
+    /* このページには Tailwind が無いので、駒の SVG の overflow-visible（クラス）が効かず、ぬばたまのにじみが
+       駒の四角い枠で切れて、月の上に四角い跡が出た（11-16 オーナー「2つとも直して」）。ゲームの画面と同じく枠の外まで描く */
+    .puyo-svg { overflow: visible; }</style>
 </head>
 <body>
   <div id="root"></div>

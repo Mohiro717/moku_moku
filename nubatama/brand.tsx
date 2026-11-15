@@ -25,11 +25,18 @@ const u = (v: number) => (v / 512) * s; // 512 枠の画素 → 実寸
 const FREEZE = `*, *::before, *::after { animation-play-state: paused !important; animation-delay: 0s !important; transition: none !important; }
 .onibi-spark { display: none !important; }`;
 
+/**
+ * ぬばたまの月白の縁。盤（駒 30〜40px）の太さ 1.3（40 枠）のままだと、アイコンの大きな絵（駒 100px 以上）では
+ * 太い灰色の輪に見えて重い（11-16 オーナー「2つとも直して」）。大きな絵だけ細く淡くする。
+ * 32px のタブのアイコンは駒が 19px で盤より小さいので、盤と同じ縁のまま（細くすると消える）
+ */
+const RIM_VARS = (sizePx: number) => (sizePx >= 80 ? { '--nb-rim': 'rgba(232,228,216,.3)', '--nb-rim-w': '0.5' } : {});
+
 /** 駒ひとつ。cx, cy は中心、size は駒の大きさ（512 枠） */
 const Piece: React.FC<{ color: 'ojama' | 'red' | 'blue' | 'green' | 'yellow'; cx: number; cy: number; size: number; rot?: number; filter?: string }> =
   ({ color, cx, cy, size, rot = 0, filter }) => (
     <div style={{ position: 'absolute', left: u(cx - size / 2), top: u(cy - size / 2), width: u(size), height: u(size),
-      rotate: rot ? `${rot}deg` : undefined, filter, ['--puyo-size' as string]: `${u(size)}px` } as React.CSSProperties}>
+      rotate: rot ? `${rot}deg` : undefined, filter, ['--puyo-size' as string]: `${u(size)}px`, ...RIM_VARS(u(size)) } as React.CSSProperties}>
       {color === 'ojama'
         ? <div style={{ clipPath: 'ellipse(54% 58% at 50% 50%)' }}><Puyo color="ojama" /></div>
         : <Puyo color={color} idle />}
