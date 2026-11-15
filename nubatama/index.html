@@ -10,10 +10,10 @@
     <meta property="og:description" content="御霊といっしょに、ぬばたまをつなげて消す落ちものパズル。">
     <meta property="og:locale" content="ja_JP">
     <meta name="twitter:card" content="summary">
-    <meta name="theme-color" content="#f8f4e9">
+    <meta name="theme-color" content="#221a1f">
     <meta name="robots" content="index, follow">
-    <link rel="icon" href="./favicon.ico" type="image/x-icon">
-    <link rel="apple-touch-icon" href="./images/180x180px.png">
+    <!-- タブのアイコン：紅の地に、墨の影がかかった月と金の環（読み込み画面と同じ意匠） -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2064%2064%22%3E%3Crect%20width%3D%2264%22%20height%3D%2264%22%20rx%3D%2214%22%20fill%3D%22%23e04a36%22/%3E%3Ccircle%20cx%3D%2232%22%20cy%3D%2232%22%20r%3D%2225%22%20fill%3D%22none%22%20stroke%3D%22%23f2c14e%22%20stroke-width%3D%222.5%22/%3E%3CclipPath%20id%3D%22m%22%3E%3Ccircle%20cx%3D%2232%22%20cy%3D%2232%22%20r%3D%2219%22/%3E%3C/clipPath%3E%3Ccircle%20cx%3D%2232%22%20cy%3D%2232%22%20r%3D%2219%22%20fill%3D%22%23fff4dc%22/%3E%3Ccircle%20cx%3D%2242%22%20cy%3D%2230%22%20r%3D%2219%22%20fill%3D%22%23221a1f%22%20clip-path%3D%22url%28%23m%29%22/%3E%3Ccircle%20cx%3D%2232%22%20cy%3D%2232%22%20r%3D%2219%22%20fill%3D%22none%22%20stroke%3D%22%23221a1f%22%20stroke-width%3D%222.5%22/%3E%3C/svg%3E">
 
     <!-- ここから下（フォント・Tailwind の設定）は ../index.html と同じ。あちらを変えたらこちらも合わせる -->
     <!-- Fonts -->
@@ -131,7 +131,8 @@
         }
     </style>
 </head>
-<body class="bg-ivory text-coffee-dark font-sans overflow-x-hidden">
+<!-- ページの地は藍と墨の夜（タイトルの紅の枠が浮くように）。月蝕綺譚のトンマナ「ベースは藍黒の闇」にも合わせる -->
+<body class="text-coffee-dark font-sans overflow-x-hidden" style="background: radial-gradient(ellipse at 50% 0%, #3a3f86 0%, #2b2f6b 38%, #221a1f 100%) fixed #221a1f;">
     <div id="root"></div>
     <script type="module" src="./main.tsx"></script>
 </body>

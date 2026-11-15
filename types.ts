@@ -31,8 +31,6 @@ export interface HeroSectionProps {
 export interface LoadingScreenProps {
   isLoading: boolean;
   onComplete?: () => void;
-  /** 読み込み画面に出す名前。省けば Moku Moku House */
-  title?: string;
 }
 
 export interface FortniteCreator {
