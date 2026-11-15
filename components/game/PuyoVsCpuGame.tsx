@@ -15,6 +15,7 @@ import { BACK_TARGET_LABEL, HEADER_OFFSET } from '../../constants/layout';
 import { COUNT_MS, GO_MS, VS_LEAD_MS, MoodIcon, preloadVsArt, VsIntroOverlay, nextMood, type IntroStep, type Mood } from './VsIntro';
 import './wapop.css';
 import { HfFrame, HfTitle } from './HanafudaUi';
+import { BgmTitle } from './BgmTitle';
 import { AllyCharacterPanel, CpuCharacterPanel, CpuCutinOverlay, KitanCredit } from './CpuCharacter';
 import {
   FANWORKS_URL,
@@ -396,7 +397,9 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
             <div className="mt-auto mx-auto flex flex-col gap-2 w-[6.5rem]">{controlButtons}</div>
           </div>
 
-          <div className="[grid-area:p-field]">
+          <div className="[grid-area:p-field] relative">
+            {/* BGM（相手のテーマ曲。useVsGameSound）の曲名。おじゃま予告の列にかぶせる（試合のはじめは予告が空いている）。数秒で消える */}
+            <BgmTitle src={character.bgm} show={inMatch} className="absolute z-30 top-1 left-1" />
             <div ref={playerNoticeRef}>
               <OjamaNotice
                 count={gameState.pendingOjamaPlayer}

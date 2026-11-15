@@ -210,3 +210,15 @@ button.hf-chip:disabled { opacity: 0.5; cursor: default; }
 .nx { text-align: center; color: var(--hf-sumi); background: var(--hf-kinari); border: 2.5px solid var(--hf-sumi); border-radius: 0.75rem; box-shadow: 3px 3px 0 var(--hf-ai); padding: 6px 4px 4px; }
 .nx .nx-label { font-size: 12px; line-height: 1; letter-spacing: 0.2em; margin-bottom: 4px; }
 .nx .kf-window { background: transparent; border: 0; padding: 2px; }
+
+/* いま流れている BGM の曲名（BgmTitle.tsx）。曲が替わったとき、横からすっと出て数秒で消える */
+.hf-np { animation: hf-np 5.2s ease-out both; }
+@keyframes hf-np {
+  0%   { opacity: 0; transform: translateX(-10px); }
+  7%   { opacity: 1; transform: translateX(0); }
+  86%  { opacity: 1; transform: translateX(0); }
+  100% { opacity: 0; transform: translateX(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hf-np { animation-timing-function: steps(1, end); }
+}

@@ -15,6 +15,7 @@ import { FANWORKS_URL, allAllyVoicesOf, allyLinesOf, allyVoiceOf, characterById 
 import { AllyCharacterPanel, CpuCutinOverlay, KitanCredit } from './CpuCharacter';
 import './wapop.css';
 import { HfFrame, HfTitle } from './HanafudaUi';
+import { BgmTitle } from './BgmTitle';
 
 interface PuyoPuyoGameProps {
   /** いっしょにあそぶキャラ（見た目と声だけ。性能の差はない） */
@@ -163,6 +164,8 @@ export const PuyoPuyoGame: React.FC<PuyoPuyoGameProps> = ({ playerCharacterId, o
               />
               {/* 3連鎖から、選んだキャラの必殺カットインを盤面に重ねる */}
               <CpuCutinOverlay cutin={ally.cutin} name={character.name} />
+              {/* BGM（選んだキャラのテーマ曲。useSoloGameSound）の曲名。盤面の枠の上辺に乗せて数秒だけ（内側に置くと出てきた鬼火の頭にかかった） */}
+              <BgmTitle src={character.bgm} show={gameState.isPlaying && !gameState.isGameOver} className="absolute z-30 -top-3 left-3" />
               </div>
             </TouchControls>
           </div>
