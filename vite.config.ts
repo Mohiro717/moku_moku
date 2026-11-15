@@ -16,6 +16,9 @@ export default defineConfig(({ mode }) => {
   // ぬばたま落とし単独サイト（npm run dev:nubatama / build:nubatama）。
   // 入口は nubatama/index.html、画像・音声は もくもくハウスと同じ public/ を使い、dist-nubatama/ に出す
   if (mode === 'nubatama') {
+    // OGP の画像と URL は絶対 URL でないと X や LINE が読まない。公開先は NUBATAMA_SITE_URL（例 https://nubatama.pages.dev）、
+    // 無ければ Cloudflare Pages がビルド中に渡す CF_PAGES_URL（その公開の URL）。どちらも無い手元では相対パスにしておく
+    const siteUrl = (process.env.NUBATAMA_SITE_URL || process.env.CF_PAGES_URL || '.').replace(/\/+$/, '');
     return {
       plugins: [
         react(),
@@ -25,6 +28,10 @@ export default defineConfig(({ mode }) => {
           generateBundle() {
             this.emitFile({ type: 'asset', fileName: '_headers', source: CLOUDFLARE_HEADERS });
           },
+        },
+        {
+          name: 'nubatama-site-url',
+          transformIndexHtml: { order: 'pre' as const, handler: (html: string) => html.replaceAll('%NUBATAMA_SITE_URL%', siteUrl) },
         },
       ],
       root: here('./nubatama'),
