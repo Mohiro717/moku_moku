@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { NubatamaLoading } from '../components/game/title/NubatamaLoading';
 import { NubatamaGame } from '../components/game/NubatamaGame';
 import { applyPerfLite } from '../utils/perfLite';
+import { FitToScreen } from './FitToScreen';
 
 // ぬばたま落とし単独サイトの入口（npm run build:nubatama → dist-nubatama/ を Cloudflare Pages に置く）。
 // もくもくハウスのゲームセクションにあるカードは出さず、読み込み画面のあとすぐタイトル画面にする（オーナー 11-15）。
@@ -18,10 +19,10 @@ const NubatamaApp: React.FC = () => {
       {isLoading ? (
         <NubatamaLoading onComplete={finish} />
       ) : (
-        <main className="min-h-screen py-2 sm:py-6">
-          <div className="max-w-6xl mx-auto px-4 text-center">
+        <main className="min-h-screen flex flex-col justify-center px-3 py-3 text-center">
+          <FitToScreen>
             <NubatamaGame />
-          </div>
+          </FitToScreen>
         </main>
       )}
     </>
