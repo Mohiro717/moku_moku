@@ -126,10 +126,12 @@ function clearRetry() {
  * タイトル・キャラえらびの BGM。同じ曲が鳴っていれば頭に戻さない（自分えらび → 相手えらび で途切れない）。
  * ブラウザに自動再生を断られたら、画面のどこかに触れた時点で鳴らす
  */
-export function playMenuBgm(src: string) {
+export function playMenuBgm(path: string) {
   const el = bgm;
   if (!el) return;
   clearRetry();
+  // el.src は絶対 URL で返るので、比べる側もそろえる（そろえないと同じ曲でも毎回頭に戻る）
+  const src = new URL(path, window.location.href).href;
   if (el.src === src && !el.paused) return;
   if (el.src !== src) {
     el.src = src;

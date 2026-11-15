@@ -200,7 +200,8 @@ const Credits: React.FC<{ onClose: () => void }> = ({ onClose }) => (
       </p>
       <p>キャラクター・楽曲の権利は、原作の権利者に帰属します。</p>
       <ul className="space-y-0.5">
-        <li>キャラクター画像・BGM：『月蝕綺譚』公式素材（公式サイトから表示・再生）</li>
+        <li>キャラクター画像・対戦のBGM：『月蝕綺譚』公式素材（公式サイトから表示・再生）</li>
+        <li>タイトル・キャラえらびのBGM：自作</li>
         <li>ボイス：AI音声合成（Irodori-TTS）でつくった声です。公式の音声・声優ではありません</li>
         <li>OPの動画：AI動画生成（MiniMax H3）</li>
         <li>効果音：自作</li>

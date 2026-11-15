@@ -25,19 +25,19 @@ const TRACKS: Record<string, BgmTrack> = {
   'matsuge_no_kyori.mp3': { title: 'まつげの距離', role: 'サスラのテーマソング B面' },
   'yuki_no_onryou.mp3': { title: '雪の音量', role: 'アウンのテーマソング' },
   'nigai_niwa.mp3': { title: '苦い庭', role: '酉花のテーマソング' },
-  'pilot_light.mp3': { title: 'Pilot Light', role: 'シンラのテーマソング' },
-  'kaerimichi_no_uta_inst.mp3': { title: 'かえりみちの唄 (Instrumental)', role: 'わらべ唄' }
+  'pilot_light.mp3': { title: 'Pilot Light', role: 'シンラのテーマソング' }
 };
 
-const MUSIC_BASE = 'https://vibe.co.jp/luna-occulta/media/music/';
+const MENU_DIR = `${import.meta.env.BASE_URL}audio/bgm`;
 
 /**
- * タイトル画面とキャラえらびの BGM（オーナー 11-15「タイトル画面、キャラ選択画面のBGM欲しい」）。
- * タイトルは公式のタイトル曲、キャラえらびは歌なしのわらべ唄（選んでいる間、歌詞が邪魔をしない）
+ * タイトル画面とキャラえらびの BGM。このゲーム専用に作った歌なしの曲（scripts/compose_menu_bgm.py で合成）。
+ * オーナー 11-16「専用の曲を作りたい。ボーカル無し。ポップ、ゆったり系で」→ 試作4曲から「BとDで」。
+ * タイトル＝月見だんご（title_b・ローファイ・ポップ）、キャラえらび＝オルゴールの夜（select_d）
  */
 export const MENU_BGM = {
-  title: `${MUSIC_BASE}kitan_maintheme.mp3`,
-  select: `${MUSIC_BASE}kaerimichi_no_uta_inst.mp3`
+  title: `${MENU_DIR}/tsukimi_dango.mp3`,
+  select: `${MENU_DIR}/orgel_no_yoru.mp3`
 } as const;
 
 /** BGM の URL から曲名を引く。一覧に無い曲は null（表示しない） */
