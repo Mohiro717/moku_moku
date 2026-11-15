@@ -25,8 +25,20 @@ const TRACKS: Record<string, BgmTrack> = {
   'matsuge_no_kyori.mp3': { title: 'まつげの距離', role: 'サスラのテーマソング B面' },
   'yuki_no_onryou.mp3': { title: '雪の音量', role: 'アウンのテーマソング' },
   'nigai_niwa.mp3': { title: '苦い庭', role: '酉花のテーマソング' },
-  'pilot_light.mp3': { title: 'Pilot Light', role: 'シンラのテーマソング' }
+  'pilot_light.mp3': { title: 'Pilot Light', role: 'シンラのテーマソング' },
+  'kaerimichi_no_uta_inst.mp3': { title: 'かえりみちの唄 (Instrumental)', role: 'わらべ唄' }
 };
+
+const MUSIC_BASE = 'https://vibe.co.jp/luna-occulta/media/music/';
+
+/**
+ * タイトル画面とキャラえらびの BGM（オーナー 11-15「タイトル画面、キャラ選択画面のBGM欲しい」）。
+ * タイトルは公式のタイトル曲、キャラえらびは歌なしのわらべ唄（選んでいる間、歌詞が邪魔をしない）
+ */
+export const MENU_BGM = {
+  title: `${MUSIC_BASE}kitan_maintheme.mp3`,
+  select: `${MUSIC_BASE}kaerimichi_no_uta_inst.mp3`
+} as const;
 
 /** BGM の URL から曲名を引く。一覧に無い曲は null（表示しない） */
 export const bgmTrackOf = (src: string): BgmTrack | null => TRACKS[src.split('/').pop() ?? ''] ?? null;

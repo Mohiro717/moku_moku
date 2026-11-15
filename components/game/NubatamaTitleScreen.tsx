@@ -4,7 +4,8 @@ import { FANWORKS_URL } from '../../constants/cpuCharacters';
 import { TitleChainDemo } from './TitleChainDemo';
 import { TitleHanafudaOdori } from './title/TitleHanafudaOdori';
 import { TITLE_CSS } from './title/common';
-import { isMuted, setMuted, unlockAudio } from '../../utils/gameAudio';
+import { isMuted, playMenuBgm, setMuted, unlockAudio } from '../../utils/gameAudio';
+import { MENU_BGM } from '../../constants/bgmTracks';
 import { IS_STANDALONE } from '../../constants/layout';
 import { FullscreenChip } from './FullscreenChip';
 import './wapop.css';
@@ -70,6 +71,11 @@ export const NubatamaTitleScreen: React.FC<Props> = ({ onVsCpu, onSingle }) => {
       video.muted = true;
       video.play().catch(() => setPhase('demo'));
     });
+  }, [phase]);
+
+  // タイトル曲。OP は自分の音を持っているので、OP が終わって見本れんさ・タイトルに来てから鳴らす
+  useEffect(() => {
+    if (phase !== 'op') playMenuBgm(MENU_BGM.title);
   }, [phase]);
 
   const toTitle = () => {
