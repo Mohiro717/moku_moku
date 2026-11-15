@@ -25,7 +25,7 @@ const AnimatedText: React.FC<{ text: string; baseDelay?: number }> = ({
   );
 };
 
-export const LoadingScreen: React.FC<LoadingScreenProps> = ({ isLoading, onComplete }) => {
+export const LoadingScreen: React.FC<LoadingScreenProps> = ({ isLoading, onComplete, title = 'Moku Moku House' }) => {
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
@@ -110,7 +110,7 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ isLoading, onCompl
 
         {/* Loading text */}
         <h2 className="font-serif text-2xl font-bold text-coffee-dark mb-4">
-          Moku Moku House
+          {title}
         </h2>
         <p className="text-coffee-mid mb-6 relative overflow-hidden">
           <AnimatedText text={LOADING_TEXT} />

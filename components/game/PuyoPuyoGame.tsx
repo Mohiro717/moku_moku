@@ -1,4 +1,5 @@
 import React, { useRef, useState } from 'react';
+import { BACK_TARGET_LABEL } from '../../constants/layout';
 import { GameGrid } from './GameGrid';
 import { useChainFx } from './ChainFx';
 import { GameControls } from './GameControls';
@@ -120,8 +121,8 @@ export const PuyoPuyoGame: React.FC<PuyoPuyoGameProps> = ({ playerCharacterId, o
             </button>
             {onBack && (
               // ゲームえらびに戻る：枠の外にあったのを、見出しの小札へ（オーナー「一体にしたい」。ボタンは枠の外に出さない）
-              <button type="button" onClick={onBack} aria-label="ゲームえらびに もどる" className="hf-chip">
-                ← <span className="hidden sm:inline">ゲームえらびに </span>もどる
+              <button type="button" onClick={onBack} aria-label={`${BACK_TARGET_LABEL} もどる`} className="hf-chip">
+                ← <span className="hidden sm:inline">{BACK_TARGET_LABEL} </span>もどる
               </button>
             )}
           </div>
