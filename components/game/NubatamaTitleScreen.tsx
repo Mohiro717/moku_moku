@@ -5,6 +5,8 @@ import { TitleChainDemo } from './TitleChainDemo';
 import { TitleHanafudaOdori } from './title/TitleHanafudaOdori';
 import { TITLE_CSS } from './title/common';
 import { isMuted, setMuted, unlockAudio } from '../../utils/gameAudio';
+import { IS_STANDALONE } from '../../constants/layout';
+import { FullscreenChip } from './FullscreenChip';
 import './wapop.css';
 import './hanafuda.css';
 
@@ -136,6 +138,7 @@ export const NubatamaTitleScreen: React.FC<Props> = ({ onVsCpu, onSingle }) => {
               <button type="button" onClick={toggleSound} aria-pressed={!muted} className={CHIP}>{muted ? '🔇 おと' : '🔊 おと'}</button>
               <button type="button" onClick={() => setPhase('demo')} className={CHIP}>あそびかた</button>
               <button type="button" onClick={() => setShowCredits(true)} className={CHIP}>クレジット</button>
+              {IS_STANDALONE && <FullscreenChip className={CHIP} />}
             </div>
             <div className="hidden sm:block absolute z-20 left-[1.6%] bottom-[1.2%]" style={OUTLINE}>
               <KitanCredit url={FANWORKS_URL} className="text-[#fff4dc]" />
@@ -158,7 +161,7 @@ export const NubatamaTitleScreen: React.FC<Props> = ({ onVsCpu, onSingle }) => {
         </div>
         <div className="flex flex-col-reverse sm:flex-row items-center justify-between gap-x-4 gap-y-2">
           <KitanCredit url={FANWORKS_URL} className="text-[#fff4dc]/70 text-center sm:text-left leading-snug" />
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="flex shrink-0 flex-wrap items-center justify-center gap-2">
             <button type="button" onClick={toggleSound} aria-pressed={!muted} className={CHIP}>
               {muted ? '🔇 おと' : '🔊 おと'}
             </button>
@@ -168,6 +171,7 @@ export const NubatamaTitleScreen: React.FC<Props> = ({ onVsCpu, onSingle }) => {
             <button type="button" onClick={() => setShowCredits(true)} className={CHIP}>
               クレジット
             </button>
+            {IS_STANDALONE && <FullscreenChip className={CHIP} />}
           </div>
         </div>
       </div>
