@@ -60,7 +60,7 @@ export const NubatamaGame: React.FC<NubatamaGameProps> = ({ onExit }) => {
 
   if (screen === 'title') {
     return (
-      <div ref={playAreaRef} className="wp-zone">
+      <div ref={playAreaRef} className="wp-zone" data-fit="menu">
         <NubatamaTitleScreen onVsCpu={() => setScreen('player-select')} onSingle={() => setScreen('solo-select')} />
       </div>
     );
@@ -69,7 +69,7 @@ export const NubatamaGame: React.FC<NubatamaGameProps> = ({ onExit }) => {
   if (screen === 'player-select' || screen === 'solo-select') {
     // 自分のキャラえらび。CPU 対戦は 1/2（つぎに相手えらび）、ひとりであそぶは これだけで はじまる
     return (
-      <div ref={playAreaRef} className="wp-zone transition-all duration-500 animate-fade-in-up">
+      <div ref={playAreaRef} data-fit="menu" className="wp-zone transition-all duration-500 animate-fade-in-up">
         <HfFrame decor="lively" className="px-4 py-5 sm:p-7 max-w-2xl mx-auto">
           <div className="flex items-center justify-center gap-3 mb-2">
             {screen === 'player-select' && <span className="hf-chip">1 / 2</span>}
@@ -107,7 +107,7 @@ export const NubatamaGame: React.FC<NubatamaGameProps> = ({ onExit }) => {
 
   if (screen === 'difficulty-select') {
     return (
-      <div ref={playAreaRef} className="wp-zone transition-all duration-500 animate-fade-in-up">
+      <div ref={playAreaRef} data-fit="menu" className="wp-zone transition-all duration-500 animate-fade-in-up">
         <HfFrame decor="lively" className="px-4 py-5 sm:p-7 max-w-2xl mx-auto">
           <div className="flex items-center justify-center gap-3 mb-2">
             <span className="hf-chip">2 / 2</span>
