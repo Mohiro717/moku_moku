@@ -112,19 +112,33 @@ export function playBgm(src: string) {
   void bgm.play().catch(() => {});
 }
 
-/** 鳴らせなかった（まだ画面に触っていない）ときに、最初の操作で鳴らしなおす */
+/**
+ * 鳴らせなかった（まだ画面に触っていない）ときに、最初の操作で鳴らしなおす。
+ * pointerdown ではなく click で受ける。2026-11-16 まで pointerdown で、
+ * ・おとボタンを押すと、押した瞬間に BGM が鳴りはじめ、続く click で消音になっていた（URL を開くと無音 → 消して点けると鳴る）
+ * ・スマホの指の pointerdown はブラウザが「操作」と数えないので、鳴らしなおしが断られ、そのまま待つのをやめていた
+ * click はボタンの処理（React）のあとに window へ届くので、おとボタンが先に BGM を鳴らせる
+ */
 let retryOnGesture: (() => void) | null = null;
 
 function clearRetry() {
   if (!retryOnGesture) return;
-  window.removeEventListener('pointerdown', retryOnGesture);
+  window.removeEventListener('click', retryOnGesture);
   window.removeEventListener('keydown', retryOnGesture);
   retryOnGesture = null;
 }
 
+/** 音ありの設定なのに、ブラウザに止められて BGM が鳴っていない（最初の操作を待っている） */
+export const isBgmWaitingForGesture = () => retryOnGesture !== null;
+
+/** 待っている BGM をいま鳴らす（ユーザー操作の中で呼ぶ） */
+export function playWaitingBgm() {
+  retryOnGesture?.();
+}
+
 /**
  * タイトル・キャラえらびの BGM。同じ曲が鳴っていれば頭に戻さない（自分えらび → 相手えらび で途切れない）。
- * ブラウザに自動再生を断られたら、画面のどこかに触れた時点で鳴らす
+ * ブラウザに自動再生を断られたら、画面のどこかに触れた時点で鳴らす（鳴るまで待ちつづける）
  */
 export function playMenuBgm(path: string) {
   const el = bgm;
@@ -143,13 +157,20 @@ export function playMenuBgm(path: string) {
   el.play().catch(() => {
     if (typeof window === 'undefined') return;
     const retry = () => {
-      clearRetry();
-      if (el.src !== src) return;
+      if (el.src !== src) {
+        clearRetry();
+        return;
+      }
       unlockAudio();
-      void el.play().catch(() => {});
+      el.play().then(
+        () => {
+          if (retryOnGesture === retry) clearRetry();
+        },
+        () => {}
+      );
     };
     retryOnGesture = retry;
-    window.addEventListener('pointerdown', retry);
+    window.addEventListener('click', retry);
     window.addEventListener('keydown', retry);
   });
 }

@@ -4,7 +4,7 @@ import { FANWORKS_URL } from '../../constants/cpuCharacters';
 import { TitleChainDemo } from './TitleChainDemo';
 import { TitleHanafudaOdori } from './title/TitleHanafudaOdori';
 import { TITLE_CSS } from './title/common';
-import { isMuted, playMenuBgm, setMuted, unlockAudio } from '../../utils/gameAudio';
+import { isBgmWaitingForGesture, isMuted, playMenuBgm, playWaitingBgm, setMuted, unlockAudio } from '../../utils/gameAudio';
 import { MENU_BGM } from '../../constants/bgmTracks';
 import { IS_STANDALONE } from '../../constants/layout';
 import { FullscreenChip } from './FullscreenChip';
@@ -85,6 +85,14 @@ export const NubatamaTitleScreen: React.FC<Props> = ({ onVsCpu, onSingle }) => {
 
   const toggleSound = () => {
     unlockAudio();
+    // 音ありの設定なのに、ブラウザに止められて鳴っていない（URL を開いて最初の操作の前。OP は音なしに落としている）。
+    // 🔊 を押した人は音を聞きたいので、消さずに鳴らす（2026-11-16 まで消音になり、もう一度押すまで無音だった）
+    const op = opRef.current;
+    if (!muted && (isBgmWaitingForGesture() || op?.muted)) {
+      playWaitingBgm();
+      if (op) op.muted = false;
+      return;
+    }
     const next = !muted;
     setMuted(next);
     setMutedState(next);
