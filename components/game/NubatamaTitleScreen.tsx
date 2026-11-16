@@ -1,8 +1,9 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { KitanCredit } from './CpuCharacter';
 import { FANWORKS_URL } from '../../constants/cpuCharacters';
 import { TitleChainDemo } from './TitleChainDemo';
 import { TitleHanafudaOdori } from './title/TitleHanafudaOdori';
+import { NubatamaLoading } from './title/NubatamaLoading';
 import { TITLE_CSS } from './title/common';
 import { isBgmWaitingForGesture, isMuted, playMenuBgm, playWaitingBgm, primeBgm, setMuted, unlockAudio } from '../../utils/gameAudio';
 import { MENU_BGM } from '../../constants/bgmTracks';
@@ -13,35 +14,22 @@ import './hanafuda.css';
 
 // ぬばたま落としのタイトル画面。流れは
 //   OP（咲耶 OP 編集 v9・30.6秒・BGM「月祭りの夜」つき。オーナー 11-16 に H3 の T3 から差し替え）
-//   → 見本れんさ（TitleChainDemo）→ タイトル（コードで組んだ案3b・ボタンつき）
+//   → 読み込み画面（NubatamaLoading）→ タイトル（コードで組んだ案3b・ボタンつき）
+// （オーナー 11-16「リロードしたら再度OP流れるように。OP→読み込み画面→タイトル画面」。
+//   前は 読み込み → OP → 見本れんさ → タイトル で、2回目からは OP を飛ばしていた）
+// OP はページを開く（リロードする）たびに1回流す。遊んでからタイトルに戻ったときは流さない（opPlayedThisLoad）。
 // タイトルは動画ではなくコードで組む（オーナー 11-13「キャラは咲耶のみ。鬼火とぬばたまは出したい。フワフワ上下運動をループ」
 // → 案3b「花札ポップ・踊る題字」を採用）。部品は components/game/title/。
-// 2回目からは OP と見本を飛ばしてタイトルから始める（見たかどうかはブラウザに覚えさせる）。
-// 「あそびかた」で見本をいつでも見直せる。おと・あそびかた・クレジット・権利表記は枠の外に出さない
+// 見本れんさ（TitleChainDemo）は「あそびかた」で見る。おと・あそびかた・クレジット・権利表記は枠の外に出さない
 // （オーナー 11-13「黒い枠の下に出ているのが気になる。一体にしたい。もどる、OPをみるはいらない」）。
 // PC は画の上（右上の隅と左下）、スマホは枠の中の下の帯。
-// OP を差し替えるときは、ファイル名と SEEN_KEY の両方を新しくする。
-// 同じ名前で中身だけ替えると、ブラウザやスマホが前の動画を使い回すことがある。
-// SEEN_KEY が同じだと、前の OP を見た人は新しい OP を見ないままタイトルへ飛ぶ
+// OP を差し替えるときはファイル名も新しくする。同じ名前で中身だけ替えると、ブラウザやスマホが前の動画を使い回すことがある
 const OP_VIDEO = `${import.meta.env.BASE_URL}video/nubatama_op_v9.mp4`;
-const SEEN_KEY = 'nubatama-op-seen-v9';
 
-type Phase = 'op' | 'demo' | 'title';
+type Phase = 'op' | 'loading' | 'demo' | 'title';
 
-const hasSeenOp = () => {
-  try {
-    return localStorage.getItem(SEEN_KEY) === '1';
-  } catch {
-    return false;
-  }
-};
-const markOpSeen = () => {
-  try {
-    localStorage.setItem(SEEN_KEY, '1');
-  } catch {
-    /* 保存できないブラウザでは毎回 OP から */
-  }
-};
+/** このページ読み込みで OP を流したか。リロードで消えるので、リロードのたびに OP から */
+let opPlayedThisLoad = false;
 
 /** 案3b を外枠いっぱいに敷く（外枠の角丸・影は外側の枠が持つ） */
 const FILL_FRAME = { '--tt-w': '100%', borderRadius: 0, boxShadow: 'none' } as unknown as React.CSSProperties;
@@ -59,7 +47,7 @@ const OUTLINE = { textShadow: '1px 1px 0 #0b0b12, -1px -1px 0 #0b0b12, 1px -1px 
 
 
 export const NubatamaTitleScreen: React.FC<Props> = ({ onVsCpu, onSingle }) => {
-  const [phase, setPhase] = useState<Phase>(() => (hasSeenOp() ? 'title' : 'op'));
+  const [phase, setPhase] = useState<Phase>(() => (opPlayedThisLoad ? 'title' : 'op'));
   const [muted, setMutedState] = useState(isMuted);
   const [showCredits, setShowCredits] = useState(false);
   const opRef = useRef<HTMLVideoElement>(null);
@@ -71,12 +59,13 @@ export const NubatamaTitleScreen: React.FC<Props> = ({ onVsCpu, onSingle }) => {
   const [needsTap, setNeedsTap] = useState(false);
   useEffect(() => {
     if (phase !== 'op') return;
+    opPlayedThisLoad = true;
     const video = opRef.current;
     if (!video) return;
     video.currentTime = 0;
     if (isMuted()) {
       video.muted = true;
-      video.play().catch(() => setPhase('demo'));
+      video.play().catch(() => setPhase('loading'));
       return;
     }
     video.muted = false;
@@ -92,19 +81,17 @@ export const NubatamaTitleScreen: React.FC<Props> = ({ onVsCpu, onSingle }) => {
     video.muted = isMuted();
     video.play().catch(() => {
       video.muted = true;
-      video.play().catch(() => setPhase('demo'));
+      video.play().catch(() => setPhase('loading'));
     });
   };
 
-  // タイトル曲。OP は自分の音を持っているので、OP が終わって見本れんさ・タイトルに来てから鳴らす
+  // タイトル曲。OP は自分の音を持っているので、OP が終わって読み込み画面・タイトルに来てから鳴らす
   useEffect(() => {
     if (phase !== 'op') playMenuBgm(MENU_BGM.title);
   }, [phase]);
 
-  const toTitle = () => {
-    markOpSeen();
-    setPhase('title');
-  };
+  const toTitle = useCallback(() => setPhase('title'), []);
+  const endOp = () => setPhase('loading');
 
   const toggleSound = () => {
     unlockAudio();
@@ -122,7 +109,7 @@ export const NubatamaTitleScreen: React.FC<Props> = ({ onVsCpu, onSingle }) => {
     if (opRef.current) opRef.current.muted = next;
   };
 
-  const playing = phase !== 'title';
+  const playing = phase === 'op' || phase === 'demo';
 
   return (
     <div className="max-w-4xl mx-auto animate-fade-in-up">
@@ -149,8 +136,8 @@ export const NubatamaTitleScreen: React.FC<Props> = ({ onVsCpu, onSingle }) => {
             height={480}
             playsInline
             preload="auto"
-            onEnded={() => setPhase('demo')}
-            onClick={toTitle}
+            onEnded={endOp}
+            onClick={endOp}
             className="absolute inset-0 z-10 block w-full h-full cursor-pointer bg-[#131320]"
             aria-label="ぬばたま落とし オープニング"
           />
@@ -170,10 +157,12 @@ export const NubatamaTitleScreen: React.FC<Props> = ({ onVsCpu, onSingle }) => {
 
         {phase === 'demo' && <TitleChainDemo onDone={toTitle} />}
 
+        {phase === 'loading' && <NubatamaLoading onComplete={toTitle} />}
+
         {playing && (
           <button
             type="button"
-            onClick={toTitle}
+            onClick={phase === 'op' ? endOp : toTitle}
             className="absolute top-3 right-3 z-30 rounded-full bg-black/25 px-3 py-1 text-xs font-serif text-white"
           >
             とばす ▶▶
