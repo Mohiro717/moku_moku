@@ -98,7 +98,8 @@ export const SakuyaFlutter: React.FC<{
         const canvas = canvasRef.current;
         // 表示される大きさ（画面の画素）で描く。640 で描いてから CSS で 1/3 に縮めると、
         // ブラウザの縮小は粗いので線がガタつく（オーナー 11-13「咲耶の輪郭がジャギってる」）
-        const shown = canvas.clientWidth * (window.devicePixelRatio || 1);
+        // clientWidth ではなく getBoundingClientRect：単独サイトは画面いっぱいに CSS の zoom で拡大するので、その倍率も含めた幅で測る
+        const shown = canvas.getBoundingClientRect().width * (window.devicePixelRatio || 1);
         const w = Math.round(Math.max(160, Math.min(WORK_W * 2, shown || WORK_W, img.naturalWidth)));
         const h = Math.round((img.naturalHeight / img.naturalWidth) * w);
         canvas.width = w;

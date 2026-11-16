@@ -138,7 +138,7 @@ export const TitleChainDemo: React.FC<Props> = ({ onDone }) => {
       <FitBox>
         <div className="flex items-center gap-6">
           <DemoBoard label="あなた" grid={playerGrid} pair={pair} chainStep={chainStep} />
-          <div className={`text-5xl text-[#e04a36] transition-all duration-500 ${beam ? 'opacity-100 translate-x-3 scale-125' : 'opacity-30'}`} aria-hidden="true">
+          <div className={`text-5xl text-[#c93a2e] transition-all duration-500 ${beam ? 'opacity-100 translate-x-3 scale-125' : 'opacity-30'}`} aria-hidden="true">
             ➜
           </div>
           <DemoBoard label="あいて" grid={rivalGrid} pair={null} chainStep={0} />

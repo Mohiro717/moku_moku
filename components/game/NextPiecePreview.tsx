@@ -21,7 +21,7 @@ export const NextPiecePreview: React.FC<NextPiecePreviewProps> = memo(({ nextPai
   return (
     // 次の次は、つぎの7割の大きさ。--puyo-size を自分で参照すると循環するので、外側の大きさを一度 --next-size に写す
     <div
-      className="kf-window bg-[#fffaf0] border-2 border-dashed border-[#221a1f]/25 rounded-xl p-1.5 flex items-end justify-center gap-1"
+      className="kf-window bg-[#f3f0e7] border-2 border-dashed border-[#0b0b12]/25 rounded-xl p-1.5 flex items-end justify-center gap-1"
       style={{ '--next-size': 'var(--puyo-size)' } as React.CSSProperties}
     >
       <PairColumn pair={nextPair} />
@@ -35,7 +35,7 @@ export const NextPiecePreview: React.FC<NextPiecePreviewProps> = memo(({ nextPai
 });
 
 /**
- * 対戦の「つぎ」＝生成りの小札（とくてんの札と同じ墨の縁・藍の影。見た目は hanafuda.css の .nx）。
+ * 対戦の「つぎ」＝月白の小札（とくてんの札と同じ墨の縁・紅の影。11-15 色調 B。見た目は hanafuda.css の .nx）。
  * 11-12 から使っていたお守りの札（オーナー生成の画像）は、オーナー 11-14「予告鬼火の枠が赤いお守りだとくどい」で
  * 4案を比べ、A 生成りの小札に決めた
  */

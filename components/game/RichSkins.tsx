@@ -22,7 +22,7 @@ const defs = () => `
     const p = PAL[c];
     return `
     <radialGradient id="rk-hl-${c}">
-      <stop offset="0" stop-color="${p.mid}" stop-opacity=".75"/><stop offset=".45" stop-color="${p.mid}" stop-opacity=".5"/>
+      <stop offset="0" stop-color="${p.mid}" stop-opacity=".9"/><stop offset=".45" stop-color="${p.mid}" stop-opacity=".6"/>
       <stop offset="1" stop-color="${p.mid}" stop-opacity="0"/>
     </radialGradient>
     <radialGradient id="rk-fl-${c}" cx="50%" cy="78%" r="80%" fx="50%" fy="85%">
@@ -69,7 +69,8 @@ export const RichOnibi: React.FC<{ color: string }> = ({ color }) => {
   if (!p) return null;
   return (
     <g>
-      <ellipse cx="20" cy="25" rx="20" ry="19" fill={`url(#rk-hl-${color})`} />
+      {/* 光のにじみ。盤が宵闇になった（色調 B）ので少し広く・濃くした（11-15。元は rx 20・ry 19・濃さ .75/.5） */}
+      <ellipse cx="20" cy="25" rx="22.5" ry="21.5" fill={`url(#rk-hl-${color})`} />
       <g>
         <path d={FLAME} fill={`url(#rk-fl-${color})`} />
         <path d={TONGUE} fill={p.mid} opacity=".85" />

@@ -2,8 +2,11 @@ import React from 'react';
 import { L, S, T, vars, noop, SAKUYA_SRC } from './common';
 import { SakuyaFlutter } from '../SakuyaFlutter';
 import {
-  BENI, GOLD, KINARI, ONI, POP_CSS, SUMI, Fuda, Kasumi, PFloat, PNuba, POnibi, StickerFilter, Susuki, makeHill, useFrameK
+  ONI, POP3, POP_CSS, Fuda, Kasumi, PFloat, PNuba, POnibi, StickerFilter, Susuki, makeHill, useFrameK
 } from './hanafudaPop';
+
+// 見比べ用の案。色は色調 B の前の5色のまま（共通部品の札・霞・すすきは色調 B になる）
+const { BENI, GOLD, KINARI, SUMI } = POP3;
 
 // 案3c「花札ポップ・ステッカー」：いちばんポップ。案3の「芒に月」を、そのまま1枚の大きな花札（札の形・月・黒い丘・すすき）として
 // 中央左に置き、咲耶がその札から飛び出す。地は紅の放射線（ゆっくり回る）と、縁に向かって濃くなるドット。

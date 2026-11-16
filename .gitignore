@@ -35,3 +35,5 @@ lerna-debug.log*
 # Temporary files
 *.tmp
 *.temp
+# ぬばたま落とし単独サイトのビルド出力
+dist-nubatama/

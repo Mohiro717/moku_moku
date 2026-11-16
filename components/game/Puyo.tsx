@@ -227,10 +227,17 @@ const NUBATAMA_CRACKS = [
   'M22 8.5 L23.5 12.8 L21.4 15.6 L22.8 19.5'
 ];
 const CRACK_RED = '#d6303e';
+/**
+ * 暗い地（色調 B「夜の花札」・宵闇の盤）で ぬばたまが地に溶けないための、暗紫のにじみと月白の細い縁（オーナー 11-15「B」。
+ * 見本で溶けるのを確かめて足した）。盤の CSS ではなく本体に描くので、アイコン（nubatama/brand.tsx）にも入る
+ */
+const NB_GLOW = 'rgba(142,107,158,.75)';
+const NB_RIM = 'rgba(232,228,216,.45)';
 
 /**
  * おじゃま＝ぬばたま（月蝕綺譚の澱）。宵闇藍の丸い墨のしずく、紅い点の眼ふたつ、胸に紅いひび一本。
- * ふちは夜気へにじむ（点々の墨と頭の墨の巻き）。ツヤの白・口・虹彩のある目は描かない（正典の禁止）。
+ * ふちは夜気へにじむ（暗紫のにじみ・点々の墨と頭の墨の巻き）。月白の細い縁で暗い地から浮かせる。
+ * ツヤの白・口・虹彩のある目は描かない（正典の禁止）。
  * variant は 0〜1 の乱数。ひびの形と左右をこれで決める。
  */
 export const Nubatama: React.FC<{ variant?: number; blinkDelay?: string; eyes?: boolean }> = ({ variant = 0, blinkDelay, eyes = true }) => {
@@ -238,12 +245,14 @@ export const Nubatama: React.FC<{ variant?: number; blinkDelay?: string; eyes?: 
   const flip = variant * 10 % 1 >= 0.5;
   return (
     <g transform={flip ? 'translate(40 0) scale(-1 1)' : undefined}>
-      {/* にじみ：体のまわりのぼかした墨と、頭の墨の巻き */}
-      <use href="#puyo-body" fill="#1b1b2e" opacity=".5" filter="url(#nb-haze)" transform="translate(20 22) scale(1.1) translate(-20 -22)" />
+      {/* にじみ：体のまわりのぼかした暗紫（11-15 まで墨 #1b1b2e。宵闇の地では見えなかった）と、頭の墨の巻き */}
+      <use href="#puyo-body" fill={NB_GLOW} filter="url(#nb-haze)" transform="translate(20 22) scale(1.12) translate(-20 -22)" />
       <path d="M16.6 5.2 C15.9 2.6 18.4 0.8 20 2.7 C20.7 0.6 23.7 0.8 23.3 3.2 C24.8 3 25.2 4.7 23.9 5.5 Z" fill="#141326" />
       <circle cx="26.6" cy="1.9" r=".9" fill="#141326" />
       <circle cx="12.8" cy="3.6" r=".7" fill="#141326" opacity=".8" />
       <use href="#puyo-body" fill="url(#puyo-g-ojama)" />
+      {/* 縁の色と太さは --nb-rim / --nb-rim-w で替えられる（アイコンの大きな絵では細く淡くする。nubatama/brand.tsx） */}
+      <use href="#puyo-body" fill="none" style={{ stroke: `var(--nb-rim, ${NB_RIM})`, strokeWidth: 'var(--nb-rim-w, 1.3)' }} />
       <path d={crack} stroke={CRACK_RED} strokeWidth=".9" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity=".9" />
       {eyes && <g className="nubatama-eye" style={blinkDelay ? { animationDelay: blinkDelay } : undefined}><NubatamaEyes /></g>}
     </g>
@@ -279,12 +288,12 @@ const STACK_LAYERS = [
 ];
 export const NubatamaStack: React.FC = () => (
   <g>
-    <ellipse cx="20" cy="21" rx="16" ry="19" fill="#1b1b2e" opacity=".45" filter="url(#nb-haze)" />
+    <ellipse cx="20" cy="21" rx="16.5" ry="19.5" fill={NB_GLOW} filter="url(#nb-haze)" />
     <path d="M16.8 4.6 C16.2 2.2 18.6 0.5 20 2.3 C20.8 0.3 23.6 0.6 23.2 2.9 C24.6 2.8 25 4.3 23.8 5 Z" fill="#141326" />
     <circle cx="26.2" cy="1.6" r=".8" fill="#141326" />
     {STACK_LAYERS.map((l, i) => (
       <g key={i}>
-        <ellipse cx="20" cy={l.cy} rx={l.rx} ry={l.ry} fill="url(#puyo-g-ojama)" stroke="#0d0c19" strokeWidth=".7" />
+        <ellipse cx="20" cy={l.cy} rx={l.rx} ry={l.ry} fill="url(#puyo-g-ojama)" stroke={NB_RIM} strokeWidth="1" />
         <g className="nubatama-eye" style={{ animationDelay: `${-i * 1.7}s` }}>
           <circle cx="15.4" cy={l.cy + 1} r="1.7" fill={CRACK_RED} />
           <circle cx="24.6" cy={l.cy + 1} r="1.7" fill={CRACK_RED} />

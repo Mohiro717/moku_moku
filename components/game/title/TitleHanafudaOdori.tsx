@@ -2,11 +2,12 @@ import React from 'react';
 import { S, vars, noop, SAKUYA_SRC } from './common';
 import { SakuyaFlutter } from '../SakuyaFlutter';
 import {
-  AI, BENI, GOLD, KINARI, POP_CSS, SUMI, Fuda, Grain, Kasumi, PFloat, PNuba, POnibi, PopGlyphLayers, StickerFilter, SusukiLayers, makeHill,
+  BENI, GEPPAKU, GOLD, KINDEI, POP_CSS, SUMI, YOI, YOI_DEEP, YOI_LIGHT, Fuda, Grain, Kasumi, PFloat, PNuba, POnibi, PopGlyphLayers, StickerFilter, SusukiLayers, makeHill,
   useFrameK, type FudaKind, type PG
 } from './hanafudaPop';
 
-// 案3b「花札ポップ・踊る題字」：色は案3の5色（紅・生成り・墨・金・藍）のまま。ポップにしたのは動きと題字。
+// 案3b「花札ポップ・踊る題字」：ポップにしたのは動きと題字。色は 11-15 から色調 B「夜の花札」（hanafudaPop.tsx の定数。
+// 地は宵闇・月は金・題字は月白に墨の縁と紅のずらし影・「落」だけ金・副題は金泥・主ボタンは紅）。
 // 題字を横書き2段にして、1字ずつ時間差で跳ねさせる（着地でつぶれて伸び返る）。
 // 背景に傾いた花札を何枚かばらまき、札と鬼火は「ぽよん」（下でつぶれて弾む）。咲耶とぬばたまは行き過ぎて戻る浮き方（形は変えない）。
 // 月と咲耶を左に寄せ、右半分を題字とボタンにあてた。
@@ -19,10 +20,10 @@ const Backdrop: React.FC = () => (
   <svg viewBox="0 0 864 480" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} aria-hidden="true">
     <defs>
       <radialGradient id="hfb-sky" cx=".32" cy=".46" r=".8">
-        <stop offset="0" stopColor="#f0613f" /><stop offset=".6" stopColor={BENI} /><stop offset="1" stopColor="#bf3328" />
+        <stop offset="0" stopColor={YOI_LIGHT} /><stop offset=".55" stopColor={YOI} /><stop offset="1" stopColor={YOI_DEEP} />
       </radialGradient>
       <radialGradient id="hfb-moon" cx=".45" cy=".4" r=".65">
-        <stop offset="0" stopColor="#fffaf0" /><stop offset="1" stopColor={KINARI} />
+        <stop offset="0" stopColor="#f8e4b0" /><stop offset="1" stopColor={GOLD} />
       </radialGradient>
     </defs>
     <rect width="864" height="480" fill="url(#hfb-sky)" />
@@ -77,7 +78,7 @@ const TCX = 662;
 const TITLE: PG[] = [
   ...line([...'ぬばたま'].map(ch => ({ ch, size: 66, adv: 70 })), TCX, 92, 0),
   ...line([
-    { ch: '落', size: 124, adv: 124, fill: 'url(#hfb-gold)', rot: -5 },
+    { ch: '落', size: 124, adv: 124, fill: GOLD, rot: -5 },
     { ch: 'と', size: 98, adv: 94, rot: 4 },
     { ch: 'し', size: 98, adv: 86, rot: -3 }
   ], TCX, 202, 4)
@@ -87,21 +88,14 @@ const TITLE: PG[] = [
 const Title: React.FC = () => (
   <div style={{ position: 'absolute', inset: 0, zIndex: 6, pointerEvents: 'none' }}>
     <div className="tt-bob" style={vars({ position: 'absolute', inset: 0, '--dur': '4.6s', '--amp': S(5), '--delay': '-1s' })}>
-      <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true">
-        <defs>
-          <linearGradient id="hfb-gold" x1="0" y1="0" x2="0" y2="1">
-            <stop offset=".1" stopColor="#ffe9a6" /><stop offset=".9" stopColor="#f0a51a" />
-          </linearGradient>
-        </defs>
-      </svg>
       <div role="img" aria-label="ぬばたま落とし" style={{ position: 'absolute', inset: 0 }}>
-        <PopGlyphLayers glyphs={TITLE} font="'Potta One', sans-serif" fill={KINARI}
-          layers={[{ color: SUMI, width: 16 }]} shadow={{ dx: 6, dy: 7, color: AI }} />
+        <PopGlyphLayers glyphs={TITLE} font="'Potta One', sans-serif" fill={GEPPAKU}
+          layers={[{ color: SUMI, width: 16 }]} shadow={{ dx: 6, dy: 7, color: BENI }} />
       </div>
       <svg viewBox="0 0 864 480" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', overflow: 'visible' }} aria-hidden="true">
         <text x={TCX} y="290" textAnchor="middle" dominantBaseline="central" fontFamily="'Potta One', sans-serif" fontSize="14"
-          letterSpacing="4" fill={KINARI} stroke={SUMI} strokeWidth="3.5" style={{ paintOrder: 'stroke fill' }}>NUBATAMA OTOSHI</text>
-        <path d={`M${TCX - 150} 290 h40 M${TCX + 110} 290 h40`} stroke={GOLD} strokeWidth="2" strokeLinecap="round" strokeDasharray="1 7" />
+          letterSpacing="4" fill={KINDEI} stroke={SUMI} strokeWidth="3.5" style={{ paintOrder: 'stroke fill' }}>NUBATAMA OTOSHI</text>
+        <path d={`M${TCX - 150} 290 h40 M${TCX + 110} 290 h40`} stroke={KINDEI} strokeWidth="2" strokeLinecap="round" strokeDasharray="1 7" />
       </svg>
     </div>
   </div>
@@ -112,8 +106,8 @@ const Button: React.FC<{ label: string; y: number; primary?: boolean; delay: num
     <button type="button" onClick={onClick} className="tt-btn" style={{
       width: '100%', height: S(42), borderRadius: S(21), fontSize: S(17), letterSpacing: '.08em',
       ...(primary
-        ? { background: SUMI, color: KINARI, border: `${S(2)} solid ${SUMI}`, boxShadow: `inset 0 0 0 ${S(2)} ${GOLD}, ${S(5)} ${S(5)} 0 ${AI}` }
-        : { background: KINARI, color: SUMI, border: `${S(2.5)} solid ${SUMI}`, boxShadow: `${S(5)} ${S(5)} 0 ${AI}` })
+        ? { background: BENI, color: '#fff', border: `${S(2.5)} solid ${SUMI}`, boxShadow: `${S(5)} ${S(5)} 0 ${SUMI}` }
+        : { background: GEPPAKU, color: YOI_DEEP, border: `${S(2.5)} solid ${SUMI}`, boxShadow: `${S(5)} ${S(5)} 0 ${SUMI}` })
     }}>
       <span style={{ width: S(8), height: S(8), borderRadius: '50%', marginRight: S(10), background: primary ? GOLD : BENI }} />
       {label}
@@ -136,10 +130,10 @@ type Props = {
 export const TitleHanafudaOdori: React.FC<Props> = ({ onVsCpu = noop, onSingle = noop, showButtons = true, buttonsClassName, style, paused = false }) => {
   const [ref, k] = useFrameK();
   return (
-    <div ref={ref} className={`tt-frame${paused ? ' tt-paused' : ''}`} style={{ background: BENI, ...style }}>
+    <div ref={ref} className={`tt-frame${paused ? ' tt-paused' : ''}`} style={{ background: YOI, ...style }}>
       <style>{POP_CSS}</style>
       <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true">
-        <StickerFilter id="hfb-print" k={k} rim={3} rimColor={KINARI} shadow={{ dx: 8, dy: 7, color: AI, opacity: 0.9 }} />
+        <StickerFilter id="hfb-print" k={k} rim={3} rimColor={GEPPAKU} shadow={{ dx: 8, dy: 7, color: BENI, opacity: 0.9 }} />
       </svg>
       <Backdrop />
       {CARDS.map((c, i) => (

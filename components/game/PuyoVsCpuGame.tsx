@@ -11,10 +11,11 @@ import { useVsCpuGame } from '../../hooks/useVsCpuGame';
 import { useCharacterReactions } from '../../hooks/game/useCpuCharacterReactions';
 import { useVsGameSound } from '../../hooks/game/useVsGameSound';
 import { isMuted, playSe, playVoice, setMuted, unlockAudio } from '../../utils/gameAudio';
-import { HEADER_OFFSET } from '../../constants/layout';
+import { BACK_TARGET_LABEL, HEADER_OFFSET } from '../../constants/layout';
 import { COUNT_MS, GO_MS, VS_LEAD_MS, MoodIcon, preloadVsArt, VsIntroOverlay, nextMood, type IntroStep, type Mood } from './VsIntro';
 import './wapop.css';
 import { HfFrame, HfTitle } from './HanafudaUi';
+import { BgmTitle } from './BgmTitle';
 import { AllyCharacterPanel, CpuCharacterPanel, CpuCutinOverlay, KitanCredit } from './CpuCharacter';
 import {
   FANWORKS_URL,
@@ -54,18 +55,22 @@ const getGameResult = (isGameOver: boolean, winner: string | null, player: 'play
   return 'lose';
 };
 
-// つぎ（NextPiecePreview.tsx の NextTag）・とくてんとも生成りの小札（案3b）
+// つぎ（NextPiecePreview.tsx の NextTag）・とくてんとも月白の小札（色調 B）
 const ScoreKoban: React.FC<{ score: number; accent?: boolean; className?: string }> = ({ score, accent = false, className = '' }) => (
   <div className={`hf-score ${className}`}>
     <div className="text-xs font-serif opacity-80">とくてん</div>
-    <div className={`font-serif text-sm sm:text-base tabular-nums leading-tight ${accent ? 'text-[#e04a36]' : ''}`}>{score.toLocaleString()}</div>
+    <div className={`font-serif text-sm sm:text-base tabular-nums leading-tight ${accent ? 'text-[#c93a2e]' : ''}`}>{score.toLocaleString()}</div>
   </div>
 );
 
-/** lg 以上：盤面の枠の下端に出すとくてん（本家と同じく8桁） */
-const BoardScore: React.FC<{ score: number; accent?: boolean }> = ({ score, accent = false }) => (
+/** lg 以上：盤面の枠の下端に出すとくてん（本家と同じく8桁）。
+ *  宵闇の盤と墨の幕（まけ）の上では、自分は金・相手は月白（墨の縁どり hf-num つき）。
+ *  月白の幕（かち・ひとやすみ・はじめる）の上では、月白の面と同じく自分は紅・相手は宵闇の字にする
+ *  （11-16 オーナー「2つとも直して」：月白の幕の上の月白の字は、縁どりだけでは はっきり読めなかった） */
+const BoardScore: React.FC<{ score: number; accent?: boolean; onLight?: boolean }> = ({ score, accent = false, onLight = false }) => (
   // 幕（z-30）がかかっても本家と同じく常に見えるように、幕より上に置く
-  <div className={`hidden lg:block relative z-40 mt-2 -mb-1 text-center font-serif text-2xl leading-none tabular-nums tracking-wider ${accent ? 'text-[#e04a36]' : 'text-[#221a1f]'}`}>
+  <div className={`hidden lg:block relative z-40 mt-2 -mb-1 text-center font-serif text-2xl leading-none tabular-nums tracking-wider ${
+    onLight ? (accent ? 'text-[#c93a2e]' : 'text-[#131320]') : `hf-num ${accent ? 'text-[#f0ce7e]' : 'text-[#e8e4d8]'}`}`}>
     {String(score).padStart(8, '0')}
   </div>
 );
@@ -309,33 +314,41 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
   // はじまりは自動（VS → カウント）。演出が無いのに止まっているとき（ふだんは無い）だけ出す
   const startPrompt = !gameState.isPlaying && !gameState.isGameOver && intro === null ? (
     <div className="wp-pop-in flex flex-col items-center gap-3">
-      <button type="button" onClick={handleStart} className="hf-btn hf-btn-sumi hf-dot px-8 py-3 text-xl">はじめる</button>
-      <div className="hidden sm:block text-xs text-[#221a1f]/80 font-serif text-center leading-relaxed">
+      <button type="button" onClick={handleStart} className="hf-btn hf-btn-main hf-dot px-8 py-3 text-xl">はじめる</button>
+      <div className="hidden sm:block text-xs text-[#131320]/80 font-serif text-center leading-relaxed">
         ←→ うごかす　Z / X まわす<br />↓ はやく　Space おとす
       </div>
-      <div className="sm:hidden text-xs text-[#221a1f]/80 font-serif text-center leading-relaxed">
+      <div className="sm:hidden text-xs text-[#131320]/80 font-serif text-center leading-relaxed">
         なぞって うごかす<br />タップ まわす　下にはじく おとす
       </div>
     </div>
   ) : undefined;
 
+  // 盤に月白の幕がかかっているか（GameGrid の renderOverlay と同じ順：ひとやすみ → かち → まけ → はじめる）
+  const onLightVeil = (side: 'player' | 'cpu') => {
+    if (gameState.isPaused) return true;
+    const result = getGameResult(gameState.isGameOver, gameState.winner, side);
+    if (result) return result === 'win';
+    return side === 'player' && !!startPrompt;
+  };
+
   const resultActions = gameState.isGameOver ? (
     <>
-      <button type="button" onClick={handleRestart} className="hf-btn hf-btn-sumi hf-dot py-2.5 text-base">もういちど</button>
+      <button type="button" onClick={handleRestart} className="hf-btn hf-btn-main hf-dot py-2.5 text-base">もういちど</button>
       {onChangeOpponent && (
-        <button type="button" onClick={onChangeOpponent} className="hf-btn hf-btn-kinari hf-dot py-2 text-sm">あいてをかえる</button>
+        <button type="button" onClick={onChangeOpponent} className="hf-btn hf-btn-sub hf-dot py-2 text-sm">あいてをかえる</button>
       )}
     </>
   ) : gameState.isPaused ? (
-    <button type="button" onClick={handlePause} className="hf-btn hf-btn-sumi hf-dot py-2.5 text-base">つづける</button>
+    <button type="button" onClick={handlePause} className="hf-btn hf-btn-main hf-dot py-2.5 text-base">つづける</button>
   ) : null;
 
   const controlButtons = (
     <>
-      <button type="button" onClick={handlePause} disabled={!inMatch} className="hf-btn hf-btn-kinari hf-btn-sm py-1.5 text-xs sm:text-sm">
+      <button type="button" onClick={handlePause} disabled={!inMatch} className="hf-btn hf-btn-sub hf-btn-sm py-1.5 text-xs sm:text-sm">
         {gameState.isPaused ? 'つづける' : 'ひとやすみ'}
       </button>
-      <button type="button" onClick={handleRestart} className="hf-btn hf-btn-kinari hf-btn-sm py-1.5 text-xs sm:text-sm">
+      <button type="button" onClick={handleRestart} className="hf-btn hf-btn-sub hf-btn-sm py-1.5 text-xs sm:text-sm">
         やりなおす
       </button>
     </>
@@ -343,7 +356,7 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
 
   return (
     <ErrorBoundary fallback={GameErrorFallback}>
-      {/* PC では枠を中身（盤面・まんなか・盤面）の幅に寄せる。max-w-7xl いっぱいだと左右に紅の余白が広く残った（オーナー 11-14） */}
+      {/* PC では枠を中身（盤面・まんなか・盤面）の幅に寄せる。max-w-7xl いっぱいだと左右に地の余白が広く残った（オーナー 11-14） */}
       <HfFrame ref={frameRef} className="puyo-vs w-full lg:w-fit max-w-7xl mx-auto px-3 py-3 sm:px-5 sm:py-4">
         {/* 見出し：タイトル（案3b の題字。盤面の画面なので跳ねさせない）・つよさ・おと・もどる */}
         <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
@@ -361,8 +374,8 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
             </button>
             {onBack && (
               // ゲームえらびに戻る：枠の外にあったのを、見出しの小札へ（オーナー「一体にしたい」。ボタンは枠の外に出さない）
-              <button type="button" onClick={onBack} aria-label="ゲームえらびに もどる" className="hf-chip">
-                ← <span className="hidden sm:inline">ゲームえらびに </span>もどる
+              <button type="button" onClick={onBack} aria-label={`${BACK_TARGET_LABEL} もどる`} className="hf-chip">
+                ← <span className="hidden sm:inline">{BACK_TARGET_LABEL} </span>もどる
               </button>
             )}
           </div>
@@ -396,7 +409,9 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
             <div className="mt-auto mx-auto flex flex-col gap-2 w-[6.5rem]">{controlButtons}</div>
           </div>
 
-          <div className="[grid-area:p-field]">
+          <div className="[grid-area:p-field] relative">
+            {/* BGM（相手のテーマ曲。useVsGameSound）の曲名。おじゃま予告の列にかぶせる（試合のはじめは予告が空いている）。数秒で消える */}
+            <BgmTitle src={character.bgm} show={inMatch} className="absolute z-30 top-1 left-1" />
             <div ref={playerNoticeRef}>
               <OjamaNotice
                 count={gameState.pendingOjamaPlayer}
@@ -422,7 +437,7 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
                   chainStep={gameState.player.currentChainStep}
                   startPrompt={startPrompt}
                   actions={resultActions}
-                  footer={<BoardScore score={gameState.player.score} accent />}
+                  footer={<BoardScore score={gameState.player.score} accent onLight={onLightVeil('player')} />}
                 />
               </TouchControls>
               {/* 必殺カットインは揺れる盤面の枠（この div）の中に置く。外に置くと、連鎖の揺れで
@@ -468,7 +483,7 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
                 isPaused={gameState.isPaused}
                 gameResult={getGameResult(gameState.isGameOver, gameState.winner, 'cpu')}
                 chainStep={gameState.cpu.currentChainStep}
-                footer={<BoardScore score={gameState.cpu.score} />}
+                footer={<BoardScore score={gameState.cpu.score} onLight={onLightVeil('cpu')} />}
               />
               <div className="hidden lg:block pointer-events-none absolute inset-0 z-20">
                 <CpuCutinOverlay cutin={cutin} name={character.name} side="cpu" />

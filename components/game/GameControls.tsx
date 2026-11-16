@@ -12,7 +12,7 @@ interface GameControlsProps {
 
 /** ひとりであそぶ：盤面の横の札（つぎ・とくてん・れんさ・ボタン）
  *  はじめる・もういちど・つづける は盤面に重ねて出すので、ここには置かない（2つ並んでいた）。
- *  ここは対戦の画面と同じ生成りの小さなボタン（案3b）で、ひとやすみ・やりなおす だけ */
+ *  ここは対戦の画面と同じ月白の小さなボタン（色調 B）で、ひとやすみ・やりなおす だけ */
 export const GameControls: React.FC<GameControlsProps> = ({
   gameState,
   onPause,
@@ -32,7 +32,7 @@ export const GameControls: React.FC<GameControlsProps> = ({
       <div className="hf-panel p-3 text-center flex flex-col justify-center gap-3">
         <div>
           <div className="text-xs font-serif opacity-80">とくてん</div>
-          <div className="text-xl font-serif text-[#e04a36]">{gameState.score.toLocaleString()}</div>
+          <div className="text-xl font-serif text-[#c93a2e]">{gameState.score.toLocaleString()}</div>
         </div>
         <div>
           <div className="text-xs font-serif opacity-80">れんさ</div>
@@ -45,10 +45,10 @@ export const GameControls: React.FC<GameControlsProps> = ({
       </div>
 
       <div className="col-span-2 lg:col-span-1 flex lg:flex-col justify-center items-center gap-2 pt-1">
-        <button type="button" onClick={onPause} disabled={!inMatch} className="hf-btn hf-btn-kinari hf-btn-sm w-[6.5rem] py-1.5 text-xs sm:text-sm">
+        <button type="button" onClick={onPause} disabled={!inMatch} className="hf-btn hf-btn-sub hf-btn-sm w-[6.5rem] py-1.5 text-xs sm:text-sm">
           {gameState.isPaused ? 'つづける' : 'ひとやすみ'}
         </button>
-        <button type="button" onClick={onRestart} className="hf-btn hf-btn-kinari hf-btn-sm w-[6.5rem] py-1.5 text-xs sm:text-sm">
+        <button type="button" onClick={onRestart} className="hf-btn hf-btn-sub hf-btn-sm w-[6.5rem] py-1.5 text-xs sm:text-sm">
           やりなおす
         </button>
       </div>

@@ -192,7 +192,8 @@ const speedLines = (board: HTMLElement, points: PopPoint[], step: number) => {
   const svg = document.createElementNS(ns, 'svg');
   svg.setAttribute('width', `${r.width}`);
   svg.setAttribute('height', `${r.height}`);
-  svg.setAttribute('fill', step >= BIG_CHAIN ? '#f6b93b' : '#3b2f2f');
+  // 盤は宵闇（色調 B）なので、ふだんの集中線は暗い茶から月白に（11-15）
+  svg.setAttribute('fill', step >= BIG_CHAIN ? '#f6b93b' : '#e8e4d8');
   for (let i = 0; i < count; i++) {
     const a = (i / count) * Math.PI * 2 + Math.random() * 0.2;
     const inner = 40 + Math.random() * 50;

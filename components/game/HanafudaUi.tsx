@@ -16,7 +16,7 @@ const CORNERS: Spot[] = [
 ];
 
 /**
- * 紅の地の外枠。decor が 'lively' なら札がぽよんと弾み、'still' なら止めておく（盤面の画面は端末の熱を避けて止める）
+ * 宵闇の地の外枠（色調 B）。decor が 'lively' なら札がぽよんと弾み、'still' なら止めておく（盤面の画面は端末の熱を避けて止める）
  */
 export const HfFrame = React.forwardRef<HTMLDivElement, {
   className?: string; decor?: 'lively' | 'still'; children: React.ReactNode;

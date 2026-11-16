@@ -1,4 +1,5 @@
 import React, { useRef, useState } from 'react';
+import { BACK_TARGET_LABEL } from '../../constants/layout';
 import { GameGrid } from './GameGrid';
 import { useChainFx } from './ChainFx';
 import { GameControls } from './GameControls';
@@ -14,6 +15,7 @@ import { FANWORKS_URL, allAllyVoicesOf, allyLinesOf, allyVoiceOf, characterById 
 import { AllyCharacterPanel, CpuCutinOverlay, KitanCredit } from './CpuCharacter';
 import './wapop.css';
 import { HfFrame, HfTitle } from './HanafudaUi';
+import { BgmTitle } from './BgmTitle';
 
 interface PuyoPuyoGameProps {
   /** いっしょにあそぶキャラ（見た目と声だけ。性能の差はない） */
@@ -75,12 +77,12 @@ export const PuyoPuyoGame: React.FC<PuyoPuyoGameProps> = ({ playerCharacterId, o
   // 盤面に重ねるボタン：はじまる前・ひとやすみ・おしまいのとき、目線の先で押せるように
   const startPrompt = !gameState.isPlaying && !gameState.isGameOver ? (
     <div className="wp-pop-in flex flex-col items-center gap-3">
-      <button type="button" onClick={handleStart} className="hf-btn hf-btn-sumi hf-dot px-8 py-3 text-xl">はじめる</button>
+      <button type="button" onClick={handleStart} className="hf-btn hf-btn-main hf-dot px-8 py-3 text-xl">はじめる</button>
       {/* スマホではキーボードの説明でなく指の説明を出す（対戦の画面と同じ文） */}
-      <div className="hidden sm:block text-xs text-[#221a1f]/80 font-serif text-center leading-relaxed">
+      <div className="hidden sm:block text-xs text-[#131320]/80 font-serif text-center leading-relaxed">
         ←→ うごかす　Z / X まわす<br />↓ はやく　Space おとす
       </div>
-      <div className="sm:hidden text-xs text-[#221a1f]/80 font-serif text-center leading-relaxed">
+      <div className="sm:hidden text-xs text-[#131320]/80 font-serif text-center leading-relaxed">
         なぞって うごかす<br />タップ まわす　下にはじく おとす
       </div>
     </div>
@@ -88,13 +90,13 @@ export const PuyoPuyoGame: React.FC<PuyoPuyoGameProps> = ({ playerCharacterId, o
 
   const actions = gameState.isGameOver ? (
     <>
-      <button type="button" onClick={handleStart} className="hf-btn hf-btn-sumi hf-dot py-2.5 text-base">もういちど</button>
+      <button type="button" onClick={handleStart} className="hf-btn hf-btn-main hf-dot py-2.5 text-base">もういちど</button>
       {onChangeCharacter && (
-        <button type="button" onClick={onChangeCharacter} className="hf-btn hf-btn-kinari hf-dot py-2 text-sm">キャラをかえる</button>
+        <button type="button" onClick={onChangeCharacter} className="hf-btn hf-btn-sub hf-dot py-2 text-sm">キャラをかえる</button>
       )}
     </>
   ) : gameState.isPaused ? (
-    <button type="button" onClick={pauseGame} className="hf-btn hf-btn-sumi hf-dot py-2.5 text-base">つづける</button>
+    <button type="button" onClick={pauseGame} className="hf-btn hf-btn-main hf-dot py-2.5 text-base">つづける</button>
   ) : null;
 
   return (
@@ -120,8 +122,8 @@ export const PuyoPuyoGame: React.FC<PuyoPuyoGameProps> = ({ playerCharacterId, o
             </button>
             {onBack && (
               // ゲームえらびに戻る：枠の外にあったのを、見出しの小札へ（オーナー「一体にしたい」。ボタンは枠の外に出さない）
-              <button type="button" onClick={onBack} aria-label="ゲームえらびに もどる" className="hf-chip">
-                ← <span className="hidden sm:inline">ゲームえらびに </span>もどる
+              <button type="button" onClick={onBack} aria-label={`${BACK_TARGET_LABEL} もどる`} className="hf-chip">
+                ← <span className="hidden sm:inline">{BACK_TARGET_LABEL} </span>もどる
               </button>
             )}
           </div>
@@ -162,6 +164,8 @@ export const PuyoPuyoGame: React.FC<PuyoPuyoGameProps> = ({ playerCharacterId, o
               />
               {/* 3連鎖から、選んだキャラの必殺カットインを盤面に重ねる */}
               <CpuCutinOverlay cutin={ally.cutin} name={character.name} />
+              {/* BGM（選んだキャラのテーマ曲。useSoloGameSound）の曲名。盤面の枠の上辺に乗せて数秒だけ（内側に置くと出てきた鬼火の頭にかかった） */}
+              <BgmTitle src={character.bgm} show={gameState.isPlaying && !gameState.isGameOver} className="absolute z-30 -top-3 left-3" />
               </div>
             </TouchControls>
           </div>
