@@ -12,15 +12,19 @@ import './wapop.css';
 import './hanafuda.css';
 
 // ぬばたま落としのタイトル画面。流れは
-//   OP（H3 の T3・8秒・声つき）→ 見本れんさ（TitleChainDemo）→ タイトル（コードで組んだ案3b・ボタンつき）
+//   OP（咲耶 OP 編集 v9・30.6秒・BGM「月祭りの夜」つき。オーナー 11-16 に H3 の T3 から差し替え）
+//   → 見本れんさ（TitleChainDemo）→ タイトル（コードで組んだ案3b・ボタンつき）
 // タイトルは動画ではなくコードで組む（オーナー 11-13「キャラは咲耶のみ。鬼火とぬばたまは出したい。フワフワ上下運動をループ」
 // → 案3b「花札ポップ・踊る題字」を採用）。部品は components/game/title/。
 // 2回目からは OP と見本を飛ばしてタイトルから始める（見たかどうかはブラウザに覚えさせる）。
 // 「あそびかた」で見本をいつでも見直せる。おと・あそびかた・クレジット・権利表記は枠の外に出さない
 // （オーナー 11-13「黒い枠の下に出ているのが気になる。一体にしたい。もどる、OPをみるはいらない」）。
 // PC は画の上（右上の隅と左下）、スマホは枠の中の下の帯。
-const OP_VIDEO = `${import.meta.env.BASE_URL}video/nubatama_title.mp4`;
-const SEEN_KEY = 'nubatama-op-seen';
+// OP を差し替えるときは、ファイル名と SEEN_KEY の両方を新しくする。
+// 同じ名前で中身だけ替えると、ブラウザやスマホが前の動画を使い回すことがある。
+// SEEN_KEY が同じだと、前の OP を見た人は新しい OP を見ないままタイトルへ飛ぶ
+const OP_VIDEO = `${import.meta.env.BASE_URL}video/nubatama_op_v9.mp4`;
+const SEEN_KEY = 'nubatama-op-seen-v9';
 
 type Phase = 'op' | 'demo' | 'title';
 
