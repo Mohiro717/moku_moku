@@ -175,6 +175,29 @@ export function playMenuBgm(path: string) {
   });
 }
 
+/**
+ * ユーザー操作の中で呼ぶ。BGM の <audio> を音なしで一瞬だけ鳴らして止め、あとで操作なしでも鳴らせるようにする。
+ * iPhone は要素ごとに「操作の中で一度鳴らしたか」を見るので、OP を「はじめる」で始めたあと、
+ * OP が終わってからのタイトル曲が止められないようにする（その時点では画面に触っていない）
+ */
+export function primeBgm(path: string) {
+  const el = bgm;
+  if (!el || !el.paused) return;
+  const src = new URL(path, window.location.href).href;
+  if (el.src !== src) el.src = src;
+  el.muted = true;
+  el.play().then(
+    () => {
+      el.pause();
+      el.currentTime = 0;
+      el.muted = muted;
+    },
+    () => {
+      el.muted = muted;
+    }
+  );
+}
+
 export function pauseBgm() {
   bgm?.pause();
 }

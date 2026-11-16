@@ -4,7 +4,7 @@ import { FANWORKS_URL } from '../../constants/cpuCharacters';
 import { TitleChainDemo } from './TitleChainDemo';
 import { TitleHanafudaOdori } from './title/TitleHanafudaOdori';
 import { TITLE_CSS } from './title/common';
-import { isBgmWaitingForGesture, isMuted, playMenuBgm, playWaitingBgm, setMuted, unlockAudio } from '../../utils/gameAudio';
+import { isBgmWaitingForGesture, isMuted, playMenuBgm, playWaitingBgm, primeBgm, setMuted, unlockAudio } from '../../utils/gameAudio';
 import { MENU_BGM } from '../../constants/bgmTracks';
 import { IS_STANDALONE } from '../../constants/layout';
 import { FullscreenChip } from './FullscreenChip';
@@ -64,18 +64,37 @@ export const NubatamaTitleScreen: React.FC<Props> = ({ onVsCpu, onSingle }) => {
   const [showCredits, setShowCredits] = useState(false);
   const opRef = useRef<HTMLVideoElement>(null);
 
-  // OP は声つき。カードのボタンを押した直後に開くので鳴らせる。断られたら音なしで流す。音を消す設定なら最初から消す
+  // OP は曲つき。カードのボタンを押した直後に開いたときは、そのまま音つきで流せる。
+  // URL を開いた直後（まだ画面に触っていない）はブラウザが音つきの自動再生を断る。そのときは音なしで流さず、
+  // 「▶ はじめる」を出して、押した操作の中で音つきで始める（オーナー 11-16「スマホ版 最初音出ない」。
+  // 前は音なしに落として流していたので、スマホでは OP もその後のタイトル曲も無音だった）。音を消す設定なら最初から音なし
+  const [needsTap, setNeedsTap] = useState(false);
   useEffect(() => {
     if (phase !== 'op') return;
     const video = opRef.current;
     if (!video) return;
     video.currentTime = 0;
+    if (isMuted()) {
+      video.muted = true;
+      video.play().catch(() => setPhase('demo'));
+      return;
+    }
+    video.muted = false;
+    video.play().catch(() => setNeedsTap(true));
+  }, [phase]);
+
+  const startOp = () => {
+    unlockAudio();
+    primeBgm(MENU_BGM.title);
+    setNeedsTap(false);
+    const video = opRef.current;
+    if (!video) return;
     video.muted = isMuted();
     video.play().catch(() => {
       video.muted = true;
       video.play().catch(() => setPhase('demo'));
     });
-  }, [phase]);
+  };
 
   // タイトル曲。OP は自分の音を持っているので、OP が終わって見本れんさ・タイトルに来てから鳴らす
   useEffect(() => {
@@ -135,6 +154,18 @@ export const NubatamaTitleScreen: React.FC<Props> = ({ onVsCpu, onSingle }) => {
             className="absolute inset-0 z-10 block w-full h-full cursor-pointer bg-[#131320]"
             aria-label="ぬばたま落とし オープニング"
           />
+        )}
+
+        {phase === 'op' && needsTap && (
+          <button
+            type="button"
+            onClick={startOp}
+            className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 bg-[#131320]/55 font-serif"
+            aria-label="オープニングをはじめる（おとが でます）"
+          >
+            <span className="hf-btn hf-btn-main hf-dot px-6 py-3 text-base sm:text-lg">▶ はじめる</span>
+            <span className="text-xs text-[#e8e4d8]/80">おとが でます</span>
+          </button>
         )}
 
         {phase === 'demo' && <TitleChainDemo onDone={toTitle} />}
