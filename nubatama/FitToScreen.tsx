@@ -1,55 +1,55 @@
-import React, { useLayoutEffect, useRef, useState } from 'react';
+import React, { useLayoutEffect, useRef } from 'react';
 
 // 中身（タイトル・キャラえらび・対戦・ひとりであそぶ）を、窓の縦と横の両方に収まる最大の倍率まで拡大する
 // （オーナー 11-15「ゲーム画面小さいですね。スクリーンいっぱいに広げたい」→「広げて（OPも）」）。
 // CSS の zoom で拡大するので、文字・図形（ぬばたま・鬼火・題字は SVG）は拡大後の解像度で描き直され、ぼやけない。
 // 拡大だけで縮小はしない（スマホは今の見た目のまま。縦に長い画面はこれまでどおりスクロール）。
-// 中身の大きさは画面ごとに替わるので、替わるたびに測り直す。
+//
+// 倍率は画面ごとに測らず、決まった箱から出す（オーナー 11-16「画面が切り替わるとサイズが不自然に変わる」「ちらつく」）。
+// 前は画面ごとに外枠を測っていて、1600×900 で タイトル 1.75 → じぶんえらび 1.61 → あいてえらび 1.44 倍と替わり、
+// 測るのが切り替えの1コマあと（入れ替わり中の外枠は一瞬 2〜5 倍の高さになる）で、対戦中も ふきだしの行数が替わるたびに跳ねていた。
+// - メニュー（.wp-zone に data-fit="menu"。タイトル・OP・じぶんえらび・あいてえらび・ひとりで）は MENU_BOX
+// - それ以外（対戦・ひとりであそぶ の盤面）は PLAY_BOX
+// 倍率が替わるのは メニュー ⇄ 盤面 の行き来と、窓の大きさが替わったときだけ。
 
 const PAD = 12; // 窓の端との すき間（px）
 
-/**
- * 中身の素の幅＝いまの画面の外枠の幅。NubatamaGame の各画面は .wp-zone の直下に外枠を1つ置く
- * （タイトルは案3b の枠、ほかは HfFrame）。外枠がスマホの w-full のように横いっぱいなら、横いっぱいの幅になる
- */
-const frameWidth = (el: HTMLElement): number => {
-  const frame = el.querySelector<HTMLElement>(':scope > .wp-zone > :not(style)');
-  return frame?.offsetWidth || el.offsetWidth;
-};
+/** 画面の素の大きさ（1600×900 で実測、zoom をかける前）。画面の中身を増やしてこれより大きくなったら、ここを測り直す */
+// 幅＝タイトル案3b の枠 896、高さ＝あいてえらび 607 に少し足す
+const MENU_BOX = { w: 896, h: 612 };
+// 幅＝CPU と たいせん の枠 806（ひとりで は 768）、高さ＝CPU と たいせん 753（ひとりで は 712）に少し足す
+const PLAY_BOX = { w: 806, h: 760 };
+
+/** 箱が窓に収まる倍率（1 未満にはしない。0.01 刻みで切り捨て） */
+const zoomFor = ({ w, h }: { w: number; h: number }): number =>
+  Math.max(1, Math.floor(Math.min((window.innerWidth - PAD * 2) / w, (window.innerHeight - PAD * 2) / h) * 100) / 100);
 
 export const FitToScreen: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const outerRef = useRef<HTMLDivElement>(null);
   const innerRef = useRef<HTMLDivElement>(null);
-  const [zoom, setZoom] = useState(1);
 
   useLayoutEffect(() => {
-    const el = innerRef.current;
-    if (!el) return;
-    let frame = 0;
+    const outer = outerRef.current, el = innerRef.current;
+    if (!outer || !el) return;
     const fit = () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => {
-        // offsetWidth / offsetHeight は zoom をかける前の大きさ
-        const w = frameWidth(el), h = el.offsetHeight;
-        if (!w || !h) return;
-        const z = Math.min((window.innerWidth - PAD * 2) / w, (window.innerHeight - PAD * 2) / h);
-        // 0.01 刻みで切り捨て（測った幅ちょうどにしない＝次に測るときも枠が横いっぱいにならない）
-        setZoom(Math.max(1, Math.floor(z * 100) / 100));
-      });
+      const isMenu = el.querySelector(':scope > .wp-zone')?.getAttribute('data-fit') === 'menu';
+      const next = String(zoomFor(isMenu ? MENU_BOX : PLAY_BOX));
+      // state を通さず style に直接書く。MutationObserver の知らせは描く前に届くので、新しい画面は最初から新しい倍率で出る
+      if (outer.style.zoom !== next) outer.style.zoom = next;
     };
     fit();
-    const ro = new ResizeObserver(fit);
-    ro.observe(el);
-    // 画面が替わっても外の箱の大きさが変わらないことがある（横いっぱいの箱）ので、すぐ下の入れ替わりも見る。
-    // subtree は見ない（対戦中は盤面の DOM が毎コマ変わり、そのたびに測ると重い）
-    const mo = new MutationObserver(fit);
-    mo.observe(el, { childList: true });
+    // メニュー ⇄ 盤面 の行き来を見る。React は画面が替わっても .wp-zone の div を使い回すことがあるので、
+    // すぐ下の入れ替わりと、印（data-fit）の付け外しの両方を見る
+    const swap = new MutationObserver(fit);
+    swap.observe(el, { childList: true });
+    const marks = new MutationObserver(fit);
+    marks.observe(el, { subtree: true, attributes: true, attributeFilter: ['data-fit'] });
     window.addEventListener('resize', fit);
-    return () => { cancelAnimationFrame(frame); ro.disconnect(); mo.disconnect(); window.removeEventListener('resize', fit); };
+    return () => { swap.disconnect(); marks.disconnect(); window.removeEventListener('resize', fit); };
   }, []);
 
   return (
-    // zoom は外の箱にかけ、中の箱を測る（中の箱の offsetWidth は zoom をかける前の値）
-    <div style={{ zoom }}>
+    <div ref={outerRef}>
       <div ref={innerRef}>{children}</div>
     </div>
   );
