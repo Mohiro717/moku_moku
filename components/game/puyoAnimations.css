@@ -431,7 +431,11 @@
   height: min(100%, calc(100dvh - var(--header-offset, 88px)));
   overflow: hidden;
 }
+/* 切れ目の両端（PC は上端・下端の横位置、スマホは左端・右端の縦位置）。絵の切り口と光の線は両方ここから引く。
+   線を角度で描くと枠の縦横比で切り口とずれる（オーナー 11-16「センターを分けているラインが映像の切れ目とズレていて不自然」） */
 .vs-splash {
+  --cut-a: 56%;
+  --cut-b: 44%;
   background: radial-gradient(ellipse at center, #24243c, #0b0b12 75%);
   animation: vs-splash-out var(--vs-ms, 4100ms) ease both;
 }
@@ -441,20 +445,26 @@
 }
 .vs-half { position: absolute; inset: 0; overflow: hidden; }
 /* 自分が入り、相手は 600ms 遅れて入る */
-.vs-half-a { clip-path: polygon(0 0, 56% 0, 44% 100%, 0 100%); animation: vs-in-left 450ms cubic-bezier(0.2, 0.9, 0.3, 1) both; }
-.vs-half-b { clip-path: polygon(56% 0, 100% 0, 100% 100%, 44% 100%); animation: vs-in-right 450ms cubic-bezier(0.2, 0.9, 0.3, 1) 600ms both; }
+.vs-half-a { clip-path: polygon(0 0, var(--cut-a) 0, var(--cut-b) 100%, 0 100%); animation: vs-in-left 450ms cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+.vs-half-b { clip-path: polygon(var(--cut-a) 0, 100% 0, 100% 100%, var(--cut-b) 100%); animation: vs-in-right 450ms cubic-bezier(0.2, 0.9, 0.3, 1) 600ms both; }
 .vs-art { position: absolute; top: 0; height: 100%; width: 56%; object-fit: cover; object-position: center; }
 .vs-half-a .vs-art { left: 0; }
 .vs-half-b .vs-art { right: 0; }
 .vs-art-flip { transform: scaleX(-1); }
 @keyframes vs-in-left { from { transform: translateX(-100%); } to { transform: translateX(0); } }
 @keyframes vs-in-right { from { transform: translateX(100%); } to { transform: translateX(0); } }
-/* 斜めの切れ目に桜色の光 */
+/* 斜めの切れ目に光の線（生成りの帯に金の芯）。切り口と同じ2点を結ぶ帯として描く。--w は帯の半分の太さ */
 .vs-slash {
   position: absolute; inset: 0;
-  background: linear-gradient(100deg, transparent calc(50% - 5px), #e8e4d8 calc(50% - 2px), #f0ce7e 50%, #e8e4d8 calc(50% + 2px), transparent calc(50% + 5px));
+  filter: drop-shadow(0 0 2px rgba(232, 228, 216, 0.7));
   animation: vs-flash var(--vs-ms, 4100ms) ease both;
 }
+.vs-slash-line, .vs-slash-core {
+  position: absolute; inset: 0;
+  clip-path: polygon(calc(var(--cut-a) - var(--w)) 0, calc(var(--cut-a) + var(--w)) 0, calc(var(--cut-b) + var(--w)) 100%, calc(var(--cut-b) - var(--w)) 100%);
+}
+.vs-slash-line { --w: 2.5px; background: #e8e4d8; }
+.vs-slash-core { --w: 1px; background: #f0ce7e; }
 @keyframes vs-flash {
   0%, 28% { opacity: 0; }
   34%, 92% { opacity: 1; }
@@ -485,12 +495,14 @@
 }
 /* スマホ（盤面まわりが縦長）：上に自分、下に相手 */
 @media (max-width: 1023px) {
-  .vs-half-a { clip-path: polygon(0 0, 100% 0, 100% 44%, 0 56%); animation-name: vs-in-top; }
-  .vs-half-b { clip-path: polygon(0 56%, 100% 44%, 100% 100%, 0 100%); animation-name: vs-in-bottom; }
-  .vs-art { width: 100%; height: 56%; }
+  .vs-half-a { clip-path: polygon(0 0, 100% 0, 100% var(--cut-b), 0 var(--cut-a)); animation-name: vs-in-top; }
+  .vs-half-b { clip-path: polygon(0 var(--cut-a), 100% var(--cut-b), 100% 100%, 0 100%); animation-name: vs-in-bottom; }
+  .vs-art { width: 100%; height: var(--cut-a); }
   .vs-half-a .vs-art { top: 0; }
   .vs-half-b .vs-art { top: auto; bottom: 0; }
-  .vs-slash { background: linear-gradient(-6deg, transparent calc(50% - 5px), #e8e4d8 calc(50% - 2px), #f0ce7e 50%, #e8e4d8 calc(50% + 2px), transparent calc(50% + 5px)); }
+  .vs-slash-line, .vs-slash-core {
+    clip-path: polygon(0 calc(var(--cut-a) - var(--w)), 100% calc(var(--cut-b) - var(--w)), 100% calc(var(--cut-b) + var(--w)), 0 calc(var(--cut-a) + var(--w)));
+  }
 }
 @keyframes vs-in-top { from { transform: translateY(-100%); } to { transform: translateY(0); } }
 @keyframes vs-in-bottom { from { transform: translateY(100%); } to { transform: translateY(0); } }

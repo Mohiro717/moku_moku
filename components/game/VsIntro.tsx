@@ -51,7 +51,10 @@ const VsSplash: React.FC<{ player: CpuCharacter; cpu: CpuCharacter }> = ({ playe
     <div className="vs-half vs-half-b">
       {cpu.cutins[0] && <img src={vsArtUrl(cpu.cutins[0])} alt="" className="vs-art vs-art-flip" />}
     </div>
-    <div className="vs-slash" />
+    <div className="vs-slash">
+      <div className="vs-slash-line" />
+      <div className="vs-slash-core" />
+    </div>
     <div className="vs-mark">VS</div>
   </div>
 );
