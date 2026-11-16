@@ -28,5 +28,17 @@ const TRACKS: Record<string, BgmTrack> = {
   'pilot_light.mp3': { title: 'Pilot Light', role: 'シンラのテーマソング' }
 };
 
+const MENU_DIR = `${import.meta.env.BASE_URL}audio/bgm`;
+
+/**
+ * タイトル画面とキャラえらびの BGM。このゲーム専用に作った歌なしの曲（scripts/compose_menu_bgm.py で合成）。
+ * オーナー 11-16「専用の曲を作りたい。ボーカル無し。ポップ、ゆったり系で」→ 試作4曲から「BとDで」。
+ * タイトル＝月見だんご（title_b・ローファイ・ポップ）、キャラえらび＝オルゴールの夜（select_d）
+ */
+export const MENU_BGM = {
+  title: `${MENU_DIR}/tsukimi_dango.mp3`,
+  select: `${MENU_DIR}/orgel_no_yoru.mp3`
+} as const;
+
 /** BGM の URL から曲名を引く。一覧に無い曲は null（表示しない） */
 export const bgmTrackOf = (src: string): BgmTrack | null => TRACKS[src.split('/').pop() ?? ''] ?? null;

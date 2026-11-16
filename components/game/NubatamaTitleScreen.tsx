@@ -4,7 +4,8 @@ import { FANWORKS_URL } from '../../constants/cpuCharacters';
 import { TitleChainDemo } from './TitleChainDemo';
 import { TitleHanafudaOdori } from './title/TitleHanafudaOdori';
 import { TITLE_CSS } from './title/common';
-import { isMuted, setMuted, unlockAudio } from '../../utils/gameAudio';
+import { isMuted, playMenuBgm, setMuted, unlockAudio } from '../../utils/gameAudio';
+import { MENU_BGM } from '../../constants/bgmTracks';
 import { IS_STANDALONE } from '../../constants/layout';
 import { FullscreenChip } from './FullscreenChip';
 import './wapop.css';
@@ -70,6 +71,11 @@ export const NubatamaTitleScreen: React.FC<Props> = ({ onVsCpu, onSingle }) => {
       video.muted = true;
       video.play().catch(() => setPhase('demo'));
     });
+  }, [phase]);
+
+  // タイトル曲。OP は自分の音を持っているので、OP が終わって見本れんさ・タイトルに来てから鳴らす
+  useEffect(() => {
+    if (phase !== 'op') playMenuBgm(MENU_BGM.title);
   }, [phase]);
 
   const toTitle = () => {
@@ -195,7 +201,8 @@ const Credits: React.FC<{ onClose: () => void }> = ({ onClose }) => (
       </p>
       <p>キャラクター・楽曲の権利は、原作の権利者に帰属します。</p>
       <ul className="space-y-0.5">
-        <li>キャラクター画像・BGM：『月蝕綺譚』公式素材（公式サイトから表示・再生）</li>
+        <li>キャラクター画像・対戦のBGM：『月蝕綺譚』公式素材（公式サイトから表示・再生）</li>
+        <li>タイトル・キャラえらびのBGM：自作</li>
         <li>ボイス：AI音声合成（Irodori-TTS）でつくった声です。公式の音声・声優ではありません</li>
         <li>OPの動画：AI動画生成（MiniMax H3）</li>
         <li>効果音：自作</li>

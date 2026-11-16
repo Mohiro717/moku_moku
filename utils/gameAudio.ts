@@ -104,11 +104,54 @@ export function unlockAudio() {
 
 export function playBgm(src: string) {
   if (!bgm) return;
+  clearRetry();
   if (!bgm.src.endsWith(src)) bgm.src = src;
   bgm.currentTime = 0;
   bgm.playbackRate = 1;
   duck(false);
   void bgm.play().catch(() => {});
+}
+
+/** 鳴らせなかった（まだ画面に触っていない）ときに、最初の操作で鳴らしなおす */
+let retryOnGesture: (() => void) | null = null;
+
+function clearRetry() {
+  if (!retryOnGesture) return;
+  window.removeEventListener('pointerdown', retryOnGesture);
+  window.removeEventListener('keydown', retryOnGesture);
+  retryOnGesture = null;
+}
+
+/**
+ * タイトル・キャラえらびの BGM。同じ曲が鳴っていれば頭に戻さない（自分えらび → 相手えらび で途切れない）。
+ * ブラウザに自動再生を断られたら、画面のどこかに触れた時点で鳴らす
+ */
+export function playMenuBgm(path: string) {
+  const el = bgm;
+  if (!el) return;
+  clearRetry();
+  // el.src は絶対 URL で返るので、比べる側もそろえる（そろえないと同じ曲でも毎回頭に戻る）
+  const src = new URL(path, window.location.href).href;
+  if (el.src === src && !el.paused) return;
+  if (el.src !== src) {
+    el.src = src;
+    el.currentTime = 0;
+  }
+  el.playbackRate = 1;
+  duck(false);
+  el.muted = muted;
+  el.play().catch(() => {
+    if (typeof window === 'undefined') return;
+    const retry = () => {
+      clearRetry();
+      if (el.src !== src) return;
+      unlockAudio();
+      void el.play().catch(() => {});
+    };
+    retryOnGesture = retry;
+    window.addEventListener('pointerdown', retry);
+    window.addEventListener('keydown', retry);
+  });
 }
 
 export function pauseBgm() {
@@ -121,6 +164,7 @@ export function resumeBgm() {
 
 export function stopBgm() {
   if (!bgm) return;
+  clearRetry();
   bgm.pause();
   bgm.currentTime = 0;
   bgm.playbackRate = 1;

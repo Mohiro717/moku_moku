@@ -8,7 +8,8 @@ import './wapop.css';
 import type { GameDifficulty } from '../../types/game';
 import { HEADER_OFFSET } from '../../constants/layout';
 import { DEFAULT_OPPONENT_CHARACTER_ID, DEFAULT_PLAYER_CHARACTER_ID, characterById } from '../../constants/cpuCharacters';
-import { unlockAudio } from '../../utils/gameAudio';
+import { playMenuBgm, stopBgm, unlockAudio } from '../../utils/gameAudio';
+import { MENU_BGM } from '../../constants/bgmTracks';
 
 // ぬばたま落としの画面の流れ（タイトル → キャラえらび → 対戦／ひとりであそぶ）。
 // もくもくハウスのゲームセクションと、ぬばたま落とし単独サイト（nubatama/）の両方がこれを使う。
@@ -43,6 +44,20 @@ export const NubatamaGame: React.FC<NubatamaGameProps> = ({ onExit }) => {
     if (playAreaRef.current) window.scrollTo({ top: Math.max(0, y - HEADER_OFFSET), behavior: 'smooth' });
   }, [screen]);
 
+  // キャラえらびの BGM（自分えらび → 相手えらび は同じ曲のまま続ける）。タイトル曲は NubatamaTitleScreen が鳴らし、
+  // 対戦・ひとりであそぶ は始まるときにキャラのテーマ曲へ替わる。ぬばたま落としを出たら止める（もくもくハウスのカード一覧へ戻るとき）
+  useEffect(() => {
+    if (screen === 'player-select' || screen === 'solo-select' || screen === 'difficulty-select') playMenuBgm(MENU_BGM.select);
+  }, [screen]);
+  useEffect(() => () => stopBgm(), []);
+
+  /** 試合に入る。キャラえらびの曲を止めてから（試合の曲は はじまりの演出のあとに鳴る） */
+  const startPlay = (next: 'playing-single' | 'vs-cpu') => {
+    unlockAudio();
+    stopBgm();
+    setScreen(next);
+  };
+
   if (screen === 'title') {
     return (
       <div ref={playAreaRef} className="wp-zone">
@@ -76,7 +91,7 @@ export const NubatamaGame: React.FC<NubatamaGameProps> = ({ onExit }) => {
           <div className="flex flex-col items-center gap-4">
             <button
               type="button"
-              onClick={() => setScreen(screen === 'player-select' ? 'difficulty-select' : 'playing-single')}
+              onClick={() => (screen === 'player-select' ? setScreen('difficulty-select') : startPlay('playing-single'))}
               className="hf-btn hf-btn-main hf-dot w-full max-w-xs py-3 text-lg"
             >
               {screen === 'player-select' ? 'つぎへ' : 'あそぶ！'}
@@ -132,7 +147,7 @@ export const NubatamaGame: React.FC<NubatamaGameProps> = ({ onExit }) => {
           </div>
 
           <div className="flex flex-col items-center gap-4">
-            <button type="button" onClick={() => { unlockAudio(); setScreen('vs-cpu'); }} className="hf-btn hf-btn-main hf-dot w-full max-w-xs py-3 text-lg">
+            <button type="button" onClick={() => startPlay('vs-cpu')} className="hf-btn hf-btn-main hf-dot w-full max-w-xs py-3 text-lg">
               たいせん する！
             </button>
             <button type="button" onClick={() => setScreen('player-select')} className="hf-btn hf-btn-sub hf-dot w-full max-w-xs py-2 text-sm">
