@@ -46,10 +46,10 @@ const VsSplash: React.FC<{ player: CpuCharacter; cpu: CpuCharacter }> = ({ playe
     style={{ '--vs-ms': `${VS_LEAD_MS + 3 * COUNT_MS}ms` } as React.CSSProperties}
   >
     <div className="vs-half vs-half-a">
-      {player.cutins[0] && <img src={vsArtUrl(player.cutins[0])} alt="" className="vs-art" />}
+      {player.cutins[0] && <img src={vsArtUrl(player.cutins[0])} alt="" className="vs-art" style={{ objectPosition: player.vsPosition }} />}
     </div>
     <div className="vs-half vs-half-b">
-      {cpu.cutins[0] && <img src={vsArtUrl(cpu.cutins[0])} alt="" className="vs-art vs-art-flip" />}
+      {cpu.cutins[0] && <img src={vsArtUrl(cpu.cutins[0])} alt="" className="vs-art vs-art-flip" style={{ objectPosition: cpu.vsPosition }} />}
     </div>
     <div className="vs-slash">
       <div className="vs-slash-line" />

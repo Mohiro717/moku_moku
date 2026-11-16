@@ -90,6 +90,8 @@ export const CPU_CHARACTER_DATA: CpuCharacter[] = [
       'https://kura.vibe.co.jp/ult/cutin_anim_nemu_s4_v3.webp',
       'https://kura.vibe.co.jp/ult/cutin_anim_nemu_s5_v3.webp'
     ],
+    // ネムは絵の左端に立つ。VS では左へ寄せて見せる
+    vsPosition: '5% 50%',
     bgm: 'https://vibe.co.jp/luna-occulta/media/music/freehand.mp3',
     lines: {
       intro: ['ん……あるじどの、あそぶ？ ちょっとだけね', 'ふぁ……ねむい。でも、まけないよ'],
@@ -290,6 +292,8 @@ export const CPU_CHARACTER_DATA: CpuCharacter[] = [
       'https://kura.vibe.co.jp/ult/cutin_anim_anne_s4_v3.webp',
       'https://kura.vibe.co.jp/ult/cutin_anim_anne_s5_v3.webp'
     ],
+    // 餡音は絵の左寄りに立つ。VS では左へ寄せて見せる
+    vsPosition: '15% 50%',
     bgm: 'https://vibe.co.jp/luna-occulta/media/music/kitan_maintheme.mp3',
     lines: {
       intro: ['あるじどの、いらっしゃい。お団子賭けて、勝負だよう', 'のんびりしてるけど、手は抜かないよう'],

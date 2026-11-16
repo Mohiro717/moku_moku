@@ -20,6 +20,11 @@ export interface CpuCharacter {
   icon: string;
   /** 大きな連鎖のたびに、この順で1本ずつ流す */
   cutins: string[];
+  /**
+   * 対戦はじまりの VS で cutins[0] のどこを見せるか（CSS の object-position）。なければ真ん中。
+   * VS は横長の絵の真ん中を縦長に切り抜くので、人物が絵の端に寄っているキャラは顔が外れる（オーナー 11-16「顔が見切れてしまっているキャラがいる」）
+   */
+  vsPosition?: string;
   bgm: string;
   /** 場面ごとの台詞。言うたびにこの中から選ぶ */
   lines: Record<CpuLineKind, string[]>;
