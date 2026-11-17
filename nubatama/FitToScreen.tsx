@@ -11,7 +11,7 @@ import './stage.css';
 // 前は画面ごとに外枠を測っていて、1600×900 で タイトル 1.75 → じぶんえらび 1.61 → あいてえらび 1.44 倍と替わり、
 // 測るのが切り替えの1コマあと（入れ替わり中の外枠は一瞬 2〜5 倍の高さになる）で、対戦中も ふきだしの行数が替わるたびに跳ねていた。
 // - メニュー（.wp-zone に data-fit="menu"。じぶんえらび・あいてえらび・ひとりで）は MENU_BOX
-// - タイトル・OP（data-fit="title"）は高さを見ず、横幅ぴったり（titleZoom）
+// - タイトル・OP（data-fit="title"）は窓を覆う倍率（titleFit）
 // - それ以外（対戦・ひとりであそぶ の盤面）は PLAY_BOX
 // 倍率が替わるのは メニュー ⇄ 盤面 の行き来と、窓の大きさが替わったときだけ。
 //
@@ -29,7 +29,7 @@ const MENU_BOX = { w: 896, h: 612 };
 const PLAY_BOX = { w: 806, h: 760 };
 // タイトル・OP の素の幅（NubatamaTitleScreen の max-w-4xl）
 const TITLE_W = 896;
-// タイトルの絵の 縦÷横（864:480。PC は絵だけで、下の帯はスマホだけ）
+// タイトルの絵の 縦÷横（864:480）
 const TITLE_RATIO = 480 / 864;
 
 /** 箱が窓に収まる倍率（1 未満にはしない。0.01 刻みで切り捨て） */
@@ -37,28 +37,25 @@ const zoomFor = ({ w, h }: { w: number; h: number }): number =>
   Math.max(1, Math.floor(Math.min((window.innerWidth - PAD * 2) / w, (window.innerHeight - PAD * 2) / h) * 100) / 100);
 
 /**
- * タイトル・OP は横幅ぴったり（オーナー 11-17、タイトルの画面写しを添えて「これをブラウザ幅いっぱいに表示させたい」）。
- * 絵は 864:480 の比で組んであり（位置は %、大きさは cqw）、横だけ伸ばすと崩れるので、比は保ったまま幅を窓に合わせる。
- * 窓が 864:480 より横長なら下が少しはみ出してスクロールになる。縦長なら上下に宵闇の地が出る。
- * 幅は窓の幅（innerWidth）から出し、下がはみ出すときだけ縦のスクロールバーの幅を引く。
- * 今のページの幅（clientWidth）で測ると、OP の出だしで一瞬出たスクロールバーのぶん 15px 狭いまま残った（11-17 実測）
+ * タイトル・OP は窓いっぱい（オーナー 11-17「これをブラウザ幅いっぱいに」→「アスペクト比の調整もしてください」）。
+ * 絵は 864:480 の格子で組んであり（位置は %、大きさは cqw、題字・丘は viewBox）、枠の縦横比を変えると部品どうしがずれる。
+ * そこで絵の比は保ったまま、窓を覆う倍率（cover）で置き、窓からはみ出した端だけを切る。
+ * 切りすぎると欠けるので、収まる倍率（contain）からの上げ幅に上限を置く。上限は向きで違う:
+ * 横長の窓（上下を切る）は 1.11 倍まで（1920×960 がちょうどこれ。右上の おと・あそびかた… は窓の隅に付いているので、
+ *   上を切るほど題字が上がって重なる。2560×1080 で 1.15 倍にしたら「ぬばたま」に重なった。11-17 実測）。
+ * 縦長の窓（左右を切る）は 1.06 倍まで（題字「し」の右端が 94% にあり、5:4 で 1.12 倍にしたら切れた。11-17 実測）。
+ * それより縦横比が離れた窓は、足りない向きに宵闇の地が少し出る。スマホ（幅 640 未満）は下の帯つきの組み方なので、これまでどおり幅ぴったり。
+ * 窓の大きさ（絵を置く枠の幅・高さ。zoom 前の値）は --nb-tw / --nb-th で stage.css に渡す
  */
-const titleZoom = (): number => {
-  const w = window.innerWidth;
-  const overflows = w * TITLE_RATIO > window.innerHeight;
-  return Math.max(1, (overflows ? w - scrollbarWidth() : w) / TITLE_W);
-};
-/** 縦のスクロールバーの幅（Windows の Chrome は 15px 前後、スマホと Mac は 0）。1回だけ測る */
-let scrollbarW: number | null = null;
-const scrollbarWidth = (): number => {
-  if (scrollbarW === null) {
-    const probe = document.createElement('div');
-    probe.style.cssText = 'position:absolute;top:-9999px;width:100px;height:100px;overflow:scroll';
-    document.body.appendChild(probe);
-    scrollbarW = probe.offsetWidth - probe.clientWidth;
-    probe.remove();
-  }
-  return scrollbarW;
+const TITLE_MAX_CROP_TOPBOTTOM = 1.11;
+const TITLE_MAX_CROP_SIDES = 1.06;
+const titleFit = (): { zoom: number; w: number; h: number } | { zoom: number } => {
+  const w = window.innerWidth, h = window.innerHeight;
+  if (w < 640) return { zoom: Math.max(1, document.documentElement.clientWidth / TITLE_W) };
+  const byW = w / TITLE_W, byH = h / (TITLE_W * TITLE_RATIO);
+  // byW > byH なら窓が絵より横長（幅で合わせると上下がはみ出す）
+  const zoom = byW > byH ? Math.min(byW, byH * TITLE_MAX_CROP_TOPBOTTOM) : Math.min(byH, byW * TITLE_MAX_CROP_SIDES);
+  return { zoom, w: w / zoom, h: h / zoom };
 };
 
 export const FitToScreen: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -72,7 +69,12 @@ export const FitToScreen: React.FC<{ children: React.ReactNode }> = ({ children 
     const fit = () => {
       const mark = el.querySelector(':scope > .wp-zone')?.getAttribute('data-fit');
       const mode = mark === 'title' || mark === 'menu' ? mark : 'play';
-      const next = String(mode === 'title' ? titleZoom() : zoomFor(mode === 'menu' ? MENU_BOX : PLAY_BOX));
+      const title = mode === 'title' ? titleFit() : null;
+      const next = String(title ? title.zoom : zoomFor(mode === 'menu' ? MENU_BOX : PLAY_BOX));
+      if (title && 'w' in title) {
+        stage.style.setProperty('--nb-tw', `${title.w}px`);
+        stage.style.setProperty('--nb-th', `${title.h}px`);
+      }
       // state を通さず style に直接書く。MutationObserver の知らせは描く前に届くので、新しい画面は最初から新しい倍率で出る
       if (outer.style.zoom !== next) outer.style.zoom = next;
       // 窓いっぱいの枠の四隅の札も、中身と同じ倍率にする（札だけ小さく見えないように）。盤面のあいだは札を弾ませない（端末の熱）

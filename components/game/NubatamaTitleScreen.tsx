@@ -116,7 +116,7 @@ export const NubatamaTitleScreen: React.FC<Props> = ({ onVsCpu, onSingle }) => {
       <style>{TITLE_CSS}</style>
       {/* 色調 B「夜の花札」（オーナー 11-15）：外枠は墨、スマホの下の帯は宵闇の深いところ、画の下地は宵闇 */}
       <div className="nb-title-card overflow-hidden rounded-3xl border-[3px] border-[#0b0b12] shadow-[0_6px_0_#0b0b12] bg-[#131320]">
-      <div className="relative bg-[#1b1b2e]">
+      <div className="nb-title-stage relative bg-[#1b1b2e]">
         {/* タイトル（案3b）。OP の下で先に動かしておき、見本の背景にもなる。
             PC はボタンを画の右下（題字の下）に重ねる。スマホは字が小さくなるので画の下に出す */}
         <TitleHanafudaOdori

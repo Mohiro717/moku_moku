@@ -34,3 +34,16 @@
 .hf-frame.nb-stage[data-mode='title'] { padding: 0; }
 .nb-stage[data-mode='title'] > .hf-decos { display: none; }
 .nb-stage-body .nb-title-card { border: 0; border-radius: 0; box-shadow: none; }
+
+/* PC のタイトル・OP：窓の縦横比に合わせる（FitToScreen.tsx の titleFit）。
+   枠を窓の大きさ（--nb-tw × --nb-th）にし、864:480 の絵（幅 896）を真ん中に置いて、はみ出した端を枠で切る。
+   OP の動画も同じく覆う（object-fit: cover）。絵の幅は .tt-frame の --tt-w を上書き（style の値より強くするため !important） */
+@media (min-width: 640px) {
+  .nb-stage[data-mode='title'] .nb-title { width: var(--nb-tw); max-width: none; }
+  .nb-stage[data-mode='title'] .nb-title-stage { height: var(--nb-th); overflow: hidden; }
+  .nb-stage[data-mode='title'] .nb-title-stage > .tt-frame {
+    --tt-w: 896px !important;
+    position: absolute; left: 50%; top: 50%; translate: -50% -50%;
+  }
+  .nb-stage[data-mode='title'] .nb-title-stage > video { object-fit: cover; }
+}
