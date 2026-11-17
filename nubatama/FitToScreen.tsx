@@ -13,6 +13,7 @@ import './stage.css';
 // - タイトル・OP（data-fit="title"）は絵の本体が窓に収まる倍率。まわりは絵が描き足す（fillFit）
 // - メニュー（.wp-zone に data-fit="menu"。じぶんえらび・あいてえらび・ひとりで）は、幅 640 以上ならタイトルと同じ倍率で窓いっぱいに組む（fillFit）。
 //   スマホは MENU_BOX
+// - 対戦（data-fit="vs"。幅 640 以上の単独サイトだけ付く）は、5列が窓いっぱいに収まる倍率（fillFit(VS_MIN)）
 // - それ以外（対戦・ひとりであそぶ の盤面）は PLAY_BOX
 // 倍率が替わるのは メニュー ⇄ 盤面 の行き来と、窓の大きさが替わったときだけ。
 //
@@ -55,11 +56,18 @@ const titleFit = (): { zoom: number; w: number; h: number } | { zoom: number } =
  * キャラえらびも同じ倍率にする（オーナー 11-17。前はタイトル 1.79 → キャラえらび 1.44 倍と、進むと大きさが変わった）。
  * キャラえらびは、どの窓でも 896×498 の中に収まるように組んである（NubatamaGame.tsx の wide、stage.css の .nb-sel）
  */
-const fillFit = (): { zoom: number; w: number; h: number } => {
+const fillFit = (minW = TITLE_W, minH = TITLE_W * TITLE_RATIO): { zoom: number; w: number; h: number } => {
   const w = window.innerWidth, h = window.innerHeight;
-  const zoom = Math.min(w / TITLE_W, h / (TITLE_W * TITLE_RATIO));
+  const zoom = Math.min(w / minW, h / minH);
   return { zoom, w: w / zoom, h: h / zoom };
 };
+
+/**
+ * 対戦の5列（PuyoVsCpuGame.tsx の wide、stage.css の .nb-vs）が窓いっぱいに収まる倍率。
+ * 高さは盤の列（おじゃま予告＋盤）で決まる。幅は 盤2つ・まんなか・左右のキャラの列の いちばん狭い幅の合計。
+ * 窓が これより横長なら左右のキャラの列が伸び、縦長なら上下に地が出る
+ */
+const VS_MIN = { w: 1060, h: 600 };
 
 export const FitToScreen: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const stageRef = useRef<HTMLDivElement>(null);
@@ -71,8 +79,12 @@ export const FitToScreen: React.FC<{ children: React.ReactNode }> = ({ children 
     if (!stage || !outer || !el) return;
     const fit = () => {
       const mark = el.querySelector(':scope > .wp-zone')?.getAttribute('data-fit');
-      const mode = mark === 'title' || mark === 'menu' ? mark : 'play';
-      const fill = mode === 'title' ? titleFit() : mode === 'menu' && window.innerWidth >= 640 ? fillFit() : null;
+      const mode = mark === 'title' || mark === 'menu' || mark === 'vs' ? mark : 'play';
+      const wide = window.innerWidth >= 640;
+      const fill = mode === 'title' ? titleFit()
+        : mode === 'menu' && wide ? fillFit()
+        : mode === 'vs' && wide ? fillFit(VS_MIN.w, VS_MIN.h)
+        : null;
       const next = String(fill ? fill.zoom : zoomFor(mode === 'menu' ? MENU_BOX : PLAY_BOX));
       if (fill && 'w' in fill) {
         stage.style.setProperty('--nb-tw', `${fill.w}px`);

@@ -15,6 +15,7 @@ import { BACK_TARGET_LABEL, HEADER_OFFSET } from '../../constants/layout';
 import { COUNT_MS, GO_MS, VS_LEAD_MS, MoodIcon, preloadVsArt, VsIntroOverlay, nextMood, type IntroStep, type Mood } from './VsIntro';
 import './wapop.css';
 import { HfFrame, HfTitle } from './HanafudaUi';
+import { useWideStage } from '../../hooks/useWideStage';
 import { BgmTitle } from './BgmTitle';
 import { AllyCharacterPanel, CpuCharacterPanel, CpuCutinOverlay, KitanCredit } from './CpuCharacter';
 import {
@@ -115,6 +116,7 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
       getPlayerPairPositions,
       getCpuPairPositions
     } = useVsCpuGame(initialDifficulty);
+    const wide = useWideStage();
 
     // 攻撃の光：盤面と予告欄の位置を取るための参照
     const playerBoardRef = useRef<HTMLDivElement>(null);
@@ -354,6 +356,152 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
     </>
   );
 
+  // 見出しの小札：つよさ・おと・もどる
+  const headChips = (
+    <>
+      <span className={`hf-chip ${wide ? '' : '!hidden sm:!inline-flex'}`}>つよさ：{DIFFICULTY_LABELS[gameState.difficulty]}</span>
+      <button
+        type="button"
+        onClick={toggleMuted}
+        aria-pressed={!muted}
+        aria-label={muted ? 'おとを出す' : 'おとを消す'}
+        className="hf-chip"
+      >
+        {muted ? '🔇 おと' : '🔊 おと'}
+      </button>
+      {onBack && (
+        // ゲームえらびに戻る：枠の外にあったのを、見出しの小札へ（オーナー「一体にしたい」。ボタンは枠の外に出さない）
+        <button type="button" onClick={onBack} aria-label={`${BACK_TARGET_LABEL} もどる`} className="hf-chip">
+          ← <span className="hidden sm:inline">{BACK_TARGET_LABEL} </span>もどる
+        </button>
+      )}
+    </>
+  );
+
+  // 自分の盤面（おじゃま予告・BGM の曲名・盤・カットイン）。wide では とくてんを盤の下でなく まんなかの列に出す
+  const playerField = (
+    <>
+      {/* BGM（相手のテーマ曲。useVsGameSound）の曲名。おじゃま予告の列にかぶせる（試合のはじめは予告が空いている）。数秒で消える */}
+      <BgmTitle src={character.bgm} show={inMatch} className="absolute z-30 top-1 left-1" />
+      <div ref={playerNoticeRef}>
+        <OjamaNotice
+          count={gameState.pendingOjamaPlayer}
+          ready={gameState.isPlaying && !gameState.cpu.isChaining}
+          hit={hits.player}
+        />
+      </div>
+      <div ref={playerBoardRef} className="relative">
+        <TouchControls
+          onMove={(direction) => handlePlayerMove(direction)}
+          onRotateClockwise={handlePlayerRotateClockwise}
+          onRotateCounterClockwise={handlePlayerRotateCounterClockwise}
+          onHardDrop={hardDropPlayerPair}
+          isActive={playing}
+        >
+          <GameGrid
+            grid={gameState.player.grid}
+            currentPair={gameState.player.currentPair}
+            getPairPositions={getPlayerPairPositions}
+            isGameOver={gameState.player.isGameOver}
+            isPaused={gameState.isPaused}
+            gameResult={getGameResult(gameState.isGameOver, gameState.winner, 'player')}
+            chainStep={gameState.player.currentChainStep}
+            startPrompt={startPrompt}
+            actions={resultActions}
+            footer={wide ? undefined : <BoardScore score={gameState.player.score} accent onLight={onLightVeil('player')} />}
+          />
+        </TouchControls>
+        {/* 必殺カットインは揺れる盤面の枠（この div）の中に置く。外に置くと、連鎖の揺れで
+            盤面だけが動いてカットインが浮いて見え、上のおじゃま予告の列にもはみ出す。
+            同キャラ戦でも分かるよう、じぶん／あいての札を出す */}
+        <CpuCutinOverlay cutin={allySide.cutin} name={playerCharacter.name} side="player" />
+        {/* lg 未満は相手の盤面が小さいので、相手のカットインも自分の盤面に重ねる */}
+        {!wide && (
+          <div className="lg:hidden pointer-events-none absolute inset-0 z-20">
+            <CpuCutinOverlay cutin={cutin} name={character.name} side="cpu" />
+          </div>
+        )}
+      </div>
+    </>
+  );
+
+  if (wide) {
+    // 単独サイトの横長の窓：［自分のキャラとふきだし］［自分の盤］［つぎ・とくてん・ボタン］［相手の盤］［相手のキャラとふきだし］
+    // （オーナー 11-17「余白が無いように素材やUI配置設計を見直して」）。枠は窓の大きさ（--nb-tw × --nb-th、FitToScreen.tsx の vsFit）。
+    // 盤の大きさは窓の高さで決まり、左右のキャラの列が残りの幅を埋める（stage.css の .nb-vs）
+    const side = (who: 'me' | 'you') => {
+      const c = who === 'me' ? playerCharacter : character;
+      const said = who === 'me' ? allySide.line : line;
+      const tick = who === 'me' ? allySide.lineTick : lineTick;
+      return (
+        <div className={`nb-vs-side nb-vs-side-${who}`}>
+          <div key={`${said}-${tick}`} className="nb-vs-say hf-bubble px-3 py-2 font-serif text-sm leading-snug animate-fade-in-up">
+            「{said}」
+          </div>
+          <MoodIcon src={c.icon} alt={c.name} mood={who === 'me' ? playerMood : cpuMood} className="nb-vs-face" />
+          <div className={`hf-band ${who === 'me' ? 'hf-band-me' : 'hf-band-you'} nb-vs-name px-3 py-1 text-base`}>
+            <span className="truncate">{c.name}</span>
+          </div>
+          <span className="hf-ink text-xs">{c.tagline}</span>
+        </div>
+      );
+    };
+    return (
+      <ErrorBoundary fallback={GameErrorFallback}>
+        <HfFrame ref={frameRef} className="puyo-vs nb-vs">
+          <div className="nb-vs-grid">
+            {side('me')}
+            <div className="relative">{playerField}</div>
+
+            <div className="nb-vs-center">
+              <HfTitle text="ぬばたま落とし" gold={[4]} className="text-[1.6rem]" />
+              <div className="flex flex-wrap justify-center gap-1.5">{headChips}</div>
+              <div className="flex justify-between gap-2 mt-1">
+                <NextTag nextPair={gameState.player.nextPair} nextNextPair={gameState.player.nextNextPair} className="w-[5rem]" />
+                <NextTag nextPair={gameState.cpu.nextPair} nextNextPair={gameState.cpu.nextNextPair} className="w-[5rem]" />
+              </div>
+              <div className="flex justify-between gap-2">
+                <ScoreKoban score={gameState.player.score} accent className="w-[5rem]" />
+                <ScoreKoban score={gameState.cpu.score} className="w-[5rem]" />
+              </div>
+              {/* ひとやすみ・やりなおすは、いつでも盤面のすぐ横で押せるように常に出す */}
+              <div className="mt-auto mx-auto flex flex-col gap-2 w-[6.5rem]">{controlButtons}</div>
+              <KitanCredit url={FANWORKS_URL} />
+            </div>
+
+            <div className="relative">
+              <div ref={cpuNoticeRef}>
+                <OjamaNotice
+                  count={gameState.pendingOjamaCpu}
+                  ready={gameState.isPlaying && !gameState.player.isChaining}
+                  hit={hits.cpu}
+                />
+              </div>
+              <div ref={cpuBoardRef} className="relative">
+                <GameGrid
+                  grid={gameState.cpu.grid}
+                  currentPair={gameState.cpu.currentPair}
+                  getPairPositions={getCpuPairPositions}
+                  isGameOver={gameState.cpu.isGameOver}
+                  isPaused={gameState.isPaused}
+                  gameResult={getGameResult(gameState.isGameOver, gameState.winner, 'cpu')}
+                  chainStep={gameState.cpu.currentChainStep}
+                />
+                <div className="pointer-events-none absolute inset-0 z-20">
+                  <CpuCutinOverlay cutin={cutin} name={character.name} side="cpu" />
+                </div>
+              </div>
+            </div>
+            {side('you')}
+          </div>
+
+          <AttackBeamLayer beams={beams} />
+          <VsIntroOverlay step={intro} showVs={showVs} player={playerCharacter} cpu={character} />
+        </HfFrame>
+      </ErrorBoundary>
+    );
+  }
+
   return (
     <ErrorBoundary fallback={GameErrorFallback}>
       {/* PC では枠を中身（盤面・まんなか・盤面）の幅に寄せる。max-w-7xl いっぱいだと左右に地の余白が広く残った（オーナー 11-14） */}
@@ -362,22 +510,7 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
         <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
           <HfTitle text="ぬばたま落とし" gold={[4]} className="text-xl sm:text-[1.75rem] pl-1" />
           <div className="flex items-center gap-2 ml-auto">
-            <span className="hf-chip !hidden sm:!inline-flex">つよさ：{DIFFICULTY_LABELS[gameState.difficulty]}</span>
-            <button
-              type="button"
-              onClick={toggleMuted}
-              aria-pressed={!muted}
-              aria-label={muted ? 'おとを出す' : 'おとを消す'}
-              className="hf-chip"
-            >
-              {muted ? '🔇 おと' : '🔊 おと'}
-            </button>
-            {onBack && (
-              // ゲームえらびに戻る：枠の外にあったのを、見出しの小札へ（オーナー「一体にしたい」。ボタンは枠の外に出さない）
-              <button type="button" onClick={onBack} aria-label={`${BACK_TARGET_LABEL} もどる`} className="hf-chip">
-                ← <span className="hidden sm:inline">{BACK_TARGET_LABEL} </span>もどる
-              </button>
-            )}
+            {headChips}
           </div>
         </div>
 
@@ -409,47 +542,7 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
             <div className="mt-auto mx-auto flex flex-col gap-2 w-[6.5rem]">{controlButtons}</div>
           </div>
 
-          <div className="[grid-area:p-field] relative">
-            {/* BGM（相手のテーマ曲。useVsGameSound）の曲名。おじゃま予告の列にかぶせる（試合のはじめは予告が空いている）。数秒で消える */}
-            <BgmTitle src={character.bgm} show={inMatch} className="absolute z-30 top-1 left-1" />
-            <div ref={playerNoticeRef}>
-              <OjamaNotice
-                count={gameState.pendingOjamaPlayer}
-                ready={gameState.isPlaying && !gameState.cpu.isChaining}
-                hit={hits.player}
-              />
-            </div>
-            <div ref={playerBoardRef} className="relative">
-              <TouchControls
-                onMove={(direction) => handlePlayerMove(direction)}
-                onRotateClockwise={handlePlayerRotateClockwise}
-                onRotateCounterClockwise={handlePlayerRotateCounterClockwise}
-                onHardDrop={hardDropPlayerPair}
-                isActive={playing}
-              >
-                <GameGrid
-                  grid={gameState.player.grid}
-                  currentPair={gameState.player.currentPair}
-                  getPairPositions={getPlayerPairPositions}
-                  isGameOver={gameState.player.isGameOver}
-                  isPaused={gameState.isPaused}
-                  gameResult={getGameResult(gameState.isGameOver, gameState.winner, 'player')}
-                  chainStep={gameState.player.currentChainStep}
-                  startPrompt={startPrompt}
-                  actions={resultActions}
-                  footer={<BoardScore score={gameState.player.score} accent onLight={onLightVeil('player')} />}
-                />
-              </TouchControls>
-              {/* 必殺カットインは揺れる盤面の枠（この div）の中に置く。外に置くと、連鎖の揺れで
-                  盤面だけが動いてカットインが浮いて見え、上のおじゃま予告の列にもはみ出す。
-                  同キャラ戦でも分かるよう、じぶん／あいての札を出す */}
-              <CpuCutinOverlay cutin={allySide.cutin} name={playerCharacter.name} side="player" />
-              {/* lg 未満は相手の盤面が小さいので、相手のカットインも自分の盤面に重ねる */}
-              <div className="lg:hidden pointer-events-none absolute inset-0 z-20">
-                <CpuCutinOverlay cutin={cutin} name={character.name} side="cpu" />
-              </div>
-            </div>
-          </div>
+          <div className="[grid-area:p-field] relative">{playerField}</div>
           <SideInfo className="[grid-area:p-side] lg:hidden" nextPair={gameState.player.nextPair} nextNextPair={gameState.player.nextNextPair} score={gameState.player.score} accent>
             {controlButtons}
           </SideInfo>

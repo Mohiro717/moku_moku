@@ -6,7 +6,8 @@ import { CharacterPicker } from './CharacterPicker';
 import { HfFrame, HfTitle } from './HanafudaUi';
 import './wapop.css';
 import type { GameDifficulty } from '../../types/game';
-import { HEADER_OFFSET, IS_STANDALONE } from '../../constants/layout';
+import { HEADER_OFFSET } from '../../constants/layout';
+import { useWideStage } from '../../hooks/useWideStage';
 import { DEFAULT_OPPONENT_CHARACTER_ID, DEFAULT_PLAYER_CHARACTER_ID, characterById } from '../../constants/cpuCharacters';
 import { playMenuBgm, stopBgm, unlockAudio } from '../../utils/gameAudio';
 import { MENU_BGM } from '../../constants/bgmTracks';
@@ -15,20 +16,6 @@ import { MENU_BGM } from '../../constants/bgmTracks';
 // もくもくハウスのゲームセクションと、ぬばたま落とし単独サイト（nubatama/）の両方がこれを使う。
 // 2026-11-15 に GameSection.tsx から切り出した。中身は切り出す前と同じ。
 type Screen = 'title' | 'player-select' | 'solo-select' | 'difficulty-select' | 'playing-single' | 'vs-cpu';
-
-/** 単独サイトの、窓が幅 640 以上のとき（FitToScreen.tsx が窓いっぱいに組む）。もくもくハウスとスマホは false で、これまでの縦積み */
-const WIDE_QUERY = '(min-width: 640px)';
-const useWideStage = () => {
-  const [wide, setWide] = useState(() => IS_STANDALONE && window.matchMedia(WIDE_QUERY).matches);
-  useEffect(() => {
-    if (!IS_STANDALONE) return;
-    const m = window.matchMedia(WIDE_QUERY);
-    const on = () => setWide(m.matches);
-    m.addEventListener('change', on);
-    return () => m.removeEventListener('change', on);
-  }, []);
-  return wide;
-};
 
 interface NubatamaGameProps {
   /** 対戦・ひとりであそぶ の「もどる」の行き先。渡さなければタイトルへ戻る */
@@ -188,8 +175,9 @@ export const NubatamaGame: React.FC<NubatamaGameProps> = ({ onExit }) => {
   }
 
   // ぬばたま落としの「もどる」は枠の中の見出しにある（PuyoVsCpuGame・PuyoPuyoGame の onBack）
+  // 対戦は、単独サイトの横長の窓では窓いっぱいの5列（data-fit="vs"。FitToScreen.tsx の vsFit）
   return (
-    <div ref={playAreaRef} className="wp-zone transition-all duration-500 animate-fade-in-up">
+    <div ref={playAreaRef} data-fit={wide && screen === 'vs-cpu' ? 'vs' : undefined} className="wp-zone transition-all duration-500 animate-fade-in-up">
       {screen === 'playing-single' ? (
         <PuyoPuyoGame playerCharacterId={playerCharacterId} onChangeCharacter={() => setScreen('solo-select')} onBack={exit} />
       ) : (

@@ -106,3 +106,53 @@
   to { scale: 1; opacity: 1; }
 }
 @media (prefers-reduced-motion: reduce) { .nb-sel-face { animation: none; } }
+
+/* PC の対戦（PuyoVsCpuGame.tsx の wide）：窓いっぱいに5列。
+   ［自分のキャラとふきだし］［自分の盤］［つぎ・とくてん・ボタン］［相手の盤］［相手のキャラとふきだし］。
+   倍率は FitToScreen.tsx の vsFit（盤の列の高さが窓の高さに合う）。盤とまんなかは幅が決まっていて、左右のキャラの列が残りの幅を埋める。
+   幅 640 未満（スマホ）は wide にならないので、これまでの並びのまま */
+.nb-stage[data-mode='vs'] > .hf-decos .hf-poyon { animation: none; }
+@media (min-width: 640px) {
+  .hf-frame.nb-stage[data-mode='vs'] { padding: 0; }
+  .nb-stage[data-mode='vs'] > .hf-decos { display: none; }
+  .nb-stage-body .hf-frame.puyo-vs.nb-vs {
+    --puyo-size: 38px;
+    width: var(--nb-tw);
+    height: var(--nb-th);
+    padding: 0;
+    overflow: clip;
+  }
+  .nb-vs-grid {
+    height: 100%;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto 12rem auto minmax(0, 1fr);
+    /* 行の高さは盤の列の高さ（FitToScreen.tsx の VS_MIN.h）。縦長の窓でも、まんなかのボタンや左右のキャラが盤から離れない */
+    grid-template-rows: minmax(0, 600px);
+    align-content: center;
+    align-items: center;
+    column-gap: 10px;
+    padding: 0 12px;
+  }
+  .nb-vs-center {
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 0 8px;
+  }
+  .nb-vs-side {
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 12px 0;
+    container-type: inline-size;
+    min-width: 0;
+  }
+  .nb-vs-say { width: 100%; max-width: 20rem; text-align: left; }
+  .nb-vs-face { width: min(92cqw, 15rem); height: auto; aspect-ratio: 1; }
+  .nb-vs-name { max-width: 100%; min-width: 6rem; display: flex; justify-content: center; }
+}
