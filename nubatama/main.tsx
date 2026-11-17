@@ -12,7 +12,7 @@ import { FitToScreen } from './FitToScreen';
 applyPerfLite();
 
 const NubatamaApp: React.FC = () => (
-  <main className="min-h-screen flex flex-col justify-center px-3 py-3 text-center">
+  <main>
     <FitToScreen>
       <NubatamaGame />
     </FitToScreen>

@@ -1,4 +1,6 @@
 import React, { useLayoutEffect, useRef } from 'react';
+import { HfFrame } from '../components/game/HanafudaUi';
+import './stage.css';
 
 // 中身（タイトル・キャラえらび・対戦・ひとりであそぶ）を、窓の縦と横の両方に収まる最大の倍率まで拡大する
 // （オーナー 11-15「ゲーム画面小さいですね。スクリーンいっぱいに広げたい」→「広げて（OPも）」）。
@@ -11,6 +13,11 @@ import React, { useLayoutEffect, useRef } from 'react';
 // - メニュー（.wp-zone に data-fit="menu"。タイトル・OP・じぶんえらび・あいてえらび・ひとりで）は MENU_BOX
 // - それ以外（対戦・ひとりであそぶ の盤面）は PLAY_BOX
 // 倍率が替わるのは メニュー ⇄ 盤面 の行き来と、窓の大きさが替わったときだけ。
+//
+// 宵闇の枠（HfFrame）は窓いっぱいに敷く（オーナー 11-17「ゲーム画面の大きさまだ小さい。ブラウザ画面の大きさと＝にしたい」）。
+// 前は枠が画面ごとの中身の幅で止まり、1600×900 の対戦で枠は幅の 58% だけ、左右に地の余白が出ていた。
+// 中身は縦横比が決まっている（盤面・タイトルの絵）ので伸ばさない。枠を窓の大きさにして、中身はその上に収まる最大の倍率で置く。
+// 画面ごとの枠（キャラえらび・対戦の HfFrame）は地・縁・札を消して、この窓いっぱいの枠に溶かす（stage.css）。
 
 const PAD = 12; // 窓の端との すき間（px）
 
@@ -25,17 +32,21 @@ const zoomFor = ({ w, h }: { w: number; h: number }): number =>
   Math.max(1, Math.floor(Math.min((window.innerWidth - PAD * 2) / w, (window.innerHeight - PAD * 2) / h) * 100) / 100);
 
 export const FitToScreen: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const stageRef = useRef<HTMLDivElement>(null);
   const outerRef = useRef<HTMLDivElement>(null);
   const innerRef = useRef<HTMLDivElement>(null);
 
   useLayoutEffect(() => {
-    const outer = outerRef.current, el = innerRef.current;
-    if (!outer || !el) return;
+    const stage = stageRef.current, outer = outerRef.current, el = innerRef.current;
+    if (!stage || !outer || !el) return;
     const fit = () => {
       const isMenu = el.querySelector(':scope > .wp-zone')?.getAttribute('data-fit') === 'menu';
       const next = String(zoomFor(isMenu ? MENU_BOX : PLAY_BOX));
       // state を通さず style に直接書く。MutationObserver の知らせは描く前に届くので、新しい画面は最初から新しい倍率で出る
       if (outer.style.zoom !== next) outer.style.zoom = next;
+      // 窓いっぱいの枠の四隅の札も、中身と同じ倍率にする（札だけ小さく見えないように）。盤面のあいだは札を弾ませない（端末の熱）
+      stage.style.setProperty('--nb-zoom', next);
+      stage.dataset.mode = isMenu ? 'menu' : 'play';
     };
     fit();
     // メニュー ⇄ 盤面 の行き来を見る。React は画面が替わっても .wp-zone の div を使い回すことがあるので、
@@ -49,8 +60,10 @@ export const FitToScreen: React.FC<{ children: React.ReactNode }> = ({ children 
   }, []);
 
   return (
-    <div ref={outerRef}>
-      <div ref={innerRef}>{children}</div>
-    </div>
+    <HfFrame ref={stageRef} decor="lively" className="nb-stage">
+      <div ref={outerRef} className="nb-stage-body">
+        <div ref={innerRef}>{children}</div>
+      </div>
+    </HfFrame>
   );
 };

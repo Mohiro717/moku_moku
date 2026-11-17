@@ -1,0 +1,31 @@
+/* ぬばたま落とし単独サイトの、窓いっぱいの宵闇の枠（FitToScreen.tsx）。
+   オーナー 11-17「ゲーム画面の大きさまだ小さい。ブラウザ画面の大きさと＝にしたい」。
+   枠の地・紙の粒・四隅の札は hanafuda.css の .hf-frame をそのまま使い、窓の端に縁は出さない（角丸・墨の縁・影なし）。
+   もくもくハウスのゲームセクションは FitToScreen を通らないので、ここは効かない */
+
+.hf-frame.nb-stage {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 12px; /* FitToScreen.tsx の PAD と同じ */
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  color: inherit; /* 中身の字の色は前と同じ（body から） */
+  text-align: center;
+}
+
+/* 四隅の札を中身と同じ倍率に */
+.nb-stage > .hf-decos { zoom: var(--nb-zoom, 1); }
+/* 盤面のあいだは札を弾ませない（盤面の画面の枠が decor="still" だったのと同じ） */
+.nb-stage[data-mode='play'] > .hf-decos .hf-poyon { animation: none; }
+
+/* 画面ごとの枠は、窓いっぱいの枠に溶かす：地・縁・影・札を消して、中身の並びと余白はそのまま */
+.nb-stage-body .hf-frame {
+  background: none;
+  border-color: transparent;
+  box-shadow: none;
+}
+.nb-stage-body .hf-frame > .hf-decos { display: none; }
