@@ -51,3 +51,58 @@
   }
   .nb-stage[data-mode='title'] .nb-title-stage > video { object-fit: cover; }
 }
+
+/* PC のキャラえらび（NubatamaGame.tsx の wide）：窓いっぱいに2列。倍率はタイトルと同じ（FitToScreen.tsx の fillFit）。
+   右の列（見出し・16人の顔・強さ・ボタン）は幅 420 で、高さ 498 の中に収まる。左の列（選んでいるキャラの顔・名前・一言）が残りの幅と高さを埋める。
+   幅 640 未満（スマホ）は wide にならないので、これまでの縦積みのまま */
+@media (min-width: 640px) {
+  .hf-frame.nb-stage[data-mode='menu'] { padding: 0; }
+  .nb-sel {
+    width: var(--nb-tw);
+    height: var(--nb-th);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 420px;
+    padding: 0 46px 0 40px; /* 窓の四隅の札（左の中ほど・右下）に字やボタンがかからない幅 */
+    gap: 12px;
+    overflow: clip;
+  }
+  .nb-sel-hero {
+    container-type: size;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 16px 8px 30px; /* 下は左下の札・霞のぶん */
+  }
+  /* 顔：列の幅と高さの小さいほうに合わせた丸。名前・一言・説明（約 180）を高さから引く */
+  .nb-sel-face {
+    flex: none;
+    width: min(78cqw, 100cqh - 185px, 560px);
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: #131320;
+    border: 4px solid #0b0b12;
+    box-shadow: 0 0 0 7px var(--ring), 0 0 0 11px #0b0b12, 10px 12px 0 11px #0b0b12;
+    overflow: hidden;
+    animation: nb-sel-pop 260ms cubic-bezier(.2,.7,.4,1.3) both;
+  }
+  .nb-sel-face > img { width: 100%; height: 100%; object-fit: cover; }
+  .nb-sel-name { font-size: 2.6rem; margin-top: 6px; }
+  /* 説明：（ ）の前で折り返す（keep-all）。行の長さはそろえる */
+  .nb-sel-lead { max-width: 30em; word-break: keep-all; text-wrap: balance; }
+  .nb-sel-side {
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 9px;
+    padding: 8px 0;
+  }
+}
+@keyframes nb-sel-pop {
+  from { scale: 0.92; opacity: 0.4; }
+  to { scale: 1; opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) { .nb-sel-face { animation: none; } }

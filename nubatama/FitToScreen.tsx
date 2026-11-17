@@ -10,8 +10,9 @@ import './stage.css';
 // 倍率は画面ごとに測らず、決まった箱から出す（オーナー 11-16「画面が切り替わるとサイズが不自然に変わる」「ちらつく」）。
 // 前は画面ごとに外枠を測っていて、1600×900 で タイトル 1.75 → じぶんえらび 1.61 → あいてえらび 1.44 倍と替わり、
 // 測るのが切り替えの1コマあと（入れ替わり中の外枠は一瞬 2〜5 倍の高さになる）で、対戦中も ふきだしの行数が替わるたびに跳ねていた。
-// - メニュー（.wp-zone に data-fit="menu"。じぶんえらび・あいてえらび・ひとりで）は MENU_BOX
-// - タイトル・OP（data-fit="title"）は絵の本体が窓に収まる倍率。まわりは絵が描き足す（titleFit）
+// - タイトル・OP（data-fit="title"）は絵の本体が窓に収まる倍率。まわりは絵が描き足す（fillFit）
+// - メニュー（.wp-zone に data-fit="menu"。じぶんえらび・あいてえらび・ひとりで）は、幅 640 以上ならタイトルと同じ倍率で窓いっぱいに組む（fillFit）。
+//   スマホは MENU_BOX
 // - それ以外（対戦・ひとりであそぶ の盤面）は PLAY_BOX
 // 倍率が替わるのは メニュー ⇄ 盤面 の行き来と、窓の大きさが替わったときだけ。
 //
@@ -46,9 +47,16 @@ const zoomFor = ({ w, h }: { w: number; h: number }): number =>
  * スマホ（幅 640 未満）は下の帯つきの組み方なので、これまでどおり幅ぴったり。
  * 窓の大きさ（絵を置く枠の幅・高さ。zoom 前の値）は --nb-tw / --nb-th で stage.css に渡す
  */
-const titleFit = (): { zoom: number; w: number; h: number } | { zoom: number } => {
+const titleFit = (): { zoom: number; w: number; h: number } | { zoom: number } =>
+  window.innerWidth < 640 ? { zoom: Math.max(1, document.documentElement.clientWidth / TITLE_W) } : fillFit();
+
+/**
+ * 窓いっぱいに組む画面の倍率と、zoom 前の窓の大きさ。タイトルの絵の本体（896×498）が窓に丸ごと収まる倍率で、
+ * キャラえらびも同じ倍率にする（オーナー 11-17。前はタイトル 1.79 → キャラえらび 1.44 倍と、進むと大きさが変わった）。
+ * キャラえらびは、どの窓でも 896×498 の中に収まるように組んである（NubatamaGame.tsx の wide、stage.css の .nb-sel）
+ */
+const fillFit = (): { zoom: number; w: number; h: number } => {
   const w = window.innerWidth, h = window.innerHeight;
-  if (w < 640) return { zoom: Math.max(1, document.documentElement.clientWidth / TITLE_W) };
   const zoom = Math.min(w / TITLE_W, h / (TITLE_W * TITLE_RATIO));
   return { zoom, w: w / zoom, h: h / zoom };
 };
@@ -64,11 +72,11 @@ export const FitToScreen: React.FC<{ children: React.ReactNode }> = ({ children 
     const fit = () => {
       const mark = el.querySelector(':scope > .wp-zone')?.getAttribute('data-fit');
       const mode = mark === 'title' || mark === 'menu' ? mark : 'play';
-      const title = mode === 'title' ? titleFit() : null;
-      const next = String(title ? title.zoom : zoomFor(mode === 'menu' ? MENU_BOX : PLAY_BOX));
-      if (title && 'w' in title) {
-        stage.style.setProperty('--nb-tw', `${title.w}px`);
-        stage.style.setProperty('--nb-th', `${title.h}px`);
+      const fill = mode === 'title' ? titleFit() : mode === 'menu' && window.innerWidth >= 640 ? fillFit() : null;
+      const next = String(fill ? fill.zoom : zoomFor(mode === 'menu' ? MENU_BOX : PLAY_BOX));
+      if (fill && 'w' in fill) {
+        stage.style.setProperty('--nb-tw', `${fill.w}px`);
+        stage.style.setProperty('--nb-th', `${fill.h}px`);
       }
       // state を通さず style に直接書く。MutationObserver の知らせは描く前に届くので、新しい画面は最初から新しい倍率で出る
       if (outer.style.zoom !== next) outer.style.zoom = next;

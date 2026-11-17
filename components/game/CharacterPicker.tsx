@@ -11,20 +11,22 @@ interface Props {
   /** ほかの画面で選んだキャラに付ける小さな札（例：自分のキャラに「じぶん」） */
   markId?: string;
   markLabel?: string;
+  /** 4人×4段に詰める（ぬばたま落とし単独サイトの横長の窓。キャラえらびの右の列） */
+  compact?: boolean;
 }
 
 // 色調 B。選んだ顔は色の輪と墨の影、名前は墨の札（金の内線）。相手の輪は 11-15 まで藍（色調 B に藍が無いので金泥に）
 const RING = { me: '#c93a2e', you: '#d9a94c' };
 
 /** ぬばたま落とし：16人の顔を並べて1人を選ぶ（自分えらび・相手えらびで使う） */
-export const CharacterPicker: React.FC<Props> = ({ selectedId, onSelect, tone = 'me', markId, markLabel }) => {
+export const CharacterPicker: React.FC<Props> = ({ selectedId, onSelect, tone = 'me', markId, markLabel, compact = false }) => {
   // 選んだキャラの VS の絵を先に読んでおく（たいせんを押してから絵が届くまでの待ちを減らす）
   useEffect(() => {
     void preloadVsArt([characterById(selectedId)?.cutins[0]]);
   }, [selectedId]);
   return (
-    <div className="hf-panel p-3 mb-5">
-      <div className="grid grid-cols-4 sm:grid-cols-8 gap-x-2 gap-y-3">
+    <div className={compact ? 'hf-panel px-2 py-2' : 'hf-panel p-3 mb-5'}>
+      <div className={compact ? 'grid grid-cols-4 gap-x-1 gap-y-1' : 'grid grid-cols-4 sm:grid-cols-8 gap-x-2 gap-y-3'}>
         {CPU_CHARACTERS.map(c => {
           const selected = selectedId === c.id;
           return (
@@ -41,10 +43,10 @@ export const CharacterPicker: React.FC<Props> = ({ selectedId, onSelect, tone = 
                 width={56}
                 height={56}
                 loading="lazy"
-                className="w-14 h-14 rounded-full object-cover bg-[#131320] border-[2.5px] border-[#0b0b12]"
+                className={`${compact ? 'w-12 h-12' : 'w-14 h-14'} rounded-full object-cover bg-[#131320] border-[2.5px] border-[#0b0b12]`}
                 style={selected ? { boxShadow: `0 0 0 3px ${RING[tone]}, 0 0 0 5px #0b0b12, 4px 5px 0 5px #0b0b12` } : undefined}
               />
-              <span className={`mt-1.5 text-xs font-serif whitespace-nowrap px-1.5 rounded-full ${selected ? 'hf-chip-sumi' : 'text-[#131320]'}`}>{c.name}</span>
+              <span className={`${compact ? 'mt-0.5' : 'mt-1.5'} text-xs font-serif whitespace-nowrap px-1.5 rounded-full ${selected ? 'hf-chip-sumi' : 'text-[#131320]'}`}>{c.name}</span>
               {markId === c.id && markLabel && (
                 <span className="absolute -top-1 -left-1 hf-chip hf-chip-beni !px-1.5 !py-0 !text-xs">{markLabel}</span>
               )}

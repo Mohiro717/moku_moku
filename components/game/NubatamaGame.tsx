@@ -6,7 +6,7 @@ import { CharacterPicker } from './CharacterPicker';
 import { HfFrame, HfTitle } from './HanafudaUi';
 import './wapop.css';
 import type { GameDifficulty } from '../../types/game';
-import { HEADER_OFFSET } from '../../constants/layout';
+import { HEADER_OFFSET, IS_STANDALONE } from '../../constants/layout';
 import { DEFAULT_OPPONENT_CHARACTER_ID, DEFAULT_PLAYER_CHARACTER_ID, characterById } from '../../constants/cpuCharacters';
 import { playMenuBgm, stopBgm, unlockAudio } from '../../utils/gameAudio';
 import { MENU_BGM } from '../../constants/bgmTracks';
@@ -15,6 +15,20 @@ import { MENU_BGM } from '../../constants/bgmTracks';
 // もくもくハウスのゲームセクションと、ぬばたま落とし単独サイト（nubatama/）の両方がこれを使う。
 // 2026-11-15 に GameSection.tsx から切り出した。中身は切り出す前と同じ。
 type Screen = 'title' | 'player-select' | 'solo-select' | 'difficulty-select' | 'playing-single' | 'vs-cpu';
+
+/** 単独サイトの、窓が幅 640 以上のとき（FitToScreen.tsx が窓いっぱいに組む）。もくもくハウスとスマホは false で、これまでの縦積み */
+const WIDE_QUERY = '(min-width: 640px)';
+const useWideStage = () => {
+  const [wide, setWide] = useState(() => IS_STANDALONE && window.matchMedia(WIDE_QUERY).matches);
+  useEffect(() => {
+    if (!IS_STANDALONE) return;
+    const m = window.matchMedia(WIDE_QUERY);
+    const on = () => setWide(m.matches);
+    m.addEventListener('change', on);
+    return () => m.removeEventListener('change', on);
+  }, []);
+  return wide;
+};
 
 interface NubatamaGameProps {
   /** 対戦・ひとりであそぶ の「もどる」の行き先。渡さなければタイトルへ戻る */
@@ -31,6 +45,7 @@ export const NubatamaGame: React.FC<NubatamaGameProps> = ({ onExit }) => {
   const [playerCharacterId, setPlayerCharacterId] = useState(DEFAULT_PLAYER_CHARACTER_ID);
   const playerCharacter = characterById(playerCharacterId);
   const exit = onExit ?? (() => setScreen('title'));
+  const wide = useWideStage();
 
   // 画面が替わったら、ヘッダーに隠れないよう、その場所までスクロールする。
   // 2026-11-09 まで scrollIntoView + scroll-mt-20 で、PC では上端 0 に止まりヘッダーの下に隠れていた。原因は2つ:
@@ -66,92 +81,105 @@ export const NubatamaGame: React.FC<NubatamaGameProps> = ({ onExit }) => {
     );
   }
 
-  if (screen === 'player-select' || screen === 'solo-select') {
-    // 自分のキャラえらび。CPU 対戦は 1/2（つぎに相手えらび）、ひとりであそぶは これだけで はじまる
-    return (
-      <div ref={playAreaRef} data-fit="menu" className="wp-zone transition-all duration-500 animate-fade-in-up">
-        <HfFrame decor="lively" className="px-4 py-5 sm:p-7 max-w-2xl mx-auto">
-          <div className="flex items-center justify-center gap-3 mb-2">
-            {screen === 'player-select' && <span className="hf-chip">1 / 2</span>}
-            <HfTitle text="じぶんを えらぶ" hop className="text-[1.75rem] sm:text-4xl" />
-          </div>
-          <p className="hf-ink text-xs sm:text-sm font-serif mb-4 leading-relaxed">
-            {screen === 'player-select'
-              ? 'いっしょに たたかう 御霊を ひとり よぶ（だれを えらんでも つよさは おなじ）'
-              : 'いっしょに あそぶ 御霊を ひとり よぶ（よこで しゃべって、れんさで かけごえ）'}
-          </p>
+  if (screen === 'player-select' || screen === 'solo-select' || screen === 'difficulty-select') {
+    // 自分えらび（CPU 対戦は 1/2、ひとりであそぶは これだけで はじまる）と、相手えらび（2/2。強さもここで選ぶ）
+    const pickingMe = screen !== 'difficulty-select';
+    const focus = pickingMe ? playerCharacter : selectedCharacter;
+    const step = screen === 'player-select' ? '1 / 2' : screen === 'difficulty-select' ? '2 / 2' : null;
+    const heading = pickingMe ? 'じぶんを えらぶ' : 'あいてを えらぶ';
+    const lead = screen === 'player-select'
+      ? 'いっしょに たたかう 御霊を ひとり よぶ（だれを えらんでも つよさは おなじ）'
+      : screen === 'solo-select'
+        ? 'いっしょに あそぶ 御霊を ひとり よぶ（よこで しゃべって、れんさで かけごえ）'
+        : 'れんさで ぬばたまを おくって、あいての上まで うめたら かち';
+    const next = () => (screen === 'player-select' ? setScreen('difficulty-select') : screen === 'solo-select' ? startPlay('playing-single') : startPlay('vs-cpu'));
+    const nextLabel = screen === 'player-select' ? 'つぎへ' : screen === 'solo-select' ? 'あそぶ！' : 'たいせん する！';
+    const back = () => setScreen(pickingMe ? 'title' : 'player-select');
 
-          <CharacterPicker selectedId={playerCharacterId} onSelect={setPlayerCharacterId} tone="me" />
-
-          <p className="mb-6 font-serif flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
-            <span className="hf-chip hf-chip-sumi">じぶん：{playerCharacter.name}</span>
-            <span className="hf-ink text-xs">{playerCharacter.tagline}</span>
-          </p>
-
-          <div className="flex flex-col items-center gap-4">
-            <button
-              type="button"
-              onClick={() => (screen === 'player-select' ? setScreen('difficulty-select') : startPlay('playing-single'))}
-              className="hf-btn hf-btn-main hf-dot w-full max-w-xs py-3 text-lg"
-            >
-              {screen === 'player-select' ? 'つぎへ' : 'あそぶ！'}
-            </button>
-            <button type="button" onClick={() => setScreen('title')} className="hf-btn hf-btn-sub hf-dot w-full max-w-xs py-2 text-sm">
-              もどる
-            </button>
-          </div>
-        </HfFrame>
+    const title = (
+      <div className="flex items-center justify-center gap-3">
+        {step && <span className="hf-chip">{step}</span>}
+        <HfTitle text={heading} hop className={wide ? 'text-[2rem]' : 'text-[1.75rem] sm:text-4xl'} />
       </div>
     );
-  }
+    // 相手：顔を並べて選ぶ。自分と同じキャラも選べる（同キャラ戦）
+    const picker = pickingMe
+      ? <CharacterPicker selectedId={playerCharacterId} onSelect={setPlayerCharacterId} tone="me" compact={wide} />
+      : <CharacterPicker selectedId={selectedCharacterId} onSelect={setSelectedCharacterId} tone="you" markId={playerCharacterId} markLabel="じぶん" compact={wide} />;
+    const versus = (
+      <>
+        <span className="hf-chip hf-chip-beni">{playerCharacter.name}</span>
+        <span className="hf-title text-lg">VS</span>
+        <span className="hf-chip hf-chip-sumi">{selectedCharacter.name}</span>
+      </>
+    );
+    // 強さ：相手とは別に選ぶ
+    const strength = !pickingMe && (
+      <div className={`grid grid-cols-3 gap-3 max-w-md mx-auto ${wide ? 'w-full' : 'mb-7'}`}>
+        {(['easy', 'normal', 'hard'] as GameDifficulty[]).map(value => (
+          <button
+            key={value}
+            type="button"
+            onClick={() => setSelectedDifficulty(value)}
+            aria-pressed={selectedDifficulty === value}
+            className={`hf-btn hf-btn-sm ${wide ? 'py-1.5' : 'py-2'} text-sm ${selectedDifficulty === value ? 'hf-btn-main' : 'hf-btn-sub'}`}
+          >
+            {DIFFICULTY_LABELS[value]}
+          </button>
+        ))}
+      </div>
+    );
 
-  if (screen === 'difficulty-select') {
+    if (wide) {
+      // 単独サイトの横長の窓：左は選んでいるキャラを大きく、右は顔の一覧と強さ・ボタン（オーナー 11-17「余白が無いように素材やUI配置設計を見直して」）。
+      // 外枠は窓の大きさ（--nb-tw × --nb-th、FitToScreen.tsx の fillFit）。右の列は幅が決まっていて、左の列が残りの幅を埋める（stage.css）
+      return (
+        <div ref={playAreaRef} data-fit="menu" className="wp-zone nb-sel">
+          <div className="nb-sel-hero">
+            <div key={focus.id} className="nb-sel-face" style={{ '--ring': pickingMe ? '#c93a2e' : '#d9a94c' } as React.CSSProperties}>
+              <img src={focus.icon} alt={focus.name} />
+            </div>
+            <HfTitle text={focus.name} className="nb-sel-name" />
+            <p className="font-serif flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
+              {!pickingMe && versus}
+              <span className={pickingMe ? 'hf-chip hf-chip-sumi' : 'hf-ink text-sm'}>{focus.tagline}</span>
+            </p>
+            <p className="nb-sel-lead hf-ink text-sm font-serif leading-relaxed">{lead}</p>
+          </div>
+          <div className="nb-sel-side">
+            {title}
+            {picker}
+            {strength}
+            <div className="flex items-center justify-center gap-4 w-full">
+              <button type="button" onClick={back} className="hf-btn hf-btn-sub hf-dot flex-1 py-2 text-sm">もどる</button>
+              <button type="button" onClick={next} className="hf-btn hf-btn-main hf-dot flex-[1.6] py-2 text-lg">{nextLabel}</button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div ref={playAreaRef} data-fit="menu" className="wp-zone transition-all duration-500 animate-fade-in-up">
         <HfFrame decor="lively" className="px-4 py-5 sm:p-7 max-w-2xl mx-auto">
-          <div className="flex items-center justify-center gap-3 mb-2">
-            <span className="hf-chip">2 / 2</span>
-            <HfTitle text="あいてを えらぶ" hop className="text-[1.75rem] sm:text-4xl" />
-          </div>
-          <p className="hf-ink text-xs sm:text-sm font-serif mb-4 leading-relaxed">れんさで ぬばたまを おくって、あいての上まで うめたら かち</p>
+          <div className="mb-2">{title}</div>
+          <p className="hf-ink text-xs sm:text-sm font-serif mb-4 leading-relaxed">{lead}</p>
 
-          {/* 相手：顔を並べて選ぶ。自分と同じキャラも選べる（同キャラ戦） */}
-          <CharacterPicker
-            selectedId={selectedCharacterId}
-            onSelect={setSelectedCharacterId}
-            tone="you"
-            markId={playerCharacterId}
-            markLabel="じぶん"
-          />
+          {picker}
 
-          <p className="mb-5 font-serif flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
-            <span className="hf-chip hf-chip-beni">{playerCharacter.name}</span>
-            <span className="hf-title text-lg">VS</span>
-            <span className="hf-chip hf-chip-sumi">{selectedCharacter.name}</span>
-            <span className="hf-ink text-xs">{selectedCharacter.tagline}</span>
+          <p className={`${pickingMe ? 'mb-6' : 'mb-5'} font-serif flex flex-wrap items-center justify-center gap-x-2 gap-y-1`}>
+            {pickingMe ? <span className="hf-chip hf-chip-sumi">じぶん：{playerCharacter.name}</span> : versus}
+            <span className="hf-ink text-xs">{focus.tagline}</span>
           </p>
 
-          {/* 強さ：相手とは別に選ぶ */}
-          <div className="grid grid-cols-3 gap-3 mb-7 max-w-md mx-auto">
-            {(['easy', 'normal', 'hard'] as GameDifficulty[]).map(value => (
-              <button
-                key={value}
-                type="button"
-                onClick={() => setSelectedDifficulty(value)}
-                aria-pressed={selectedDifficulty === value}
-                className={`hf-btn hf-btn-sm py-2 text-sm ${selectedDifficulty === value ? 'hf-btn-main' : 'hf-btn-sub'}`}
-              >
-                {DIFFICULTY_LABELS[value]}
-              </button>
-            ))}
-          </div>
+          {strength}
 
           <div className="flex flex-col items-center gap-4">
-            <button type="button" onClick={() => startPlay('vs-cpu')} className="hf-btn hf-btn-main hf-dot w-full max-w-xs py-3 text-lg">
-              たいせん する！
+            <button type="button" onClick={next} className="hf-btn hf-btn-main hf-dot w-full max-w-xs py-3 text-lg">
+              {nextLabel}
             </button>
-            <button type="button" onClick={() => setScreen('player-select')} className="hf-btn hf-btn-sub hf-dot w-full max-w-xs py-2 text-sm">
-              もどる（じぶんを えらびなおす）
+            <button type="button" onClick={back} className="hf-btn hf-btn-sub hf-dot w-full max-w-xs py-2 text-sm">
+              {pickingMe ? 'もどる' : 'もどる（じぶんを えらびなおす）'}
             </button>
           </div>
         </HfFrame>
