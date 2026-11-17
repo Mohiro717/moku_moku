@@ -1,5 +1,6 @@
 import React, { useLayoutEffect, useRef } from 'react';
 import { HfFrame } from '../components/game/HanafudaUi';
+import { VS_UX_SAMPLE } from '../hooks/useWideStage';
 import './stage.css';
 
 // 中身（タイトル・キャラえらび・対戦・ひとりであそぶ）を、窓の縦と横の両方に収まる最大の倍率まで拡大する
@@ -67,7 +68,8 @@ const fillFit = (minW = TITLE_W, minH = TITLE_W * TITLE_RATIO): { zoom: number; 
  * 高さは盤の列（おじゃま予告＋盤）で決まる。幅は 盤2つ・まんなか・左右のキャラの列の いちばん狭い幅の合計。
  * 窓が これより横長なら左右のキャラの列が伸び、縦長なら上下に地が出る
  */
-const VS_MIN = { w: 1060, h: 600 };
+// 見本 c（上の帯）は帯のぶん高い（hooks/useWideStage.ts の VS_UX_SAMPLE）
+const VS_MIN = { w: 1060, h: VS_UX_SAMPLE === 'c' ? 648 : 600 };
 
 export const FitToScreen: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const stageRef = useRef<HTMLDivElement>(null);

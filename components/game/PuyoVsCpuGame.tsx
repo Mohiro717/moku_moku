@@ -15,7 +15,7 @@ import { BACK_TARGET_LABEL, HEADER_OFFSET } from '../../constants/layout';
 import { COUNT_MS, GO_MS, VS_LEAD_MS, MoodIcon, preloadVsArt, VsIntroOverlay, nextMood, type IntroStep, type Mood } from './VsIntro';
 import './wapop.css';
 import { HfFrame, HfTitle } from './HanafudaUi';
-import { useWideStage } from '../../hooks/useWideStage';
+import { useWideStage, VS_UX_SAMPLE } from '../../hooks/useWideStage';
 import { BgmTitle } from './BgmTitle';
 import { AllyCharacterPanel, CpuCharacterPanel, CpuCutinOverlay, KitanCredit } from './CpuCharacter';
 import {
@@ -357,24 +357,31 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
   );
 
   // 見出しの小札：つよさ・おと・もどる
+  const strengthChip = (
+    <span className={`hf-chip ${wide ? '' : '!hidden sm:!inline-flex'}`}>つよさ：{DIFFICULTY_LABELS[gameState.difficulty]}</span>
+  );
+  const muteChip = (
+    <button
+      type="button"
+      onClick={toggleMuted}
+      aria-pressed={!muted}
+      aria-label={muted ? 'おとを出す' : 'おとを消す'}
+      className="hf-chip"
+    >
+      {muted ? '🔇 おと' : '🔊 おと'}
+    </button>
+  );
+  const backChip = onBack && (
+    // ゲームえらびに戻る：枠の外にあったのを、見出しの小札へ（オーナー「一体にしたい」。ボタンは枠の外に出さない）
+    <button type="button" onClick={onBack} aria-label={`${BACK_TARGET_LABEL} もどる`} className="hf-chip">
+      ← {!wide && <span className="hidden sm:inline">{BACK_TARGET_LABEL} </span>}もどる
+    </button>
+  );
   const headChips = (
     <>
-      <span className={`hf-chip ${wide ? '' : '!hidden sm:!inline-flex'}`}>つよさ：{DIFFICULTY_LABELS[gameState.difficulty]}</span>
-      <button
-        type="button"
-        onClick={toggleMuted}
-        aria-pressed={!muted}
-        aria-label={muted ? 'おとを出す' : 'おとを消す'}
-        className="hf-chip"
-      >
-        {muted ? '🔇 おと' : '🔊 おと'}
-      </button>
-      {onBack && (
-        // ゲームえらびに戻る：枠の外にあったのを、見出しの小札へ（オーナー「一体にしたい」。ボタンは枠の外に出さない）
-        <button type="button" onClick={onBack} aria-label={`${BACK_TARGET_LABEL} もどる`} className="hf-chip">
-          ← <span className="hidden sm:inline">{BACK_TARGET_LABEL} </span>もどる
-        </button>
-      )}
+      {strengthChip}
+      {muteChip}
+      {backChip}
     </>
   );
 
@@ -429,44 +436,65 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
     // 単独サイトの横長の窓：［自分のキャラとふきだし］［自分の盤］［つぎ・とくてん・ボタン］［相手の盤］［相手のキャラとふきだし］
     // （オーナー 11-17「余白が無いように素材やUI配置設計を見直して」）。枠は窓の大きさ（--nb-tw × --nb-th、FitToScreen.tsx の vsFit）。
     // 盤の大きさは窓の高さで決まり、左右のキャラの列が残りの幅を埋める（stage.css の .nb-vs）
-    const side = (who: 'me' | 'you') => {
+    // まんなかの列の見本（オーナー 11-17「UXの部分めちゃくちゃ。見ずらい」→ 3案を並べて選んでもらう。?ux=a|b|c。決まったら1つに絞る）
+    // a: まんなかに全部（題字・つよさ → つぎ・とくてん → ボタン2つ横並び → おと・もどる → クレジット）
+    // b: 操作は左右の列の上（自分の上に ひとやすみ・やりなおす、相手の上に つよさ・おと・もどる）。まんなかは 題字・つぎ・とくてん・クレジット
+    // c: 上の帯（題字と小札を窓の上端に1本）。まんなかは つぎ・とくてん・ボタン・クレジット
+    const ux = VS_UX_SAMPLE;
+    const title = <HfTitle text="ぬばたま落とし" gold={[4]} className="text-[1.45rem] leading-none whitespace-nowrap" />;
+    const controlsRow = <div className="grid grid-cols-2 gap-2 w-full">{controlButtons}</div>;
+    const controlsStack = <div className="flex flex-col gap-2 w-[6.5rem]">{controlButtons}</div>;
+    const credit = <KitanCredit url={FANWORKS_URL} className="nb-vs-credit hf-ink" />;
+    const side = (who: 'me' | 'you', top?: React.ReactNode) => {
       const c = who === 'me' ? playerCharacter : character;
       const said = who === 'me' ? allySide.line : line;
       const tick = who === 'me' ? allySide.lineTick : lineTick;
       return (
         <div className={`nb-vs-side nb-vs-side-${who}`}>
-          <div key={`${said}-${tick}`} className="nb-vs-say hf-bubble px-3 py-2 font-serif text-sm leading-snug animate-fade-in-up">
-            「{said}」
+          {top && <div className="nb-vs-side-top">{top}</div>}
+          {/* キャラは盤の下端にそろえる（オーナー 11-17） */}
+          <div className="nb-vs-side-bottom">
+            <div key={`${said}-${tick}`} className="nb-vs-say hf-bubble px-3 py-2 font-serif text-sm leading-snug animate-fade-in-up">
+              「{said}」
+            </div>
+            <MoodIcon src={c.icon} alt={c.name} mood={who === 'me' ? playerMood : cpuMood} className="nb-vs-face" />
+            <div className={`hf-band ${who === 'me' ? 'hf-band-me' : 'hf-band-you'} nb-vs-name px-3 py-1 text-base`}>
+              <span className="truncate">{c.name}</span>
+            </div>
           </div>
-          <MoodIcon src={c.icon} alt={c.name} mood={who === 'me' ? playerMood : cpuMood} className="nb-vs-face" />
-          <div className={`hf-band ${who === 'me' ? 'hf-band-me' : 'hf-band-you'} nb-vs-name px-3 py-1 text-base`}>
-            <span className="truncate">{c.name}</span>
-          </div>
-          <span className="hf-ink text-xs">{c.tagline}</span>
         </div>
       );
     };
+    const nextScore = (
+      <div className="grid grid-cols-2 gap-2 w-full">
+        <NextTag nextPair={gameState.player.nextPair} nextNextPair={gameState.player.nextNextPair} />
+        <NextTag nextPair={gameState.cpu.nextPair} nextNextPair={gameState.cpu.nextNextPair} />
+        <ScoreKoban score={gameState.player.score} accent />
+        <ScoreKoban score={gameState.cpu.score} />
+      </div>
+    );
     return (
       <ErrorBoundary fallback={GameErrorFallback}>
-        <HfFrame ref={frameRef} className="puyo-vs nb-vs">
+        <HfFrame ref={frameRef} className={`puyo-vs nb-vs nb-vs-ux-${ux}`}>
           <div className="nb-vs-grid">
-            {side('me')}
+            {ux === 'c' && (
+              <div className="nb-vs-bar">
+                {title}
+                <div className="flex gap-2">{headChips}</div>
+              </div>
+            )}
+            {side('me', ux === 'b' ? controlsStack : undefined)}
             <div className="relative">{playerField}</div>
 
             <div className="nb-vs-center">
-              <HfTitle text="ぬばたま落とし" gold={[4]} className="text-[1.6rem]" />
-              <div className="flex flex-wrap justify-center gap-1.5">{headChips}</div>
-              <div className="flex justify-between gap-2 mt-1">
-                <NextTag nextPair={gameState.player.nextPair} nextNextPair={gameState.player.nextNextPair} className="w-[5rem]" />
-                <NextTag nextPair={gameState.cpu.nextPair} nextNextPair={gameState.cpu.nextNextPair} className="w-[5rem]" />
-              </div>
-              <div className="flex justify-between gap-2">
-                <ScoreKoban score={gameState.player.score} accent className="w-[5rem]" />
-                <ScoreKoban score={gameState.cpu.score} className="w-[5rem]" />
-              </div>
+              {ux === 'a' && <>{title}{strengthChip}</>}
+              {ux === 'b' && title}
+              {nextScore}
+              <div className="flex-1" />
               {/* ひとやすみ・やりなおすは、いつでも盤面のすぐ横で押せるように常に出す */}
-              <div className="mt-auto mx-auto flex flex-col gap-2 w-[6.5rem]">{controlButtons}</div>
-              <KitanCredit url={FANWORKS_URL} />
+              {ux === 'a' && <>{controlsRow}<div className="flex gap-2">{muteChip}{backChip}</div></>}
+              {ux === 'c' && controlsStack}
+              {credit}
             </div>
 
             <div className="relative">
@@ -492,7 +520,7 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
                 </div>
               </div>
             </div>
-            {side('you')}
+            {side('you', ux === 'b' ? <div className="flex flex-col items-center gap-2">{strengthChip}{muteChip}{backChip}</div> : undefined)}
           </div>
 
           <AttackBeamLayer beams={beams} />

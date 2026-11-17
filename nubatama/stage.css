@@ -126,31 +126,54 @@
     height: 100%;
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto 12rem auto minmax(0, 1fr);
-    /* 行の高さは盤の列の高さ（FitToScreen.tsx の VS_MIN.h）。縦長の窓でも、まんなかのボタンや左右のキャラが盤から離れない */
-    grid-template-rows: minmax(0, 600px);
+    /* 行の高さは盤の列（おじゃま予告＋盤 586）＋下の すき間。縦長の窓でも、まんなかのボタンや左右のキャラが盤から離れない */
+    grid-template-rows: minmax(0, 592px);
     align-content: center;
-    align-items: center;
+    align-items: end;
     column-gap: 10px;
     padding: 0 12px;
+  }
+  .nb-vs-ux-c .nb-vs-grid { grid-template-rows: auto minmax(0, 592px); }
+  /* 見本 c：題字と小札の帯（5列の上いっぱい） */
+  .nb-vs-bar {
+    grid-column: 1 / -1;
+    align-self: center;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 4px 4px;
   }
   .nb-vs-center {
     align-self: stretch;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 8px;
-    padding: 10px 0 8px;
+    gap: 10px;
+    padding: 46px 8px 0; /* 上はおじゃま予告の高さ。つぎ を盤の上端にそろえる */
   }
+  .nb-vs-ux-a .nb-vs-center, .nb-vs-ux-b .nb-vs-center { padding-top: 10px; }
+  .nb-vs-credit { font-size: 10px; line-height: 1.45; margin: 0; }
   .nb-vs-side {
     align-self: stretch;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    gap: 10px;
-    padding: 12px 0;
+    justify-content: space-between;
+    padding-top: 46px;
     container-type: inline-size;
     min-width: 0;
+  }
+  /* 盤の側は すき間を空ける（盤の紅の影に ふきだしが かからないように。オーナー 11-17） */
+  .nb-vs-side-me { padding-right: 12px; }
+  .nb-vs-side-you { padding-left: 12px; }
+  .nb-vs-side-top { display: flex; justify-content: center; width: 100%; }
+  .nb-vs-side-bottom {
+    margin-top: auto;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
   }
   .nb-vs-say { width: 100%; max-width: 20rem; text-align: left; }
   .nb-vs-face { width: min(92cqw, 15rem); height: auto; aspect-ratio: 1; }
