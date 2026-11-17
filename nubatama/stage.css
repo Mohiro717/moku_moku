@@ -29,3 +29,8 @@
   box-shadow: none;
 }
 .nb-stage-body .hf-frame > .hf-decos { display: none; }
+
+/* タイトル・OP は窓の横幅ぴったり（FitToScreen.tsx の titleZoom）。窓の端との すき間・カードの角丸・墨の縁・影をなくす */
+.hf-frame.nb-stage[data-mode='title'] { padding: 0; }
+.nb-stage[data-mode='title'] > .hf-decos { display: none; }
+.nb-stage-body .nb-title-card { border: 0; border-radius: 0; box-shadow: none; }

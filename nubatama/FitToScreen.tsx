@@ -10,7 +10,8 @@ import './stage.css';
 // 倍率は画面ごとに測らず、決まった箱から出す（オーナー 11-16「画面が切り替わるとサイズが不自然に変わる」「ちらつく」）。
 // 前は画面ごとに外枠を測っていて、1600×900 で タイトル 1.75 → じぶんえらび 1.61 → あいてえらび 1.44 倍と替わり、
 // 測るのが切り替えの1コマあと（入れ替わり中の外枠は一瞬 2〜5 倍の高さになる）で、対戦中も ふきだしの行数が替わるたびに跳ねていた。
-// - メニュー（.wp-zone に data-fit="menu"。タイトル・OP・じぶんえらび・あいてえらび・ひとりで）は MENU_BOX
+// - メニュー（.wp-zone に data-fit="menu"。じぶんえらび・あいてえらび・ひとりで）は MENU_BOX
+// - タイトル・OP（data-fit="title"）は高さを見ず、横幅ぴったり（titleZoom）
 // - それ以外（対戦・ひとりであそぶ の盤面）は PLAY_BOX
 // 倍率が替わるのは メニュー ⇄ 盤面 の行き来と、窓の大きさが替わったときだけ。
 //
@@ -26,10 +27,39 @@ const PAD = 12; // 窓の端との すき間（px）
 const MENU_BOX = { w: 896, h: 612 };
 // 幅＝CPU と たいせん の枠 806（ひとりで は 768）、高さ＝CPU と たいせん 753（ひとりで は 712）に少し足す
 const PLAY_BOX = { w: 806, h: 760 };
+// タイトル・OP の素の幅（NubatamaTitleScreen の max-w-4xl）
+const TITLE_W = 896;
+// タイトルの絵の 縦÷横（864:480。PC は絵だけで、下の帯はスマホだけ）
+const TITLE_RATIO = 480 / 864;
 
 /** 箱が窓に収まる倍率（1 未満にはしない。0.01 刻みで切り捨て） */
 const zoomFor = ({ w, h }: { w: number; h: number }): number =>
   Math.max(1, Math.floor(Math.min((window.innerWidth - PAD * 2) / w, (window.innerHeight - PAD * 2) / h) * 100) / 100);
+
+/**
+ * タイトル・OP は横幅ぴったり（オーナー 11-17、タイトルの画面写しを添えて「これをブラウザ幅いっぱいに表示させたい」）。
+ * 絵は 864:480 の比で組んであり（位置は %、大きさは cqw）、横だけ伸ばすと崩れるので、比は保ったまま幅を窓に合わせる。
+ * 窓が 864:480 より横長なら下が少しはみ出してスクロールになる。縦長なら上下に宵闇の地が出る。
+ * 幅は窓の幅（innerWidth）から出し、下がはみ出すときだけ縦のスクロールバーの幅を引く。
+ * 今のページの幅（clientWidth）で測ると、OP の出だしで一瞬出たスクロールバーのぶん 15px 狭いまま残った（11-17 実測）
+ */
+const titleZoom = (): number => {
+  const w = window.innerWidth;
+  const overflows = w * TITLE_RATIO > window.innerHeight;
+  return Math.max(1, (overflows ? w - scrollbarWidth() : w) / TITLE_W);
+};
+/** 縦のスクロールバーの幅（Windows の Chrome は 15px 前後、スマホと Mac は 0）。1回だけ測る */
+let scrollbarW: number | null = null;
+const scrollbarWidth = (): number => {
+  if (scrollbarW === null) {
+    const probe = document.createElement('div');
+    probe.style.cssText = 'position:absolute;top:-9999px;width:100px;height:100px;overflow:scroll';
+    document.body.appendChild(probe);
+    scrollbarW = probe.offsetWidth - probe.clientWidth;
+    probe.remove();
+  }
+  return scrollbarW;
+};
 
 export const FitToScreen: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const stageRef = useRef<HTMLDivElement>(null);
@@ -40,13 +70,14 @@ export const FitToScreen: React.FC<{ children: React.ReactNode }> = ({ children 
     const stage = stageRef.current, outer = outerRef.current, el = innerRef.current;
     if (!stage || !outer || !el) return;
     const fit = () => {
-      const isMenu = el.querySelector(':scope > .wp-zone')?.getAttribute('data-fit') === 'menu';
-      const next = String(zoomFor(isMenu ? MENU_BOX : PLAY_BOX));
+      const mark = el.querySelector(':scope > .wp-zone')?.getAttribute('data-fit');
+      const mode = mark === 'title' || mark === 'menu' ? mark : 'play';
+      const next = String(mode === 'title' ? titleZoom() : zoomFor(mode === 'menu' ? MENU_BOX : PLAY_BOX));
       // state を通さず style に直接書く。MutationObserver の知らせは描く前に届くので、新しい画面は最初から新しい倍率で出る
       if (outer.style.zoom !== next) outer.style.zoom = next;
       // 窓いっぱいの枠の四隅の札も、中身と同じ倍率にする（札だけ小さく見えないように）。盤面のあいだは札を弾ませない（端末の熱）
       stage.style.setProperty('--nb-zoom', next);
-      stage.dataset.mode = isMenu ? 'menu' : 'play';
+      stage.dataset.mode = mode;
     };
     fit();
     // メニュー ⇄ 盤面 の行き来を見る。React は画面が替わっても .wp-zone の div を使い回すことがあるので、

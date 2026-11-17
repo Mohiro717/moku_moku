@@ -60,7 +60,7 @@ export const NubatamaGame: React.FC<NubatamaGameProps> = ({ onExit }) => {
 
   if (screen === 'title') {
     return (
-      <div ref={playAreaRef} className="wp-zone" data-fit="menu">
+      <div ref={playAreaRef} className="wp-zone" data-fit="title">
         <NubatamaTitleScreen onVsCpu={() => setScreen('player-select')} onSingle={() => setScreen('solo-select')} />
       </div>
     );
