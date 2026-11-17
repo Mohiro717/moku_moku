@@ -410,12 +410,17 @@ export const PopGlyphLayers: React.FC<{
   );
 };
 
-/** 紙の粒（版画のざらつき）。動かない層 */
-export const Grain: React.FC<{ id: string; opacity?: number }> = ({ id, opacity = 0.14 }) => (
-  <svg viewBox="0 0 864 480" preserveAspectRatio="none" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 9,
-    pointerEvents: 'none', mixBlendMode: 'multiply', opacity }} aria-hidden="true">
-    <filter id={id}><feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="2" seed="7" />
+/**
+ * 紙の粒（版画のざらつき）。動かない層。
+ * box を渡すと 864 枠の外まで同じ細かさで敷く（タイトルの描き足し。左上 x, y と幅・高さを 864 枠の画素で）
+ */
+export const Grain: React.FC<{ id: string; opacity?: number; box?: { x: number; y: number; w: number; h: number } }> = ({ id, opacity = 0.14, box }) => (
+  <svg viewBox={box ? `${box.x} ${box.y} ${box.w} ${box.h}` : '0 0 864 480'} preserveAspectRatio="none"
+    style={{ position: 'absolute', ...(box ? { left: L(box.x), top: T(box.y), width: S(box.w), height: T(box.h) } : { inset: 0, width: '100%', height: '100%' }),
+      zIndex: 9, pointerEvents: 'none', mixBlendMode: 'multiply', opacity }} aria-hidden="true">
+    <filter id={id} filterUnits="userSpaceOnUse" x={box?.x ?? 0} y={box?.y ?? 0} width={box?.w ?? 864} height={box?.h ?? 480}>
+      <feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="2" seed="7" />
       <feColorMatrix values="0 0 0 0 .45  0 0 0 0 .35  0 0 0 0 .3  0 0 0 -1.6 1.25" /></filter>
-    <rect width="864" height="480" filter={`url(#${id})`} />
+    <rect x={box?.x ?? 0} y={box?.y ?? 0} width={box?.w ?? 864} height={box?.h ?? 480} filter={`url(#${id})`} />
   </svg>
 );

@@ -1,5 +1,5 @@
 import React from 'react';
-import { S, vars, noop, SAKUYA_SRC } from './common';
+import { L, S, T, vars, noop, SAKUYA_SRC } from './common';
 import { SakuyaFlutter } from '../SakuyaFlutter';
 import {
   BENI, GEPPAKU, GOLD, KINDEI, POP_CSS, SUMI, YOI, YOI_DEEP, YOI_LIGHT, Fuda, Grain, Kasumi, PFloat, PNuba, POnibi, PopGlyphLayers, StickerFilter, SusukiLayers, makeHill,
@@ -16,22 +16,74 @@ const hill = makeHill([0, 404], [140, 360], [300, 366], [440, 408]);
 
 const MOON = { cx: 262, cy: 226, r: 186 };
 
-const Backdrop: React.FC = () => (
-  <svg viewBox="0 0 864 480" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} aria-hidden="true">
-    <defs>
-      <radialGradient id="hfb-sky" cx=".32" cy=".46" r=".8">
+// 描き足し（bleed）：単独サイトの PC では、864×480 の絵の本体は窓に丸ごと収まる大きさで真ん中に置き、
+// そのまわり（窓の縦横比が絵と違うぶん）を夜空・横縞・紙の粒・墨の丘・すすき・金の霞でつなげて描く
+// （オーナー 11-17「余白が無いように素材やUI配置設計を見直して」）。前は端を切って覆っていたので、題字が欠けないよう
+// 切る量に上限を置き、それを越える窓では宵闇の地の帯が出ていた。
+// 描き足す範囲は絵の外へ左右 BLEED_X・上下 BLEED_Y（864 枠の画素）。ウルトラワイド（21:9）と 4:3 の縦置きまで届く。
+// 窓の外にはみ出したぶんは外側（.nb-title-stage）で切る。もくもくハウス版は bleed なしで、前と同じ絵
+const BLEED_X = 600;
+const BLEED_Y = 500;
+const BOX = { x: -BLEED_X, y: -BLEED_Y, w: 864 + BLEED_X * 2, h: 480 + BLEED_Y * 2 };
+/** 描き足しの範囲を覆う箱（864 枠の座標の viewBox を、外へはみ出して置く） */
+const bleedBox: React.CSSProperties = { position: 'absolute', left: L(BOX.x), top: T(BOX.y), width: S(BOX.w), height: T(BOX.h) };
+
+/** 左の描き足し：本体の丘の左端（0, 404）へ、なめらかにつながる低い丘 */
+const hillLeft = makeHill([-BLEED_X, 436], [-400, 452], [-100, 436], [0, 404]);
+/** 右の描き足し：本体の右下の隅（864, 480）から立ち上がる遠くの丘 */
+const hillRight1 = makeHill([864, 480], [900, 468], [960, 430], [1060, 418]);
+const hillRight2 = makeHill([1060, 418], [1180, 404], [1320, 410], [864 + BLEED_X, 424]);
+const hillRight = (x: number) => (x < 1060 ? hillRight1(x) : hillRight2(x));
+
+const Backdrop: React.FC<{ bleed?: boolean }> = ({ bleed }) => {
+  // 空の光は本体の中で前と同じ形（objectBoundingBox の .32 / .46 / .8 を 864×480 の座標に直した だ円）。外は宵闇の深いところに落ちる
+  const sky = bleed
+    ? <radialGradient id="hfb-sky" gradientUnits="userSpaceOnUse" cx="0" cy="0" r="1" gradientTransform="translate(276.48 220.8) scale(691.2 384)">
         <stop offset="0" stopColor={YOI_LIGHT} /><stop offset=".55" stopColor={YOI} /><stop offset="1" stopColor={YOI_DEEP} />
       </radialGradient>
-      <radialGradient id="hfb-moon" cx=".45" cy=".4" r=".65">
-        <stop offset="0" stopColor="#f8e4b0" /><stop offset="1" stopColor={GOLD} />
-      </radialGradient>
-    </defs>
-    <rect width="864" height="480" fill="url(#hfb-sky)" />
-    {Array.from({ length: 24 }, (_, i) => (
-      <path key={i} d={`M0 ${i * 20 + 6} H864`} stroke="#fff" strokeOpacity=".035" strokeWidth="6" />
-    ))}
-    <circle cx={MOON.cx} cy={MOON.cy} r={MOON.r + 15} fill="none" stroke={GOLD} strokeOpacity=".55" strokeWidth="2" strokeDasharray="1 10" strokeLinecap="round" />
-  </svg>
+    : <radialGradient id="hfb-sky" cx=".32" cy=".46" r=".8">
+        <stop offset="0" stopColor={YOI_LIGHT} /><stop offset=".55" stopColor={YOI} /><stop offset="1" stopColor={YOI_DEEP} />
+      </radialGradient>;
+  const x0 = bleed ? BOX.x : 0, x1 = bleed ? BOX.x + BOX.w : 864;
+  const lines = bleed ? { from: -Math.ceil(BLEED_Y / 20), to: Math.ceil((480 + BLEED_Y) / 20) } : { from: 0, to: 24 };
+  return (
+    <svg viewBox={bleed ? `${BOX.x} ${BOX.y} ${BOX.w} ${BOX.h}` : '0 0 864 480'}
+      style={bleed ? bleedBox : { position: 'absolute', inset: 0, width: '100%', height: '100%' }} aria-hidden="true">
+      <defs>
+        {sky}
+        <radialGradient id="hfb-moon" cx=".45" cy=".4" r=".65">
+          <stop offset="0" stopColor="#f8e4b0" /><stop offset="1" stopColor={GOLD} />
+        </radialGradient>
+      </defs>
+      <rect x={x0} y={bleed ? BOX.y : 0} width={x1 - x0} height={bleed ? BOX.h : 480} fill="url(#hfb-sky)" />
+      {Array.from({ length: lines.to - lines.from }, (_, k) => {
+        const i = lines.from + k;
+        return <path key={i} d={`M${x0} ${i * 20 + 6} H${x1}`} stroke="#fff" strokeOpacity=".035" strokeWidth="6" />;
+      })}
+      <circle cx={MOON.cx} cy={MOON.cy} r={MOON.r + 15} fill="none" stroke={GOLD} strokeOpacity=".55" strokeWidth="2" strokeDasharray="1 10" strokeLinecap="round" />
+    </svg>
+  );
+};
+
+/**
+ * 描き足しの墨の丘とすすき（本体の丘と同じ層 z=5 に置き、咲耶の足もとより上に重なる順を保つ）。
+ * 本体の丘の下（y 480 より下）も地面で埋める。窓が絵より縦長のとき、下に夜空の帯が出ないように
+ */
+const HillBleed: React.FC = () => (
+  <div style={{ position: 'absolute', inset: 0, zIndex: 5, pointerEvents: 'none' }} aria-hidden="true">
+    <svg viewBox={`${BOX.x} ${BOX.y} ${BOX.w} ${BOX.h}`} style={bleedBox}>
+      <path fill={SUMI} d={[
+        `M${-BLEED_X} 436 C-400 452 -100 436 0 404`,
+        'C140 360 300 366 440 408 C520 430 570 456 590 480',
+        'L864 480 C900 468 960 430 1060 418',
+        `C1180 404 1320 410 ${864 + BLEED_X} 424`,
+        `V${480 + BLEED_Y} H${-BLEED_X} Z`
+      ].join(' ')} />
+    </svg>
+    {/* 描き足しのすすきは本体より まばら（1本ずつ揺れる層なので、増やしすぎると重くなる） */}
+    <SusukiLayers hill={hillLeft} from={-BLEED_X + 20} to={-20} step={26} seed={300} />
+    <SusukiLayers hill={hillRight} from={890} to={864 + BLEED_X - 20} step={26} seed={500} />
+  </div>
 );
 
 /** 月は単独で ふわふわ（背景も浮く） */
@@ -125,9 +177,11 @@ type Props = {
   style?: React.CSSProperties;
   /** 画が隠れている間（OP 動画の下）は全部の動きを止める。外すと続きから動く */
   paused?: boolean;
+  /** 絵の外へ夜空・丘・霞を描き足す（単独サイト）。見えるかどうかは外側の切り方で決まる（.tt-frame の overflow が hidden なら前と同じ絵） */
+  bleed?: boolean;
 };
 
-export const TitleHanafudaOdori: React.FC<Props> = ({ onVsCpu = noop, onSingle = noop, showButtons = true, buttonsClassName, style, paused = false }) => {
+export const TitleHanafudaOdori: React.FC<Props> = ({ onVsCpu = noop, onSingle = noop, showButtons = true, buttonsClassName, style, paused = false, bleed = false }) => {
   const [ref, k] = useFrameK();
   return (
     <div ref={ref} className={`tt-frame${paused ? ' tt-paused' : ''}`} style={{ background: YOI, ...style }}>
@@ -135,7 +189,15 @@ export const TitleHanafudaOdori: React.FC<Props> = ({ onVsCpu = noop, onSingle =
       <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true">
         <StickerFilter id="hfb-print" k={k} rim={3} rimColor={GEPPAKU} shadow={{ dx: 8, dy: 7, color: BENI, opacity: 0.9 }} />
       </svg>
-      <Backdrop />
+      <Backdrop bleed={bleed} />
+      {bleed && (
+        <>
+          {/* 描き足しの金の霞：右の空に1本、左の丘の裾に1本（本体の霞と高さをそろえ、横に続いて見えるように） */}
+          <Kasumi x={900} y={96} w={300} dur={10} amp={18} delay={3} z={1} />
+          <Kasumi x={-BLEED_X + 40} y={446} w={520} h={30} dur={8.5} amp={20} delay={1} z={7} />
+          <HillBleed />
+        </>
+      )}
       {CARDS.map((c, i) => (
         <PFloat key={i} x={c.x} y={c.y} w={c.w} tilt={c.tilt} dur={2.4 + (i % 3) * 0.3} amp={7} delay={c.d} rot={5} anim="poyon" z={1}>
           <Fuda kind={c.k} />
@@ -165,7 +227,7 @@ export const TitleHanafudaOdori: React.FC<Props> = ({ onVsCpu = noop, onSingle =
           <Button label="ひとりで あそぶ" y={392} delay={0.4} onClick={onSingle} />
         </div>
       )}
-      <Grain id="hfb-grain" />
+      <Grain id="hfb-grain" box={bleed ? BOX : undefined} />
     </div>
   );
 };

@@ -11,7 +11,7 @@ import './stage.css';
 // 前は画面ごとに外枠を測っていて、1600×900 で タイトル 1.75 → じぶんえらび 1.61 → あいてえらび 1.44 倍と替わり、
 // 測るのが切り替えの1コマあと（入れ替わり中の外枠は一瞬 2〜5 倍の高さになる）で、対戦中も ふきだしの行数が替わるたびに跳ねていた。
 // - メニュー（.wp-zone に data-fit="menu"。じぶんえらび・あいてえらび・ひとりで）は MENU_BOX
-// - タイトル・OP（data-fit="title"）は窓を覆う倍率（titleFit）
+// - タイトル・OP（data-fit="title"）は絵の本体が窓に収まる倍率。まわりは絵が描き足す（titleFit）
 // - それ以外（対戦・ひとりであそぶ の盤面）は PLAY_BOX
 // 倍率が替わるのは メニュー ⇄ 盤面 の行き来と、窓の大きさが替わったときだけ。
 //
@@ -37,24 +37,19 @@ const zoomFor = ({ w, h }: { w: number; h: number }): number =>
   Math.max(1, Math.floor(Math.min((window.innerWidth - PAD * 2) / w, (window.innerHeight - PAD * 2) / h) * 100) / 100);
 
 /**
- * タイトル・OP は窓いっぱい（オーナー 11-17「これをブラウザ幅いっぱいに」→「アスペクト比の調整もしてください」）。
+ * タイトル・OP は窓いっぱい、余白なし（オーナー 11-17「これをブラウザ幅いっぱいに」→「アスペクト比の調整も」
+ * →「余白が無いように素材やUI配置設計を見直して」）。
  * 絵は 864:480 の格子で組んであり（位置は %、大きさは cqw、題字・丘は viewBox）、枠の縦横比を変えると部品どうしがずれる。
- * そこで絵の比は保ったまま、窓を覆う倍率（cover）で置き、窓からはみ出した端だけを切る。
- * 切りすぎると欠けるので、収まる倍率（contain）からの上げ幅に上限を置く。上限は向きで違う:
- * 横長の窓（上下を切る）は 1.11 倍まで（1920×960 がちょうどこれ。右上の おと・あそびかた… は窓の隅に付いているので、
- *   上を切るほど題字が上がって重なる。2560×1080 で 1.15 倍にしたら「ぬばたま」に重なった。11-17 実測）。
- * 縦長の窓（左右を切る）は 1.06 倍まで（題字「し」の右端が 94% にあり、5:4 で 1.12 倍にしたら切れた。11-17 実測）。
- * それより縦横比が離れた窓は、足りない向きに宵闇の地が少し出る。スマホ（幅 640 未満）は下の帯つきの組み方なので、これまでどおり幅ぴったり。
+ * そこで絵の本体（咲耶・題字・ボタン・札）は窓に丸ごと収まる倍率（contain）で置き、端は切らない。
+ * 窓の縦横比が絵と違うぶんは、絵のほうが夜空・丘・霞を窓の端まで描き足す（TitleHanafudaOdori の bleed）。
+ * 前は覆う倍率（cover）で端を切っていて、題字が欠けないよう切る量に上限を置いたぶん、宵闇の地の帯が出ていた。
+ * スマホ（幅 640 未満）は下の帯つきの組み方なので、これまでどおり幅ぴったり。
  * 窓の大きさ（絵を置く枠の幅・高さ。zoom 前の値）は --nb-tw / --nb-th で stage.css に渡す
  */
-const TITLE_MAX_CROP_TOPBOTTOM = 1.11;
-const TITLE_MAX_CROP_SIDES = 1.06;
 const titleFit = (): { zoom: number; w: number; h: number } | { zoom: number } => {
   const w = window.innerWidth, h = window.innerHeight;
   if (w < 640) return { zoom: Math.max(1, document.documentElement.clientWidth / TITLE_W) };
-  const byW = w / TITLE_W, byH = h / (TITLE_W * TITLE_RATIO);
-  // byW > byH なら窓が絵より横長（幅で合わせると上下がはみ出す）
-  const zoom = byW > byH ? Math.min(byW, byH * TITLE_MAX_CROP_TOPBOTTOM) : Math.min(byH, byW * TITLE_MAX_CROP_SIDES);
+  const zoom = Math.min(w / TITLE_W, h / (TITLE_W * TITLE_RATIO));
   return { zoom, w: w / zoom, h: h / zoom };
 };
 

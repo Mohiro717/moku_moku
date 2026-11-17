@@ -35,15 +35,19 @@
 .nb-stage[data-mode='title'] > .hf-decos { display: none; }
 .nb-stage-body .nb-title-card { border: 0; border-radius: 0; box-shadow: none; }
 
-/* PC のタイトル・OP：窓の縦横比に合わせる（FitToScreen.tsx の titleFit）。
-   枠を窓の大きさ（--nb-tw × --nb-th）にし、864:480 の絵（幅 896）を真ん中に置いて、はみ出した端を枠で切る。
-   OP の動画も同じく覆う（object-fit: cover）。絵の幅は .tt-frame の --tt-w を上書き（style の値より強くするため !important） */
+/* PC のタイトル・OP：どの縦横比の窓でも余白を出さない（FitToScreen.tsx の titleFit）。
+   枠を窓の大きさ（--nb-tw × --nb-th）にし、864:480 の絵の本体（幅 896）は窓に丸ごと収まる大きさで真ん中に置く（端を切らない）。
+   本体の外は、絵が描き足す夜空・丘・霞（TitleHanafudaOdori の bleed）を見せ、窓の端で切る。
+   OP の動画は窓を覆う（object-fit: cover。端が少し切れる）。絵の幅は .tt-frame の --tt-w を上書き（style の値より強くするため !important） */
 @media (min-width: 640px) {
   .nb-stage[data-mode='title'] .nb-title { width: var(--nb-tw); max-width: none; }
-  .nb-stage[data-mode='title'] .nb-title-stage { height: var(--nb-th); overflow: hidden; }
+  /* clip（hidden ではなく）：描き足しが窓の外まで伸びているので、hidden だとボタンに触れたときなどに枠ごと横へスクロールして
+     本体が左にずれた（11-17 実測、1600×900 で 392px）。clip はスクロールそのものを持たない */
+  .nb-stage[data-mode='title'] .nb-title-stage { height: var(--nb-th); overflow: clip; }
   .nb-stage[data-mode='title'] .nb-title-stage > .tt-frame {
     --tt-w: 896px !important;
     position: absolute; left: 50%; top: 50%; translate: -50% -50%;
+    overflow: visible;
   }
   .nb-stage[data-mode='title'] .nb-title-stage > video { object-fit: cover; }
 }

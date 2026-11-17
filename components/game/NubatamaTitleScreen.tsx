@@ -126,6 +126,7 @@ export const NubatamaTitleScreen: React.FC<Props> = ({ onVsCpu, onSingle }) => {
           buttonsClassName="hidden sm:block"
           style={FILL_FRAME}
           paused={phase === 'op'}
+          bleed={IS_STANDALONE}
         />
 
         {phase === 'op' && (
