@@ -436,8 +436,6 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
     // 単独サイトの横長の窓：［自分のキャラとふきだし］［自分の盤］［つぎ・とくてん・ボタン］［相手の盤］［相手のキャラとふきだし］
     // （オーナー 11-17「余白が無いように素材やUI配置設計を見直して」）。枠は窓の大きさ（--nb-tw × --nb-th、FitToScreen.tsx の vsFit）。
     // 盤の大きさは窓の高さで決まり、左右のキャラの列が残りの幅を埋める（stage.css の .nb-vs）
-    const title = <HfTitle text="ぬばたま落とし" gold={[4]} className="text-[1.45rem] leading-none whitespace-nowrap" />;
-    const credit = <KitanCredit url={FANWORKS_URL} className="nb-vs-credit hf-ink" />;
     // 盤を大きくするため、本家（画面にボタンが無い）に寄せてボタンを減らす（オーナー 11-18「不要なボタンあれば消したり」）。
     // つよさ（キャラえらびで見えている）・やりなおす（決着のあとは「もういちど」）は出さず、残る3つは小札1列
     const pauseChip = (
@@ -480,11 +478,10 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
             <div className="nb-vs-field relative">{playerField}</div>
 
             <div className="nb-vs-center">
-              {title}
+              {/* 題字とクレジットは出さない（オーナー 11-18「不要」。クレジットはタイトル画面の「クレジット」にある） */}
               {nextScore}
               <div className="flex-1" />
               <div className="flex flex-wrap justify-center gap-1.5">{pauseChip}{muteChip}{backChip}</div>
-              {credit}
             </div>
 
             <div className="nb-vs-field relative">
