@@ -11,7 +11,7 @@ import { useVsCpuGame } from '../../hooks/useVsCpuGame';
 import { useCharacterReactions } from '../../hooks/game/useCpuCharacterReactions';
 import { useVsGameSound } from '../../hooks/game/useVsGameSound';
 import { isMuted, playSe, playVoice, setMuted, unlockAudio } from '../../utils/gameAudio';
-import { BACK_TARGET_LABEL, HEADER_OFFSET } from '../../constants/layout';
+import { BACK_TARGET_LABEL, HEADER_OFFSET, IS_STANDALONE } from '../../constants/layout';
 import { COUNT_MS, GO_MS, VS_LEAD_MS, MoodIcon, preloadVsArt, VsIntroOverlay, nextMood, type IntroStep, type Mood } from './VsIntro';
 import './wapop.css';
 import { HfFrame, HfTitle } from './HanafudaUi';
@@ -371,6 +371,14 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
       {muted ? '🔇 おと' : '🔊 おと'}
     </button>
   );
+  // 単独サイトの ひとやすみ（小札）。盤を大きくするため、本家（画面にボタンが無い）に寄せてボタンを減らした
+  // （オーナー 11-18「不要なボタンあれば消したり」）。つよさ（キャラえらびで見えている）・やりなおす（決着のあとは「もういちど」）は出さず、
+  // ひとやすみ・おと・もどるの小札3つだけ。PC・タブレット（wide）もスマホも同じ（オーナー 11-18「スマホ版やタブレット版も直して」）
+  const pauseChip = (
+    <button type="button" onClick={handlePause} disabled={!inMatch} className="hf-chip">
+      {gameState.isPaused ? '▶ つづける' : '⏸ ひとやすみ'}
+    </button>
+  );
   const backChip = onBack && (
     // ゲームえらびに戻る：枠の外にあったのを、見出しの小札へ（オーナー「一体にしたい」。ボタンは枠の外に出さない）
     <button type="button" onClick={onBack} aria-label={`${BACK_TARGET_LABEL} もどる`} className="hf-chip">
@@ -435,14 +443,9 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
   if (wide) {
     // 単独サイトの横長の窓：［自分のキャラとふきだし］［自分の盤］［つぎ・とくてん・ボタン］［相手の盤］［相手のキャラとふきだし］
     // （オーナー 11-17「余白が無いように素材やUI配置設計を見直して」）。枠は窓の大きさ（--nb-tw × --nb-th、FitToScreen.tsx の vsFit）。
-    // 盤の大きさは窓の高さで決まり、左右のキャラの列が残りの幅を埋める（stage.css の .nb-vs）
-    // 盤を大きくするため、本家（画面にボタンが無い）に寄せてボタンを減らす（オーナー 11-18「不要なボタンあれば消したり」）。
-    // つよさ（キャラえらびで見えている）・やりなおす（決着のあとは「もういちど」）は出さず、残る3つは小札1列
-    const pauseChip = (
-      <button type="button" onClick={handlePause} disabled={!inMatch} className="hf-chip">
-        {gameState.isPaused ? '▶ つづける' : '⏸ ひとやすみ'}
-      </button>
-    );
+    // 盤の大きさは窓の高さで決まり、左右のキャラの列が残りの幅を埋める（stage.css の .nb-vs）。
+    // 窓が 4:3 より縦長（タブレット・縦置きの画面）なら、盤とまんなかを上に、キャラを盤の下に並べる（stage.css の縦長の組み方）。
+    // ボタンは小札3つ（pauseChip の説明）
     const side = (who: 'me' | 'you') => {
       const c = who === 'me' ? playerCharacter : character;
       const said = who === 'me' ? allySide.line : line;
@@ -475,7 +478,7 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
         <HfFrame ref={frameRef} className="puyo-vs nb-vs">
           <div className="nb-vs-grid">
             {side('me')}
-            <div className="nb-vs-field relative">{playerField}</div>
+            <div className="nb-vs-field nb-vs-field-me relative">{playerField}</div>
 
             <div className="nb-vs-center">
               {/* 題字とクレジットは出さない（オーナー 11-18「不要」。クレジットはタイトル画面の「クレジット」にある） */}
@@ -484,7 +487,7 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
               <div className="flex flex-wrap justify-center gap-1.5">{pauseChip}{muteChip}{backChip}</div>
             </div>
 
-            <div className="nb-vs-field relative">
+            <div className="nb-vs-field nb-vs-field-you relative">
               <div ref={cpuNoticeRef} className="nb-vs-notice">
                 <OjamaNotice
                   count={gameState.pendingOjamaCpu}
@@ -521,13 +524,20 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
     <ErrorBoundary fallback={GameErrorFallback}>
       {/* PC では枠を中身（盤面・まんなか・盤面）の幅に寄せる。max-w-7xl いっぱいだと左右に地の余白が広く残った（オーナー 11-14） */}
       <HfFrame ref={frameRef} className="puyo-vs w-full lg:w-fit max-w-7xl mx-auto px-3 py-3 sm:px-5 sm:py-4">
-        {/* 見出し：タイトル（案3b の題字。盤面の画面なので跳ねさせない）・つよさ・おと・もどる */}
-        <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-          <HfTitle text="ぬばたま落とし" gold={[4]} className="text-xl sm:text-[1.75rem] pl-1" />
-          <div className="flex items-center gap-2 ml-auto">
-            {headChips}
+        {/* 見出し：タイトル（案3b の題字。盤面の画面なので跳ねさせない）・つよさ・おと・もどる。
+            単独サイト（スマホ）は題字を出さず、小札3つ（ひとやすみ・おと・もどる）だけ（オーナー 11-18「スマホ版やタブレット版も直して」） */}
+        {IS_STANDALONE ? (
+          <div className="flex flex-wrap items-center justify-center gap-2 mb-3">
+            {pauseChip}{muteChip}{backChip}
           </div>
-        </div>
+        ) : (
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <HfTitle text="ぬばたま落とし" gold={[4]} className="text-xl sm:text-[1.75rem] pl-1" />
+            <div className="flex items-center gap-2 ml-auto">
+              {headChips}
+            </div>
+          </div>
+        )}
 
         {/* 盤面まわり。並びは puyoAnimations.css の .puyo-vs-grid：
             lg 以上（本家の対戦画面の並び）: 自分の盤面 | まんなか（両者のつぎ・相手の顔と台詞・ボタン）| 相手の盤面、とくてんは盤面の下
@@ -559,7 +569,7 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
 
           <div className="[grid-area:p-field] relative">{playerField}</div>
           <SideInfo className="[grid-area:p-side] lg:hidden" nextPair={gameState.player.nextPair} nextNextPair={gameState.player.nextNextPair} score={gameState.player.score} accent>
-            {controlButtons}
+            {!IS_STANDALONE && controlButtons}
           </SideInfo>
           {/* lg 以上：名前の帯は盤面のすぐ下。アイコンは外側の端（本家と同じ位置） */}
           <div className="[grid-area:p-foot] hidden lg:flex mt-2">
@@ -602,9 +612,12 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
 
         <AttackBeamLayer beams={beams} />
 
-        <div className="mt-3 text-center">
-          <KitanCredit url={FANWORKS_URL} />
-        </div>
+        {/* 単独サイトは対戦の画面にクレジットを出さない（タイトル画面の「クレジット」にある。オーナー 11-18） */}
+        {!IS_STANDALONE && (
+          <div className="mt-3 text-center">
+            <KitanCredit url={FANWORKS_URL} />
+          </div>
+        )}
 
         {/* はじまりの演出：黒い枠いっぱいに VS の絵、3・2・1 を重ね、はじめ！ */}
         <VsIntroOverlay step={intro} showVs={showVs} player={playerCharacter} cpu={character} />

@@ -169,3 +169,70 @@
   .nb-vs-face { width: min(92cqw, 15rem); height: auto; aspect-ratio: 1; }
   .nb-vs-name { max-width: 100%; min-width: 6rem; display: flex; justify-content: center; }
 }
+
+/* 窓が 4:3 より縦長（タブレットの縦・横、縦置きの画面、5:4 の画面）の対戦：盤とまんなかを上に、キャラを盤の下に並べる。
+   ［　｜自分の盤｜つぎ・とくてん｜相手の盤｜　］
+   ［自分のキャラとふきだし　　｜小札　　｜相手のキャラとふきだし］
+   5列のままだと、768×1024 で盤が 0.76 倍に縮み、上下に地が出て、左右のキャラの列は幅 90 ほどで ふきだしが1字ずつ折れた
+   （オーナー 11-18「スマホ版やタブレット版も直して」）。
+   倍率は FitToScreen.tsx の VS_TALL（この組み方が窓に収まる倍率）。下の段は窓の残りの高さを全部使う。
+   条件の式は FitToScreen.tsx の TALL_QUERY と同じにすること（ずれると、倍率と並びが食い違う） */
+@media (min-width: 640px) and (max-aspect-ratio: 4/3) {
+  .nb-vs-grid {
+    grid-template-columns: minmax(0, 1fr) auto 12rem auto minmax(0, 1fr);
+    grid-template-rows: 556px minmax(0, 1fr);
+    grid-template-areas:
+      ".  pf c yf ."
+      "ms ms c ys ys";
+    align-content: stretch;
+    align-items: stretch;
+    row-gap: 12px;
+    padding: 12px;
+  }
+  .nb-vs-field-me { grid-area: pf; }
+  .nb-vs-field-you { grid-area: yf; }
+  .nb-vs-center { grid-area: c; padding-bottom: 0; } /* 小札は下の段の下端（名前の帯の高さ）にそろう */
+  .nb-vs-side-me { grid-area: ms; }
+  .nb-vs-side-you { grid-area: ys; }
+  .nb-vs-side,
+  .nb-vs-side-me,
+  .nb-vs-side-you {
+    padding: 0;
+    container-type: size; /* 下の段の高さで顔の大きさと並びを決める */
+  }
+  /* 下の段が低いとき（4:3 の横置き）：顔と名前の帯の横に ふきだし。自分は 顔｜ふきだし、相手は ふきだし｜顔 */
+  .nb-vs-side-bottom {
+    margin: 0;
+    height: 100%;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto;
+    grid-template-areas: "face say" "name say";
+    align-items: end;
+    justify-items: center;
+    column-gap: 14px;
+    row-gap: 8px;
+  }
+  .nb-vs-side-you .nb-vs-side-bottom {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "say face" "say name";
+  }
+  .nb-vs-say { grid-area: say; align-self: center; max-width: 22rem; }
+  .nb-vs-side-me .nb-vs-say { justify-self: start; }
+  .nb-vs-side-you .nb-vs-say { justify-self: end; }
+  .nb-vs-face { grid-area: face; width: min(100cqh - 52px, 42cqw, 15rem); }
+  .nb-vs-name { grid-area: name; }
+  /* 下の段が高いとき（縦置き）：PC の左右の列と同じく、ふきだし・顔・名前の帯を縦に積む */
+  @container (min-height: 330px) {
+    .nb-vs-side-bottom,
+    .nb-vs-side-you .nb-vs-side-bottom {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      grid-template-areas: "say" "face" "name";
+      align-content: center;
+    }
+    .nb-vs-side-me .nb-vs-say,
+    .nb-vs-side-you .nb-vs-say { justify-self: center; width: 100%; }
+    .nb-vs-face { align-self: center; width: min(100cqh - 170px, 88cqw, 17rem); }
+  }
+}

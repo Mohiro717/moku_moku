@@ -13,7 +13,8 @@ import './stage.css';
 // - タイトル・OP（data-fit="title"）は絵の本体が窓に収まる倍率。まわりは絵が描き足す（fillFit）
 // - メニュー（.wp-zone に data-fit="menu"。じぶんえらび・あいてえらび・ひとりで）は、幅 640 以上ならタイトルと同じ倍率で窓いっぱいに組む（fillFit）。
 //   スマホは MENU_BOX
-// - 対戦（data-fit="vs"。幅 640 以上の単独サイトだけ付く）は、5列が窓いっぱいに収まる倍率（fillFit(VS_MIN)）
+// - 対戦（data-fit="vs"。幅 640 以上の単独サイトだけ付く）は、5列が窓いっぱいに収まる倍率（fillFit(VS_MIN)）。
+//   窓が 4:3 より縦長なら、盤の下にキャラを並べる組み方が収まる倍率（fillFit(VS_TALL)）
 // - それ以外（対戦・ひとりであそぶ の盤面）は PLAY_BOX
 // 倍率が替わるのは メニュー ⇄ 盤面 の行き来と、窓の大きさが替わったときだけ。
 //
@@ -69,6 +70,14 @@ const fillFit = (minW = TITLE_W, minH = TITLE_W * TITLE_RATIO): { zoom: number; 
  */
 // 高さ＝盤 540 ＋上下の すき間（おじゃま予告は盤の上の縁に重ねるので、段を取らない）。幅＝盤2つ 576・まんなか 192・すき間・左右のキャラの列 各 90 以上
 const VS_MIN = { w: 1010, h: 556 };
+/**
+ * 窓が 4:3 より縦長（タブレット・縦置きの画面）の対戦は、盤とまんなかを上に、キャラを盤の下に並べる（stage.css の縦長の組み方）。
+ * 幅＝盤2つ 576・まんなか 192・すき間 20・左右の端 24。高さ＝盤の段 556・下の段 180 以上・すき間 12・上下の端 24。
+ * 4:3 ちょうどで、5列と盤の大きさがほぼ同じになる（1024×768 で 5列 1.01 倍・縦長 0.99 倍）。それより縦長なら こちらが大きい。
+ * 式は stage.css の @media と同じにすること
+ */
+const VS_TALL = { w: 812, h: 772 };
+const TALL_QUERY = '(min-width: 640px) and (max-aspect-ratio: 4/3)';
 
 export const FitToScreen: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const stageRef = useRef<HTMLDivElement>(null);
@@ -84,7 +93,7 @@ export const FitToScreen: React.FC<{ children: React.ReactNode }> = ({ children 
       const wide = window.innerWidth >= 640;
       const fill = mode === 'title' ? titleFit()
         : mode === 'menu' && wide ? fillFit()
-        : mode === 'vs' && wide ? fillFit(VS_MIN.w, VS_MIN.h)
+        : mode === 'vs' && wide ? (window.matchMedia(TALL_QUERY).matches ? fillFit(VS_TALL.w, VS_TALL.h) : fillFit(VS_MIN.w, VS_MIN.h))
         : null;
       const next = String(fill ? fill.zoom : zoomFor(mode === 'menu' ? MENU_BOX : PLAY_BOX));
       if (fill && 'w' in fill) {
