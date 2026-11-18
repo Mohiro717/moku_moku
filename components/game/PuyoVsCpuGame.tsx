@@ -545,13 +545,14 @@ export const PuyoVsCpuGame: React.FC<PuyoVsCpuGameProps> = ({ initialDifficulty 
         <div className="puyo-vs-grid relative">
           {/* 台詞の長さで列が広がらないように（広がると相手の盤面が伸び、つぎ・とくてんが盤面から離れる） */}
           <div className="[grid-area:c-head] [contain:inline-size] lg:hidden flex flex-col gap-2">
-            {/* 単独サイトは自分と相手の欄を同じ大きさに（オーナー 11-18「大きさの違いがもやもや」）。もくもくハウスは自分の欄が小さいまま */}
+            {/* 単独サイトは自分と相手の欄を同じ小さい形に（オーナー 11-18「大きさの違いがもやもや」→「メッセージらんを小さくしたい」）。
+                盤は小さくしない。もくもくハウスは相手の欄が大きいまま */}
+            <AllyCharacterPanel character={playerCharacter} line={allySide.line} mood={playerMood} even={IS_STANDALONE} />
             {IS_STANDALONE ? (
-              <CpuCharacterPanel character={playerCharacter} line={allySide.line} mood={playerMood} accent even />
+              <AllyCharacterPanel character={character} line={line} mood={cpuMood} accent={false} even />
             ) : (
-              <AllyCharacterPanel character={playerCharacter} line={allySide.line} mood={playerMood} />
+              <CpuCharacterPanel character={character} line={line} mood={cpuMood} />
             )}
-            <CpuCharacterPanel character={character} line={line} mood={cpuMood} even={IS_STANDALONE} />
           </div>
 
           {/* lg 以上のまんなかの列：上の両端に各自の「つぎ」（盤面の上の内側の角）、中段は空け、下端にボタン */}

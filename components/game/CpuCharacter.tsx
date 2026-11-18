@@ -8,7 +8,10 @@ interface PanelProps {
   line: string;
   /** 顔の様子（対戦のときだけ。無ければ止まった顔） */
   mood?: Mood;
-  /** 自分の側（名前を紅に） */
+}
+
+interface SmallPanelProps extends PanelProps {
+  /** 自分の側（名前を紅に）。既定は自分の側 */
   accent?: boolean;
   /** 台詞を2行ぶんの高さに固定する（自分と相手の欄の大きさを、台詞の長さによらずそろえる） */
   even?: boolean;
@@ -18,7 +21,7 @@ interface PanelProps {
 const PANEL_CLASS = 'hf-bubble flex items-center gap-3 px-3 py-2';
 
 /** CPU 盤面の上に置く、相手キャラの顔・名前・台詞 */
-export const CpuCharacterPanel = React.forwardRef<HTMLDivElement, PanelProps>(({ character, line, mood, accent = false, even = false }, ref) => (
+export const CpuCharacterPanel = React.forwardRef<HTMLDivElement, PanelProps>(({ character, line, mood }, ref) => (
   <div ref={ref} className={PANEL_CLASS}>
     {mood ? (
       <MoodIcon src={character.icon} alt={character.name} mood={mood} className="w-16 h-16" />
@@ -34,10 +37,10 @@ export const CpuCharacterPanel = React.forwardRef<HTMLDivElement, PanelProps>(({
     )}
     <div className="min-w-0 flex-1 text-left">
       <div className="flex items-baseline gap-2">
-        <span className={`font-serif text-lg ${accent ? 'text-[#c93a2e]' : ''}`}>{character.name}</span>
+        <span className="font-serif text-lg">{character.name}</span>
         <span className="text-xs opacity-75">{character.tagline}</span>
       </div>
-      <p key={line} className={`mt-1 text-sm leading-snug font-serif animate-fade-in-up ${even ? 'min-h-[2.75em]' : ''}`}>
+      <p key={line} className="mt-1 text-sm leading-snug font-serif animate-fade-in-up">
         「{line}」
       </p>
     </div>
@@ -45,11 +48,13 @@ export const CpuCharacterPanel = React.forwardRef<HTMLDivElement, PanelProps>(({
 ));
 CpuCharacterPanel.displayName = 'CpuCharacterPanel';
 
-/** スマホ・タブレット用：自分の側（あるじどのの味方）の顔と台詞。相手より小さく、名前は紅 */
-export const AllyCharacterPanel: React.FC<PanelProps> = ({ character, line, mood }) => (
+/** スマホ・タブレット用：自分の側（あるじどのの味方）の顔と台詞。相手より小さく、名前は紅。
+ *  単独サイトのスマホは、相手の欄もこの小さい形にして2つをそろえる（accent=false・even。オーナー 11-18
+ *  「大きさの違いがもやもや」→「メッセージらんを小さくしたい。盤面を小さくするとUXの不満がたまりそう」） */
+export const AllyCharacterPanel: React.FC<SmallPanelProps> = ({ character, line, mood, accent = true, even = false }) => (
   <div className="hf-bubble flex items-center gap-2 px-2 py-1">
     {mood ? (
-      <MoodIcon src={character.icon} alt={character.name} mood={mood} className="w-12 h-12" />
+      <MoodIcon src={character.icon} alt={character.name} mood={mood} className={even ? 'w-11 h-11' : 'w-12 h-12'} />
     ) : (
       <img
         src={character.icon}
@@ -59,8 +64,8 @@ export const AllyCharacterPanel: React.FC<PanelProps> = ({ character, line, mood
         className="w-10 h-10 shrink-0 rounded-full object-cover border-[3px] border-[#0b0b12] bg-[#131320]"
       />
     )}
-    <p key={line} className="min-w-0 flex-1 text-left text-xs leading-snug font-serif animate-fade-in-up">
-      <span className="mr-1 text-[#c93a2e]">{character.name}</span>「{line}」
+    <p key={line} className={`min-w-0 flex-1 text-left text-xs leading-snug font-serif animate-fade-in-up ${even ? 'min-h-[2.75em]' : ''}`}>
+      <span className={`mr-1 ${accent ? 'text-[#c93a2e]' : 'font-bold'}`}>{character.name}</span>「{line}」
     </p>
   </div>
 );
