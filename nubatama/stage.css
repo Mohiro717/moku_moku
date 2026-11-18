@@ -236,3 +236,27 @@
     .nb-vs-face { align-self: center; width: min(100cqh - 170px, 88cqw, 17rem); }
   }
 }
+
+/* スマホ（幅 640 未満）の対戦：盤の駒の大きさを窓の高さに合わせ、下の自分と相手の欄まで1画面に収める。
+   駒 26px（puyoAnimations.css）のままだと中身が 728px あり、375×667 では相手の欄が 60px ほど下にはみ出した
+   （オーナー 11-18「この大きさだとはみ出るな」）。
+   375×667 で実測：枠の高さは駒 18px で 627、駒 1px ごとに約 12px 増える。窓の上下の すき間 24 を足すと、収まる駒は (窓の高さ − 435) ÷ 12。
+   台詞が3行になる欄があっても はみ出しにくいよう 5px 多めに引く。上限は今までの 26px（窓の高さ 755 以上）、下限は 18px */
+@media (max-width: 639px) {
+  .nb-stage-body .puyo-vs { --puyo-size: clamp(18px, calc((100dvh - 440px) / 12), 26px); }
+}
+/* 盤が細くなると、盤に重なる幕（ひとやすみ・かち・まけ・はじめる）の判子とボタンが盤の幅からはみ出す
+   （375×667 で判子「ひとやすみ」193px・盤 165px。駒 26px のときも判子は幕の内側より広かった）。
+   幕の幅（cqw）に合わせて字を縮め、列も幕の幅に収める。広い盤では今までの大きさが上限 */
+@media (max-width: 639px) {
+  .nb-stage-body .puyo-vs :is(.hf-veil, .hf-veil-dark) {
+    container-type: inline-size;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .nb-stage-body .puyo-vs :is(.hf-veil, .hf-veil-dark) .wp-hanko {
+    font-size: min(1.875rem, 13cqw);
+    padding-inline: min(1rem, 4cqw);
+  }
+  .nb-stage-body .puyo-vs :is(.hf-veil, .hf-veil-dark) .hf-btn-main { font-size: min(1.125rem, 11cqw); padding-inline: 0.6em; }
+  .nb-stage-body .puyo-vs :is(.hf-veil, .hf-veil-dark) .hf-btn-sub { font-size: min(0.875rem, 8.5cqw); padding-inline: 0.6em; }
+}
