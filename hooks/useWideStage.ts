@@ -18,8 +18,3 @@ export const useWideStage = () => {
   return wide;
 };
 
-/** 対戦のまんなかの列の見本（?ux=a|b|c）。オーナーが選んだら、この切り替えごと消して1つに絞る */
-export const VS_UX_SAMPLE: 'a' | 'b' | 'c' = (() => {
-  const v = typeof window === 'undefined' ? null : new URLSearchParams(window.location.search).get('ux');
-  return v === 'b' || v === 'c' ? v : 'a';
-})();
