@@ -8,13 +8,17 @@ interface PanelProps {
   line: string;
   /** 顔の様子（対戦のときだけ。無ければ止まった顔） */
   mood?: Mood;
+  /** 自分の側（名前を紅に） */
+  accent?: boolean;
+  /** 台詞を2行ぶんの高さに固定する（自分と相手の欄の大きさを、台詞の長さによらずそろえる） */
+  even?: boolean;
 }
 
 // 相手の台詞＝生成りの面に墨の縁・藍の影（案3b。hanafuda.css の .hf-bubble）
 const PANEL_CLASS = 'hf-bubble flex items-center gap-3 px-3 py-2';
 
 /** CPU 盤面の上に置く、相手キャラの顔・名前・台詞 */
-export const CpuCharacterPanel = React.forwardRef<HTMLDivElement, PanelProps>(({ character, line, mood }, ref) => (
+export const CpuCharacterPanel = React.forwardRef<HTMLDivElement, PanelProps>(({ character, line, mood, accent = false, even = false }, ref) => (
   <div ref={ref} className={PANEL_CLASS}>
     {mood ? (
       <MoodIcon src={character.icon} alt={character.name} mood={mood} className="w-16 h-16" />
@@ -30,10 +34,10 @@ export const CpuCharacterPanel = React.forwardRef<HTMLDivElement, PanelProps>(({
     )}
     <div className="min-w-0 flex-1 text-left">
       <div className="flex items-baseline gap-2">
-        <span className="font-serif text-lg">{character.name}</span>
+        <span className={`font-serif text-lg ${accent ? 'text-[#c93a2e]' : ''}`}>{character.name}</span>
         <span className="text-xs opacity-75">{character.tagline}</span>
       </div>
-      <p key={line} className="mt-1 text-sm leading-snug font-serif animate-fade-in-up">
+      <p key={line} className={`mt-1 text-sm leading-snug font-serif animate-fade-in-up ${even ? 'min-h-[2.75em]' : ''}`}>
         「{line}」
       </p>
     </div>
