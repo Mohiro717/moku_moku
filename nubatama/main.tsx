@@ -11,6 +11,13 @@ import { FitToScreen } from './FitToScreen';
 // 遊びの中身は もくもくハウスと同じ部品（components/game/NubatamaGame.tsx）。
 applyPerfLite();
 
+// ホーム画面アプリ（PWA）の見張り役。ビルドした版だけ（開発中に入れると古い版が残って紛らわしい）
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  });
+}
+
 const NubatamaApp: React.FC = () => (
   <main>
     <FitToScreen>
